@@ -1,7 +1,8 @@
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, render_template_string, request, jsonify, redirect, url_for, session
 import pymysql
 
 app = Flask(__name__)
+app.secret_key = 'shahoor_secret_key_super_secure'  # کلیلی پاراستنی سێشن
 
 # زانیارییەکانی داتابەیسی Railway
 DB_CONFIG = {
@@ -15,6 +16,43 @@ DB_CONFIG = {
 
 def get_db():
     return pymysql.connect(**DB_CONFIG)
+
+# لاپەڕەی داخڵکردنی وشەی نهێنی
+LOGIN_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چوونەژوورەوە - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; padding: 16px; }
+        .login-card { background: #151d30; border: 1px solid #334155; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .logo { color: #f59e0b; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
+        .pin-input { width: 100%; padding: 14px; background: #0f172a; border: 1.5px solid #334155; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
+        .pin-input:focus { border-color: #f59e0b; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .error-msg { color: #ef4444; font-size: 13px; margin-top: 14px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">✨ شاهور ڕێستۆرانت</div>
+        <div class="subtitle">تکایە وشەی نهێنی بنووسە بۆ چوونەژوورەوە</div>
+        <form method="POST" action="/login">
+            <input type="password" name="pin" class="pin-input" placeholder="••••••" inputmode="numeric" required autofocus>
+            <button type="submit" class="btn-submit">چوونەژوورەوە</button>
+        </form>
+        {% if error %}
+            <div class="error-msg">{{ error }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
+"""
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -166,7 +204,7 @@ HTML_TEMPLATE = """
         .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
         .cart-items-list { overflow-y: auto; flex: 1; max-height: 50vh; margin-bottom: 14px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
-        .del-item-btn { color: #ef4444; background: none; border: none; font-size: 16px; cursor: pointer; margin-right: 8px; }
+        .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -179,7 +217,7 @@ HTML_TEMPLATE = """
     <div class="table-bar">
         <label>📍 ژمارەی مێزەکەت:</label>
         <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
-            {% for num in range(1, 31) %}
+            {% for num in range(1, 91) %}
                 <option value="{{ num }}">مێزی {{ num }}</option>
             {% endfor %}
         </select>
@@ -305,17 +343,15 @@ HTML_TEMPLATE = """
                 const row = document.createElement('div');
                 row.className = 'cart-item-row';
                 row.innerHTML = `
-                    <div style="display:flex; align-items:center;">
-                        <button type="button" class="del-item-btn" onclick="removeFoodEntirely('${name}')">🗑</button>
-                        <div>
-                            <div style="font-weight:700; font-size:13px; color:#fff;">${name}</div>
-                            <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
-                        </div>
-                    </div>
                     <div class="counter-group">
+                        <button type="button" class="del-item-btn" onclick="removeFoodEntirely('${name}')" title="سڕینەوە">🗑</button>
                         <button type="button" class="btn-count" onclick="updateQty('${name}', -1, ${item.price}, '${item.cat}'); renderCartModalList();">-</button>
                         <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
                         <button type="button" class="btn-count plus" onclick="updateQty('${name}', 1, ${item.price}, '${item.cat}'); renderCartModalList();">+</button>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight:700; font-size:13px; color:#fff;">${name}</div>
+                        <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
                     </div>
                 `;
                 list.appendChild(row);
@@ -389,8 +425,22 @@ HTML_TEMPLATE = """
 </html>
 """
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        pin = request.form.get('pin')
+        if pin == '345678' or pin == '٣٤٥٦٧٨':
+            session['authenticated'] = True
+            return redirect(url_for('menu'))
+        else:
+            return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
+    return render_template_string(LOGIN_TEMPLATE)
+
 @app.route('/')
 def menu():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -411,6 +461,9 @@ def menu():
 
 @app.route('/get_table_orders/<table_num>')
 def get_table_orders(table_num):
+    if not session.get('authenticated'):
+        return jsonify([])
+
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -428,6 +481,9 @@ def get_table_orders(table_num):
 
 @app.route('/save_cart_order', methods=['POST'])
 def save_cart_order():
+    if not session.get('authenticated'):
+        return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
+
     data = request.get_json()
     table_num = data.get('table_number')
     cart_data = data.get('cart', {})
