@@ -1,17 +1,19 @@
 import streamlit as st
 import pymysql
 import json
+import streamlit.components.v1 as components
 
-# ڕێکخستنی شاشەی مۆبایل
+# ڕێکخستنی شاشە بۆ مۆبایل بەبێ بۆشایی زیادە
 st.set_page_config(page_title="مێنیوی شاهور", layout="wide", initial_sidebar_state="collapsed")
 
-# شاردنەوەی سەرپەڕەی ستاندارد
+# شاردنەوەی سەرپەڕە و پێڕستی زیادی Streamlit
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
         .block-container {padding: 0 !important; margin: 0 !important;}
+        iframe {width: 100% !important; border: none !important;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -28,7 +30,7 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
-# هێنانی خواردنەکان لە داتابەیس
+# ١. هێنانی خواردنەکان لە خشتەی nse
 def fetch_foods():
     try:
         conn = get_db()
@@ -40,7 +42,7 @@ def fetch_foods():
     except:
         return []
 
-# هێنانی ئۆردەرەکانی ئێستای سەر مێزەکان
+# ٢. هێنانی ئۆردەرە چالاکەکانی سەر مێزەکان لە خشتەی froshtn
 def fetch_all_active_orders():
     try:
         conn = get_db()
@@ -57,10 +59,36 @@ def fetch_all_active_orders():
     except:
         return []
 
+# ٣. ناردن و پاشەکەوتکردنی ئۆردەر لە داتابەیس لە ڕێگەی فۆرمی مۆبایل
+query_params = st.query_params
+if "save_order" in query_params:
+    try:
+        tbl = query_params.get("table")
+        cart_str = query_params.get("data")
+        if tbl and cart_str:
+            cart_items = json.loads(cart_str)
+            conn = get_db()
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(tbl),))
+                for f_name, item in cart_items.items():
+                    qty = int(item['qty'])
+                    price = float(item['price'])
+                    cat = item.get('cat', '')
+                    if qty > 0:
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at)
+                            VALUES (%s, %s, %s, %s, %s, NOW())
+                        """, (str(tbl), f_name, qty, price, cat))
+                conn.commit()
+            conn.close()
+            st.query_params.clear()
+            st.rerun()
+    except:
+        pass
+
 foods_data = fetch_foods()
 active_orders_data = fetch_all_active_orders()
 
-# داڕشتنی پۆلەکانی خواردن
 categories = {}
 for food in foods_data:
     cat = food['category'] if food.get('category') else 'گشتی'
@@ -76,7 +104,6 @@ for food in foods_data:
 foods_json = json.dumps(categories, ensure_ascii=False)
 orders_json = json.dumps(active_orders_data, ensure_ascii=False, default=str)
 
-# پێکهاتەی وێبسایت بە تەواوی
 HTML_CODE = f"""
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -86,7 +113,7 @@ HTML_CODE = f"""
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }}
-        body {{ background-color: #0b0f19; color: #f8fafc; padding-bottom: 110px; }}
+        body {{ background-color: #0b0f19; color: #f8fafc; padding-bottom: 120px; }}
         
         .app-header {{
             background: linear-gradient(180deg, #161f32 0%, #0b0f19 100%);
@@ -239,7 +266,6 @@ HTML_CODE = f"""
     <div class="table-bar">
         <label>📍 ژمارەی مێزەکەت:</label>
         <select id="tableSelect" class="table-select" onchange="onTableChanged(this.value)">
-            <!-- دروستکردنی ٣٠ مێز -->
         </select>
     </div>
 
@@ -398,7 +424,7 @@ HTML_CODE = f"""
                             </div>
                         </div>
                         <div class="counter-group">
-                            <button type="button" class="btn-count" onclick="updateQty('${{name}}', -1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">-</button>
+                            <button type="button" class="btn-count" onclick="updateQty('${{name}}, -1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">-</button>
                             <span style="padding:0 8px; font-weight:700;">${{item.qty}}</span>
                             <button type="button" class="btn-count plus" onclick="updateQty('${{name}}', 1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">+</button>
                         </div>
@@ -418,12 +444,10 @@ HTML_CODE = f"""
 
         function submitFinalOrder() {{
             const tableNum = document.getElementById('tableSelect').value;
-            const payload = JSON.stringify({{ table: tableNum, items: cart }});
+            const dataStr = encodeURIComponent(JSON.stringify(cart));
             
-            // ناردنی داتا بۆ داتابەیس بە پارامیتەر
-            window.parent.postMessage({{ type: 'streamlit:setComponentValue', value: payload }}, '*');
-            alert('داواکارییەکە بە سەرکەوتوویی تۆمارکرا!');
-            toggleCartModal(false);
+            // ناردنی فەرمان بۆ Streamlit بۆ سەیڤکردن
+            window.top.location.href = window.top.location.pathname + '?save_order=1&table=' + tableNum + '&data=' + dataStr;
         }}
 
         window.onload = initApp;
@@ -432,30 +456,5 @@ HTML_CODE = f"""
 </html>
 """
 
-# هەڵگرتن لە داتابەیس
-from streamlit.components.v1 import html
-order_payload = html(HTML_CODE, height=850, scrolling=True)
-
-if order_payload:
-    try:
-        data = json.loads(order_payload)
-        tbl = data.get('table')
-        cart_items = data.get('items', {})
-        
-        conn = get_db()
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(tbl),))
-            for f_name, item in cart_items.items():
-                qty = int(item['qty'])
-                price = float(item['price'])
-                cat = item.get('cat', '')
-                if qty > 0:
-                    cursor.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at)
-                        VALUES (%s, %s, %s, %s, %s, NOW())
-                    """, (str(tbl), f_name, qty, price, cat))
-            conn.commit()
-        conn.close()
-        st.rerun()
-    except Exception as e:
-        st.error(f"هەڵە: {e}")
+# پیشاندانی فۆرمەکە بە بێ هیچ ئیرۆرێک
+components.html(HTML_CODE, height=950, scrolling=True)
