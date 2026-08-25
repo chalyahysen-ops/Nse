@@ -2,9 +2,8 @@ from flask import Flask, render_template_string, request, jsonify, redirect, url
 import pymysql
 
 app = Flask(__name__)
-app.secret_key = 'shahoor_secret_key_super_secure'  # کلیلی پاراستنی سێشن
+app.secret_key = 'shahoor_secret_key_super_secure'
 
-# زانیارییەکانی داتابەیسی Railway
 DB_CONFIG = {
     'host': 'sakura.proxy.rlwy.net',
     'port': 31707,
@@ -17,7 +16,6 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
-# لاپەڕەی داخڵکردنی وشەی نهێنی
 LOGIN_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -65,10 +63,10 @@ HTML_TEMPLATE = """
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0b0f19; color: #f8fafc; padding-bottom: 120px; }
-        
+
         .app-header {
             background: linear-gradient(180deg, #161f32 0%, #0b0f19 100%);
-            padding: 16px 16px 8px;
+            padding: 14px 16px 8px;
             text-align: center;
             border-bottom: 1px solid rgba(245, 158, 11, 0.2);
             position: sticky;
@@ -80,25 +78,42 @@ HTML_TEMPLATE = """
 
         .table-bar {
             background: #1e293b;
-            margin: 12px 16px;
-            padding: 10px 14px;
+            margin: 10px 16px;
+            padding: 10px 12px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border: 1px solid #334155;
+            gap: 8px;
         }
-        .table-bar label { font-weight: 700; font-size: 13px; color: #f8fafc; }
+        .table-info { display: flex; align-items: center; gap: 6px; }
+        .table-info label { font-weight: 700; font-size: 13px; color: #f8fafc; }
         .table-select {
             background: #0f172a;
             color: #f59e0b;
             border: 1.5px solid #f59e0b;
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 700;
             outline: none;
         }
+
+        .table-actions { display: flex; align-items: center; gap: 6px; }
+        .btn-action {
+            border: none;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-change-tbl { background: #0284c7; color: #ffffff; }
+        .btn-clear-tbl { background: #ef4444; color: #ffffff; }
 
         .categories-scroll {
             display: flex;
@@ -125,7 +140,7 @@ HTML_TEMPLATE = """
         .category-block { margin-bottom: 18px; }
         .category-title { color: #f59e0b; font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .category-title::after { content: ''; flex: 1; height: 1px; background: #334155; }
-        
+
         .food-card {
             background: #151d30;
             border: 1px solid #243048;
@@ -140,7 +155,7 @@ HTML_TEMPLATE = """
         .food-details { flex: 1; min-width: 0; }
         .food-name { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .food-price { font-size: 13px; font-weight: 700; color: #10b981; }
-        
+
         .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 8px; border: 1px solid #334155; padding: 2px; gap: 3px; }
         .btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #ffffff; font-size: 15px; font-weight: 700; cursor: pointer; }
         .btn-count.plus { background: #f59e0b; color: #0b0f19; }
@@ -205,6 +220,27 @@ HTML_TEMPLATE = """
         .cart-items-list { overflow-y: auto; flex: 1; max-height: 50vh; margin-bottom: 14px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+
+        /* مۆداڵی گۆڕینی مێز */
+        .modal-center-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 400;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-center-card {
+            background: #151d30;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -215,12 +251,19 @@ HTML_TEMPLATE = """
     </header>
 
     <div class="table-bar">
-        <label>📍 ژمارەی مێزەکەت:</label>
-        <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
-            {% for num in range(1, 91) %}
-                <option value="{{ num }}">مێزی {{ num }}</option>
-            {% endfor %}
-        </select>
+        <div class="table-info">
+            <label>📍 مێزی:</label>
+            <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
+                {% for num in range(1, 91) %}
+                    <option value="{{ num }}">{{ num }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="table-actions">
+            <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
+            <button type="button" class="btn-action btn-clear-tbl" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
+        </div>
     </div>
 
     <div class="categories-scroll">
@@ -237,7 +280,7 @@ HTML_TEMPLATE = """
             {% for item in items %}
             <div class="food-card">
                 <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="food-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
-                
+
                 <div class="food-details">
                     <div class="food-name">{{ item.food_name }}</div>
                     <div class="food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
@@ -263,6 +306,7 @@ HTML_TEMPLATE = """
         <button type="button" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
     </div>
 
+    <!-- مۆداڵی سەبەتە -->
     <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -274,18 +318,46 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
+    <!-- مۆداڵی گۆڕینی ژمارەی مێز -->
+    <div class="modal-center-overlay" id="changeTableModal" onclick="toggleChangeTableModal(false)">
+        <div class="modal-center-card" onclick="event.stopPropagation()">
+            <div class="modal-title" style="margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 16px;">ژمارەی ئەو مێزە دیاری بکە کە دەتەوێت ئۆردەرەکەی بۆ بگوازیتەوە:</p>
+            
+            <select id="newTableSelect" class="table-select" style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 18px;">
+                {% for num in range(1, 91) %}
+                    <option value="{{ num }}">مێزی {{ num }}</option>
+                {% endfor %}
+            </select>
+
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-send-main" style="flex: 1; padding: 10px;" onclick="confirmChangeTable()">گواستنەوە</button>
+                <button type="button" class="btn-action btn-clear-tbl" style="flex: 1; justify-content: center;" onclick="toggleChangeTableModal(false)">پاشگەزبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let cart = {}; 
+        let isUserInteracting = false;
+        let interactionTimeout = null;
+
+        function markInteracting() {
+            isUserInteracting = true;
+            clearTimeout(interactionTimeout);
+            interactionTimeout = setTimeout(() => { isUserInteracting = false; }, 8000);
+        }
 
         function resetInputs() {
             document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
         }
 
         function updateQty(foodName, change, price, cat) {
+            markInteracting();
             if (!cart[foodName]) {
                 cart[foodName] = { qty: 0, price: price, cat: cat || '' };
             }
-            
+
             cart[foodName].qty += change;
             if (cart[foodName].qty <= 0) {
                 delete cart[foodName];
@@ -298,6 +370,7 @@ HTML_TEMPLATE = """
         }
 
         function removeFoodEntirely(foodName) {
+            markInteracting();
             delete cart[foodName];
             const input = document.getElementById('qty_' + foodName);
             if (input) input.value = 0;
@@ -332,7 +405,7 @@ HTML_TEMPLATE = """
         function renderCartModalList() {
             const list = document.getElementById('cartItemsList');
             list.innerHTML = '';
-            
+
             if (Object.keys(cart).length === 0) {
                 list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">سەبەتە بەتاڵە!</div>';
                 return;
@@ -370,13 +443,15 @@ HTML_TEMPLATE = """
             }
         }
 
-        function fetchTableOrders(tableNum) {
+        function fetchTableOrders(tableNum, isAutoSync = false) {
+            if (isAutoSync && isUserInteracting) return;
+
             fetch('/get_table_orders/' + tableNum)
                 .then(res => res.json())
                 .then(data => {
                     cart = {};
                     resetInputs();
-                    
+
                     if (data.length > 0) {
                         data.forEach(item => {
                             cart[item.food_name] = {
@@ -389,7 +464,11 @@ HTML_TEMPLATE = """
                         });
                     }
                     renderCartSummary();
-                });
+                    if (document.getElementById('cartModal').style.display === 'flex') {
+                        renderCartModalList();
+                    }
+                })
+                .catch(() => {});
         }
 
         function submitFinalOrder() {
@@ -408,6 +487,7 @@ HTML_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
+                    isUserInteracting = false;
                     alert('داواکارییەکە بە سەرکەوتوویی تۆمارکرا و ڕەوانەی کاشێر کرا!');
                     fetchTableOrders(tableNum);
                 } else {
@@ -417,8 +497,71 @@ HTML_TEMPLATE = """
             .catch(err => alert("کێشە لە پەیوەندی سێرڤەر!"));
         }
 
+        // 🗑 سڕینەوەی هەموو داواکارییەکانی مێزی دیاریکراو
+        function clearCurrentTableOrders() {
+            const currentTbl = document.getElementById('tableSelect').value;
+            if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
+                fetch('/clear_table_orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table_number: currentTbl })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("مێزی " + currentTbl + " بە سەرکەوتوویی بەتاڵکرایەوە!");
+                        fetchTableOrders(currentTbl);
+                    } else {
+                        alert("هەڵە لە سڕینەوە: " + data.message);
+                    }
+                });
+            }
+        }
+
+        // 🔄 گۆڕینی ژمارەی مێز
+        function openChangeTableModal() {
+            const currentTbl = document.getElementById('tableSelect').value;
+            document.getElementById('newTableSelect').value = currentTbl;
+            toggleChangeTableModal(true);
+        }
+
+        function toggleChangeTableModal(show) {
+            document.getElementById('changeTableModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function confirmChangeTable() {
+            const oldTbl = document.getElementById('tableSelect').value;
+            const newTbl = document.getElementById('newTableSelect').value;
+
+            if (oldTbl === newTbl) {
+                alert("تکایە ژمارەیەکی جیاواز دیاری بکە!");
+                return;
+            }
+
+            fetch('/change_table_number', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_table: oldTbl, new_table: newTbl })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    toggleChangeTableModal(false);
+                    alert("داواکارییەکان بە سەرکەوتوویی گوازرانەوە بۆ مێزی " + newTbl);
+                    document.getElementById('tableSelect').value = newTbl;
+                    fetchTableOrders(newTbl);
+                } else {
+                    alert("هەڵە لە گواستنەوە: " + data.message);
+                }
+            });
+        }
+
         window.onload = function() {
             fetchTableOrders(document.getElementById('tableSelect').value);
+            setInterval(() => {
+                const tableNum = document.getElementById('tableSelect').value;
+                fetchTableOrders(tableNum, true);
+            }, 4000);
         };
     </script>
 </body>
@@ -491,18 +634,75 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+            cursor.execute("SELECT food_name, SUM(quantity) as total_qty FROM froshtn WHERE table_cabin = %s GROUP BY food_name", (str(table_num),))
+            existing_rows = cursor.fetchall()
+            existing_items = {row['food_name']: int(row['total_qty']) for row in existing_rows}
 
             for food_name, item in cart_data.items():
-                qty = int(item['qty'])
+                new_qty = int(item['qty'])
                 price = float(item['price'])
                 cat = item.get('cat', '')
-                if qty > 0:
+                old_qty = existing_items.get(food_name, 0)
+
+                if new_qty > old_qty:
+                    diff_qty = new_qty - old_qty
                     cursor.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (str(table_num), food_name, qty, price, cat))
+                    """, (str(table_num), food_name, diff_qty, price, cat))
+                elif new_qty < old_qty:
+                    cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s AND food_name = %s", (str(table_num), food_name))
+                    if new_qty > 0:
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 1)
+                        """, (str(table_num), food_name, new_qty, price, cat))
 
+            for old_food in existing_items:
+                if old_food not in cart_data or cart_data[old_food]['qty'] <= 0:
+                    cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s AND food_name = %s", (str(table_num), old_food))
+
+            conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        if conn: conn.close()
+        return jsonify({'status': 'error', 'message': str(e)})
+
+# 🗑 API بۆ سڕینەوەی مێز
+@app.route('/clear_table_orders', methods=['POST'])
+def clear_table_orders():
+    if not session.get('authenticated'):
+        return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
+
+    data = request.get_json()
+    table_num = data.get('table_number')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+            conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        if conn: conn.close()
+        return jsonify({'status': 'error', 'message': str(e)})
+
+# 🔄 API بۆ گۆڕینی ژمارەی مێز
+@app.route('/change_table_number', methods=['POST'])
+def change_table_number():
+    if not session.get('authenticated'):
+        return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
+
+    data = request.get_json()
+    old_tbl = data.get('old_table')
+    new_tbl = data.get('new_table')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE froshtn SET table_cabin = %s WHERE table_cabin = %s", (str(new_tbl), str(old_tbl)))
             conn.commit()
         conn.close()
         return jsonify({'status': 'success'})
