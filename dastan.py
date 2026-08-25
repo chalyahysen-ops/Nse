@@ -3,21 +3,21 @@ import pymysql
 import json
 import streamlit.components.v1 as components
 
-# ڕێکخستنی شاشە بۆ مۆبایل بەبێ بۆشایی زیادە
-st.set_page_config(page_title="مێنیوی شاهور", layout="wide", initial_sidebar_state="collapsed")
+# ڕێکخستنی سەرەکی شاشەی مۆبایل
+st.set_page_config(page_title="شاهور ڕێستۆرانت", layout="wide", initial_sidebar_state="collapsed")
 
-# شاردنەوەی سەرپەڕە و پێڕستی زیادی Streamlit
+# نەهێشتنی سەرپەڕە و بۆشاییە زیادەکانی Streamlit
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
-        .block-container {padding: 0 !important; margin: 0 !important;}
+        .block-container {padding: 0 !important; margin: 0 !important; max-width: 100% !important;}
         iframe {width: 100% !important; border: none !important;}
     </style>
 """, unsafe_allow_html=True)
 
-# زانیاری داتابەیسی سەرەکی
+# زانیاری بەستنەوە بە داتابەیسی سەرەکی
 DB_CONFIG = {
     'host': 'sakura.proxy.rlwy.net',
     'port': 31707,
@@ -30,7 +30,37 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
-# ١. هێنانی خواردنەکان لە خشتەی nse
+# ١. پشکنینی ناردنی داواکاری لە ڕێگەی فۆرمی مۆبایل
+query_params = st.query_params
+if "save_order" in query_params:
+    try:
+        tbl = query_params.get("table")
+        cart_str = query_params.get("data")
+        if tbl and cart_str:
+            cart_items = json.loads(cart_str)
+            conn = get_db()
+            with conn.cursor() as cursor:
+                # سڕینەوەی داواکاری کۆنی هەمان مێز
+                cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(tbl),))
+                
+                # تۆمارکردنی داواکاری نوێ بە دۆخی is_printed = 0 بۆ چاپی سی شارپ
+                for f_name, item in cart_items.items():
+                    qty = int(item['qty'])
+                    price = float(item['price'])
+                    cat = item.get('cat', '')
+                    if qty > 0:
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                        """, (str(tbl), f_name, qty, price, cat))
+                conn.commit()
+            conn.close()
+            st.query_params.clear()
+            st.rerun()
+    except Exception as err:
+        pass
+
+# ٢. هێنانی خواردنەکان لە خشتەی nse
 def fetch_foods():
     try:
         conn = get_db()
@@ -42,13 +72,13 @@ def fetch_foods():
     except:
         return []
 
-# ٢. هێنانی ئۆردەرە چالاکەکانی سەر مێزەکان لە خشتەی froshtn
-def fetch_all_active_orders():
+# ٣. هێنانی ئۆردەرەکانی سەر مێز بۆ بارکردنەوە لە کاتی هەڵبژاردنی مێز
+def fetch_active_orders():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT table_cabin, food_name, price, category, SUM(quantity) as quantity, SUM(quantity * price) as total 
+                SELECT table_cabin, food_name, price, category, SUM(quantity) as quantity 
                 FROM froshtn 
                 WHERE table_cabin IS NOT NULL AND table_cabin != ''
                 GROUP BY table_cabin, food_name, price, category
@@ -59,35 +89,8 @@ def fetch_all_active_orders():
     except:
         return []
 
-# ٣. ناردن و پاشەکەوتکردنی ئۆردەر لە داتابەیس لە ڕێگەی فۆرمی مۆبایل
-query_params = st.query_params
-if "save_order" in query_params:
-    try:
-        tbl = query_params.get("table")
-        cart_str = query_params.get("data")
-        if tbl and cart_str:
-            cart_items = json.loads(cart_str)
-            conn = get_db()
-            with conn.cursor() as cursor:
-                cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(tbl),))
-                for f_name, item in cart_items.items():
-                    qty = int(item['qty'])
-                    price = float(item['price'])
-                    cat = item.get('cat', '')
-                    if qty > 0:
-                        cursor.execute("""
-                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at)
-                            VALUES (%s, %s, %s, %s, %s, NOW())
-                        """, (str(tbl), f_name, qty, price, cat))
-                conn.commit()
-            conn.close()
-            st.query_params.clear()
-            st.rerun()
-    except:
-        pass
-
 foods_data = fetch_foods()
-active_orders_data = fetch_all_active_orders()
+active_orders_data = fetch_active_orders()
 
 categories = {}
 for food in foods_data:
@@ -198,10 +201,10 @@ HTML_CODE = f"""
         .bottom-cart-bar {{
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            background: rgba(15, 23, 42, 0.96);
+            background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(10px);
             border-top: 1px solid #334155;
-            padding: 10px 16px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -233,7 +236,7 @@ HTML_CODE = f"""
         .modal-overlay {{
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
             z-index: 300;
             display: none;
             align-items: flex-end;
@@ -424,7 +427,7 @@ HTML_CODE = f"""
                             </div>
                         </div>
                         <div class="counter-group">
-                            <button type="button" class="btn-count" onclick="updateQty('${{name}}, -1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">-</button>
+                            <button type="button" class="btn-count" onclick="updateQty('${{name}}', -1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">-</button>
                             <span style="padding:0 8px; font-weight:700;">${{item.qty}}</span>
                             <button type="button" class="btn-count plus" onclick="updateQty('${{name}}', 1, ${{item.price}}, '${{item.cat}}'); renderCartModalList();">+</button>
                         </div>
@@ -446,7 +449,7 @@ HTML_CODE = f"""
             const tableNum = document.getElementById('tableSelect').value;
             const dataStr = encodeURIComponent(JSON.stringify(cart));
             
-            // ناردنی فەرمان بۆ Streamlit بۆ سەیڤکردن
+            // ناردنی ڕاستەوخۆ بۆ داتابەیس
             window.top.location.href = window.top.location.pathname + '?save_order=1&table=' + tableNum + '&data=' + dataStr;
         }}
 
@@ -456,5 +459,5 @@ HTML_CODE = f"""
 </html>
 """
 
-# پیشاندانی فۆرمەکە بە بێ هیچ ئیرۆرێک
-components.html(HTML_CODE, height=950, scrolling=True)
+# پیشاندانی تەواوی لاپەڕەکە
+components.html(HTML_CODE, height=1000, scrolling=True)
