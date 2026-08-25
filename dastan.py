@@ -1,12 +1,18 @@
 from flask import Flask, render_template_string, request, jsonify
 import pymysql
-import win32print
-import win32ui
-import win32con
+
+# پشکنین بۆ کتێبخانەکانی چاپی ویندۆز بۆ ئەوەی لەسەر لینوکس/کلاود ئیرۆر نەدات
+try:
+    import win32print
+    import win32ui
+    import win32con
+    HAS_WIN32 = True
+except ImportError:
+    HAS_WIN32 = False
 
 app = Flask(__name__)
 
-# زانیارییەکانی بەستنەوە بە داتابەیسی Railway
+# زانیاری داتابەیسی سەرەکی
 DB_CONFIG = {
     'host': 'sakura.proxy.rlwy.net',
     'port': 31707,
@@ -19,8 +25,10 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
-# فەنکشنی چاپکردنی وەسڵی چێشتخانە لەسەر قەبارەی 8cm (80mm) بە فۆنتی کوردی
 def print_receipt(table_num, items_list):
+    if not HAS_WIN32:
+        return  # لەسەر کلاود چاپی ناکات چونکە پرێنتەر نییە
+
     printers = ["XP-80C", "XP-80C (copy 1)"]
 
     for printer_name in printers:
@@ -32,7 +40,6 @@ def print_receipt(table_num, items_list):
                 hdc.StartDoc("Kitchen Receipt")
                 hdc.StartPage()
 
-                # فۆنتەکان بۆ چاپی کوردی
                 font_title = win32ui.CreateFont({
                     "name": "Noto Kufi Arabic",
                     "height": 38,
@@ -56,7 +63,6 @@ def print_receipt(table_num, items_list):
 
                 y = 10
                 
-                # سەردێڕ
                 hdc.SelectObject(font_title)
                 hdc.TextOut(130, y, "شاهور ڕێستۆرانت")
                 y += 45
@@ -65,7 +71,6 @@ def print_receipt(table_num, items_list):
                 hdc.TextOut(140, y, "وەسڵی چێشتخانە")
                 y += 40
 
-                # ژمارەی مێز
                 hdc.TextOut(160, y, f"مێزی: {table_num}")
                 y += 45
 
@@ -79,7 +84,6 @@ def print_receipt(table_num, items_list):
                 hdc.TextOut(10, y, "------------------------------------------")
                 y += 35
 
-                # لیستی خواردنەکان
                 for item in items_list:
                     name = str(item.get('name', ''))
                     qty = str(item.get('qty', 1))
@@ -449,7 +453,7 @@ HTML_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
-                    alert('داواکارییەکە تۆمارکرا و ڕاستەوخۆ نێردرا بۆ پرێنتەرەکانی چێشتخانە!');
+                    alert('داواکارییەکە پاشەکەوتکرا و نێردرا!');
                     fetchTableOrders(tableNum);
                 } else {
                     alert('هەڵە: ' + data.message);
@@ -529,7 +533,6 @@ def save_cart_order():
             conn.commit()
         conn.close()
 
-        # فەرمانی چاپی ئۆتۆماتیکی بۆ پرێنتەرەکان
         if printed_items:
             print_receipt(table_num, printed_items)
 
