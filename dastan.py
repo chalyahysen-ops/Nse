@@ -204,20 +204,18 @@ HTML_TEMPLATE = """
         .cart-badge { background: #f59e0b; color: #0b0f19; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 10px; }
         .cart-total-txt { font-size: 14px; font-weight: 800; color: #10b981; }
         
-        /* دوگمەی ناردن */
         .btn-send-main {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: #0b0f19;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
         }
 
-        /* ستایلی سەوز بۆ دوگمەی ناردن کاتێک سەرکەوتوو بوو */
         .btn-send-main.saved-success {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
             color: #ffffff !important;
@@ -280,9 +278,30 @@ HTML_TEMPLATE = """
             max-width: 360px;
             text-align: center;
         }
+
+        /* نامەی ئاگاداری سەرکەوتن (Toast) */
+        #toastMsg {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: #ffffff;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body>
+
+    <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
 
     <header class="app-header">
         <div class="restaurant-name">✨ شاهور ڕێستۆرانت</div>
@@ -382,11 +401,20 @@ HTML_TEMPLATE = """
 
     <script>
         let cartItems = []; 
-        let hasUnsavedChanges = false;
 
-        // ڕێکخستنەوەی ڕەنگی دوگمەکە بۆ دۆخی ئاسایی (پرتەقاڵی)
+        function showToast(text, isError = false) {
+            const toast = document.getElementById('toastMsg');
+            toast.innerText = text;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.opacity = '1'; }, 10);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 2500);
+        }
+
         function setButtonStateNormal() {
-            hasUnsavedChanges = true;
             const btnMain = document.getElementById('btnSubmitMain');
             const btnModal = document.getElementById('btnSubmitModal');
             if (btnMain) {
@@ -399,9 +427,7 @@ HTML_TEMPLATE = """
             }
         }
 
-        // ڕێکخستنی ڕەنگی دوگمەکە بۆ سەوز دوای ناردنی سەرکەوتوو
         function setButtonStateSaved() {
-            hasUnsavedChanges = false;
             const btnMain = document.getElementById('btnSubmitMain');
             const btnModal = document.getElementById('btnSubmitModal');
             if (btnMain) {
@@ -420,7 +446,7 @@ HTML_TEMPLATE = """
 
         function addNewPlateDivider() {
             if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
-                alert("تکایە سەرەتا خواردنێک دیاری بکە پاشان قاپی نوێ لێبدە!");
+                showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
                 return;
             }
             cartItems.push({
@@ -435,6 +461,7 @@ HTML_TEMPLATE = """
             if (document.getElementById('cartModal').style.display === 'flex') {
                 renderCartModalList();
             }
+            showToast("هێڵی قاپی نوێ بۆ مەتبەخ زیادکرا");
         }
 
         function updateQty(foodName, change, price, cat) {
@@ -582,12 +609,10 @@ HTML_TEMPLATE = """
             }
         }
 
-        // کاتێک مێز دەگۆڕدرێت لە ڕێگەی Select
         function onTableChanged(newTableNum) {
             fetchTableOrders(newTableNum);
         }
 
-        // هێنانی داواکارییە تۆمارکراوەکانی مێزەکە لە داتابەیس
         function fetchTableOrders(tableNum) {
             fetch('/get_table_orders/' + tableNum)
                 .then(res => res.json())
@@ -595,7 +620,7 @@ HTML_TEMPLATE = """
                     cartItems = [];
                     resetInputs();
 
-                    if (data.length > 0) {
+                    if (data && data.length > 0) {
                         data.forEach(item => {
                             const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
                             cartItems.push({
@@ -622,7 +647,7 @@ HTML_TEMPLATE = """
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
             if (cartItems.length === 0) {
-                alert("تکایە سەرەتا خواردن دیاری بکە!");
+                showToast("تکایە سەرەتا خواردن دیاری بکە!", true);
                 return;
             }
 
@@ -636,12 +661,12 @@ HTML_TEMPLATE = """
                 if (data.status === 'success') {
                     toggleCartModal(false);
                     setButtonStateSaved();
-                    alert('داواکارییەکە بە سەرکەوتوویی بۆ مەتبەخ و کاشێر تۆمارکرا!');
+                    showToast("✅ داواکارییەکە بۆ مەتبەخ و کاشێر تۆمارکرا");
                 } else {
-                    alert('هەڵە لە ناردن: ' + data.message);
+                    showToast('هەڵە لە ناردن: ' + data.message, true);
                 }
             })
-            .catch(err => alert("کێشە لە پەیوەندی سێرڤەر!"));
+            .catch(err => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
         }
 
         function clearCurrentTableOrders() {
@@ -655,10 +680,10 @@ HTML_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        alert("مێزی " + currentTbl + " بە سەرکەوتوویی بەتاڵکرایەوە!");
+                        showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
                         fetchTableOrders(currentTbl);
                     } else {
-                        alert("هەڵە لە سڕینەوە: " + data.message);
+                        showToast("هەڵە: " + data.message, true);
                     }
                 });
             }
@@ -679,7 +704,7 @@ HTML_TEMPLATE = """
             const newTbl = document.getElementById('newTableSelect').value;
 
             if (oldTbl === newTbl) {
-                alert("تکایە ژمارەیەکی جیاواز دیاری بکە!");
+                showToast("تکایە ژمارەیەکی جیاواز دیاری بکە!", true);
                 return;
             }
 
@@ -692,11 +717,11 @@ HTML_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     toggleChangeTableModal(false);
-                    alert("داواکارییەکان بە سەرکەوتوویی گوازرانەوە بۆ مێزی " + newTbl);
+                    showToast("داواکارییەکان گوازرانەوە بۆ مێزی " + newTbl);
                     document.getElementById('tableSelect').value = newTbl;
                     fetchTableOrders(newTbl);
                 } else {
-                    alert("هەڵە لە گواستنەوە: " + data.message);
+                    showToast("هەڵە لە گواستنەوە: " + data.message, true);
                 }
             });
         }
@@ -752,10 +777,9 @@ def get_table_orders(table_num):
         conn = get_db()
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT id, food_name, price, category, quantity 
+                SELECT food_name, price, category, quantity 
                 FROM froshtn 
-                WHERE table_cabin = %s 
-                ORDER BY id ASC
+                WHERE table_cabin = %s
             """, (str(table_num),))
             orders = cursor.fetchall()
         conn.close()
