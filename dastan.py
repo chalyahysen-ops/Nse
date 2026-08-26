@@ -22,7 +22,6 @@ LOGIN_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- متا تەگەکانی PWA بۆ شاردنەوەی لینک و شریتی وێبگەڕ لە ئایفۆن -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>چوونەژوورەوە - شاهور</title>
@@ -61,7 +60,6 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- متا تەگەکانی PWA بۆ شاردنەوەی لینک و شریتی وێبگەڕ لە ئایفۆن -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>مێنیوی شاهور</title>
@@ -120,6 +118,21 @@ HTML_TEMPLATE = """
         }
         .btn-change-tbl { background: #0284c7; color: #ffffff; }
         .btn-clear-tbl { background: #ef4444; color: #ffffff; }
+
+        /* دوگمەی هێڵی جیاکەرەوەی قاپ */
+        .btn-add-plate {
+            background: #8b5cf6;
+            color: #ffffff;
+            border: none;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
         .categories-scroll {
             display: flex;
@@ -227,6 +240,20 @@ HTML_TEMPLATE = """
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
+        /* ستایلی هێڵی جیاکەرەوەی قاپەکان */
+        .plate-separator-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #8b5cf6;
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            margin: 10px 0;
+        }
+
         .modal-center-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -266,6 +293,7 @@ HTML_TEMPLATE = """
         </div>
 
         <div class="table-actions">
+            <button type="button" class="btn-add-plate" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
             <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
             <button type="button" class="btn-action btn-clear-tbl" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
         </div>
@@ -311,6 +339,7 @@ HTML_TEMPLATE = """
         <button type="button" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
     </div>
 
+    <!-- مۆداڵی سەبەتە -->
     <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -318,10 +347,14 @@ HTML_TEMPLATE = """
                 <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
             </div>
             <div class="cart-items-list" id="cartItemsList"></div>
-            <button type="button" class="btn-send-main" style="width: 100%; padding: 12px;" onclick="submitFinalOrder()">تۆمارکردن لە سیستەم</button>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; justify-content: center;" onclick="addNewPlateDivider()">➕ قاپی نوێ (هێڵ)</button>
+                <button type="button" class="btn-send-main" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">تۆمارکردن لە سیستەم</button>
+            </div>
         </div>
     </div>
 
+    <!-- مۆداڵی گۆڕینی ژمارەی مێز -->
     <div class="modal-center-overlay" id="changeTableModal" onclick="toggleChangeTableModal(false)">
         <div class="modal-center-card" onclick="event.stopPropagation()">
             <div class="modal-title" style="margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
@@ -341,7 +374,8 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        let cart = {}; 
+        // لیستی داواکارییەکان بە ڕیزبەندی (ڕێگە بە هێڵی جیاکەرەوە دەدات)
+        let cartItems = []; 
         let isUserInteracting = false;
         let interactionTimeout = null;
 
@@ -355,28 +389,74 @@ HTML_TEMPLATE = """
             document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
         }
 
+        // زیادکردنی هێڵی قاپی نوێ
+        function addNewPlateDivider() {
+            markInteracting();
+            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
+                alert("تکایە سەرەتا خواردنێک دیاری بکە پاشان قاپی نوێ لێبدە!");
+                return;
+            }
+            cartItems.push({
+                is_divider: true,
+                food_name: '--- قاپی نوێ / هێڵ ---',
+                price: 0,
+                qty: 1,
+                cat: 'مەتبەخ'
+            });
+            renderCartSummary();
+            if (document.getElementById('cartModal').style.display === 'flex') {
+                renderCartModalList();
+            }
+            alert("هێڵی قاپی نوێ بۆ مەتبەخ زیادکرا!");
+        }
+
         function updateQty(foodName, change, price, cat) {
             markInteracting();
-            if (!cart[foodName]) {
-                cart[foodName] = { qty: 0, price: price, cat: cat || '' };
+            let found = false;
+            // ئەگەر پێشتر لە کۆتا قاپدا هەبوو
+            for (let i = cartItems.length - 1; i >= 0; i--) {
+                if (cartItems[i].is_divider) break;
+                if (cartItems[i].food_name === foodName) {
+                    cartItems[i].qty += change;
+                    if (cartItems[i].qty <= 0) {
+                        cartItems.splice(i, 1);
+                    }
+                    found = true;
+                    break;
+                }
             }
 
-            cart[foodName].qty += change;
-            if (cart[foodName].qty <= 0) {
-                delete cart[foodName];
+            if (!found && change > 0) {
+                cartItems.push({
+                    is_divider: false,
+                    food_name: foodName,
+                    price: price,
+                    qty: 1,
+                    cat: cat || ''
+                });
             }
 
-            const input = document.getElementById('qty_' + foodName);
-            if (input) input.value = cart[foodName] ? cart[foodName].qty : 0;
-
+            // نوێکردنەوەی هەموو بڕەکان لەسەر مێنیو
+            updateMenuCardInputs();
             renderCartSummary();
         }
 
-        function removeFoodEntirely(foodName) {
+        function updateMenuCardInputs() {
+            resetInputs();
+            cartItems.forEach(item => {
+                if (!item.is_divider) {
+                    const input = document.getElementById('qty_' + item.food_name);
+                    if (input) {
+                        input.value = (parseInt(input.value) || 0) + item.qty;
+                    }
+                }
+            });
+        }
+
+        function removeCartIndex(index) {
             markInteracting();
-            delete cart[foodName];
-            const input = document.getElementById('qty_' + foodName);
-            if (input) input.value = 0;
+            cartItems.splice(index, 1);
+            updateMenuCardInputs();
             renderCartSummary();
             renderCartModalList();
         }
@@ -384,10 +464,12 @@ HTML_TEMPLATE = """
         function renderCartSummary() {
             let total = 0;
             let count = 0;
-            for (let name in cart) {
-                total += (cart[name].qty * cart[name].price);
-                count += cart[name].qty;
-            }
+            cartItems.forEach(item => {
+                if (!item.is_divider) {
+                    total += (item.qty * item.price);
+                    count += item.qty;
+                }
+            });
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
             document.getElementById('cartCount').innerText = count;
         }
@@ -409,28 +491,58 @@ HTML_TEMPLATE = """
             const list = document.getElementById('cartItemsList');
             list.innerHTML = '';
 
-            if (Object.keys(cart).length === 0) {
+            if (cartItems.length === 0) {
                 list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">سەبەتە بەتاڵە!</div>';
                 return;
             }
 
-            for (let name in cart) {
-                const item = cart[name];
-                const row = document.createElement('div');
-                row.className = 'cart-item-row';
-                row.innerHTML = `
-                    <div class="counter-group">
-                        <button type="button" class="del-item-btn" onclick="removeFoodEntirely('${name}')" title="سڕینەوە">🗑</button>
-                        <button type="button" class="btn-count" onclick="updateQty('${name}', -1, ${item.price}, '${item.cat}'); renderCartModalList();">-</button>
-                        <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
-                        <button type="button" class="btn-count plus" onclick="updateQty('${name}', 1, ${item.price}, '${item.cat}'); renderCartModalList();">+</button>
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="font-weight:700; font-size:13px; color:#fff;">${name}</div>
-                        <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
-                    </div>
-                `;
-                list.appendChild(row);
+            let plateNum = 1;
+            // نیشاندانی سەرەتای قاپی ١
+            const startHeader = document.createElement('div');
+            startHeader.className = 'plate-separator-row';
+            startHeader.innerHTML = `<span>🍽 قاپی ١</span>`;
+            list.appendChild(startHeader);
+
+            cartItems.forEach((item, index) => {
+                if (item.is_divider) {
+                    plateNum++;
+                    const sep = document.createElement('div');
+                    sep.className = 'plate-separator-row';
+                    sep.innerHTML = `
+                        <span>🍽 قاپی ${plateNum} (هێڵی مەتبەخ)</span>
+                        <button type="button" class="del-item-btn" style="background:#ef4444; color:#fff;" onclick="removeCartIndex(${index})">✕</button>
+                    `;
+                    list.appendChild(sep);
+                } else {
+                    const row = document.createElement('div');
+                    row.className = 'cart-item-row';
+                    row.innerHTML = `
+                        <div class="counter-group">
+                            <button type="button" class="del-item-btn" onclick="removeCartIndex(${index})" title="سڕینەوە">🗑</button>
+                            <button type="button" class="btn-count" onclick="modifyItemQty(${index}, -1)">-</button>
+                            <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
+                            <button type="button" class="btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
+                            <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                        </div>
+                    `;
+                    list.appendChild(row);
+                }
+            });
+        }
+
+        function modifyItemQty(index, change) {
+            markInteracting();
+            if (cartItems[index] && !cartItems[index].is_divider) {
+                cartItems[index].qty += change;
+                if (cartItems[index].qty <= 0) {
+                    cartItems.splice(index, 1);
+                }
+                updateMenuCardInputs();
+                renderCartSummary();
+                renderCartModalList();
             }
         }
 
@@ -452,20 +564,22 @@ HTML_TEMPLATE = """
             fetch('/get_table_orders/' + tableNum)
                 .then(res => res.json())
                 .then(data => {
-                    cart = {};
+                    cartItems = [];
                     resetInputs();
 
                     if (data.length > 0) {
                         data.forEach(item => {
-                            cart[item.food_name] = {
+                            const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
+                            cartItems.push({
+                                is_divider: isDiv,
+                                food_name: item.food_name,
                                 qty: parseInt(item.quantity),
                                 price: parseFloat(item.price),
                                 cat: item.category || ''
-                            };
-                            const input = document.getElementById('qty_' + item.food_name);
-                            if (input) input.value = item.quantity;
+                            });
                         });
                     }
+                    updateMenuCardInputs();
                     renderCartSummary();
                     if (document.getElementById('cartModal').style.display === 'flex') {
                         renderCartModalList();
@@ -476,7 +590,7 @@ HTML_TEMPLATE = """
 
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
-            if (Object.keys(cart).length === 0) {
+            if (cartItems.length === 0) {
                 alert("تکایە سەرەتا خواردن دیاری بکە!");
                 return;
             }
@@ -484,14 +598,14 @@ HTML_TEMPLATE = """
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart: cart })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
                     isUserInteracting = false;
-                    alert('داواکارییەکە بە سەرکەوتوویی تۆمارکرا و ڕەوانەی کاشێر کرا!');
+                    alert('داواکارییەکە بە سەرکەوتوویی لەگەڵ هێڵەکانی مەتبەخ تۆمارکرا!');
                     fetchTableOrders(tableNum);
                 } else {
                     alert('هەڵە لە ناردن: ' + data.message);
@@ -612,10 +726,10 @@ def get_table_orders(table_num):
         conn = get_db()
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT food_name, price, category, SUM(quantity) as quantity 
+                SELECT id, food_name, price, category, quantity 
                 FROM froshtn 
                 WHERE table_cabin = %s 
-                GROUP BY food_name, price, category
+                ORDER BY id ASC
             """, (str(table_num),))
             orders = cursor.fetchall()
         conn.close()
@@ -630,38 +744,24 @@ def save_cart_order():
 
     data = request.get_json()
     table_num = data.get('table_number')
-    cart_data = data.get('cart', {})
+    cart_items = data.get('cart_items', [])
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT food_name, SUM(quantity) as total_qty FROM froshtn WHERE table_cabin = %s GROUP BY food_name", (str(table_num),))
-            existing_rows = cursor.fetchall()
-            existing_items = {row['food_name']: int(row['total_qty']) for row in existing_rows}
+            # پێشتر هەموو داواکارییەکانی ئەم مێزە دەسڕێتەوە تا بەپێی ڕیزبەندی نوێ و هێڵەکان تۆمار ببێتەوە
+            cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
-            for food_name, item in cart_data.items():
-                new_qty = int(item['qty'])
-                price = float(item['price'])
+            for item in cart_items:
+                food_name = item.get('food_name')
+                qty = int(item.get('qty', 1))
+                price = float(item.get('price', 0))
                 cat = item.get('cat', '')
-                old_qty = existing_items.get(food_name, 0)
 
-                if new_qty > old_qty:
-                    diff_qty = new_qty - old_qty
-                    cursor.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (str(table_num), food_name, diff_qty, price, cat))
-                elif new_qty < old_qty:
-                    cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s AND food_name = %s", (str(table_num), food_name))
-                    if new_qty > 0:
-                        cursor.execute("""
-                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                            VALUES (%s, %s, %s, %s, %s, NOW(), 1)
-                        """, (str(table_num), food_name, new_qty, price, cat))
-
-            for old_food in existing_items:
-                if old_food not in cart_data or cart_data[old_food]['qty'] <= 0:
-                    cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s AND food_name = %s", (str(table_num), old_food))
+                cursor.execute("""
+                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                """, (str(table_num), food_name, qty, price, cat))
 
             conn.commit()
         conn.close()
