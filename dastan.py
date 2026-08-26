@@ -119,7 +119,6 @@ HTML_TEMPLATE = """
         .btn-change-tbl { background: #0284c7; color: #ffffff; }
         .btn-clear-tbl { background: #ef4444; color: #ffffff; }
 
-        /* دوگمەی هێڵی جیاکەرەوەی قاپ */
         .btn-add-plate {
             background: #8b5cf6;
             color: #ffffff;
@@ -204,6 +203,8 @@ HTML_TEMPLATE = """
         }
         .cart-badge { background: #f59e0b; color: #0b0f19; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 10px; }
         .cart-total-txt { font-size: 14px; font-weight: 800; color: #10b981; }
+        
+        /* دوگمەی ناردن */
         .btn-send-main {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: #0b0f19;
@@ -213,6 +214,13 @@ HTML_TEMPLATE = """
             font-size: 14px;
             font-weight: 800;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* ستایلی سەوز بۆ دوگمەی ناردن کاتێک سەرکەوتوو بوو */
+        .btn-send-main.saved-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: #ffffff !important;
         }
 
         .modal-overlay {
@@ -240,7 +248,6 @@ HTML_TEMPLATE = """
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
-        /* ستایلی هێڵی جیاکەرەوەی قاپەکان */
         .plate-separator-row {
             display: flex;
             align-items: center;
@@ -285,7 +292,7 @@ HTML_TEMPLATE = """
     <div class="table-bar">
         <div class="table-info">
             <label>📍 مێزی:</label>
-            <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
+            <select id="tableSelect" class="table-select" onchange="onTableChanged(this.value)">
                 {% for num in range(1, 91) %}
                     <option value="{{ num }}">{{ num }}</option>
                 {% endfor %}
@@ -336,7 +343,7 @@ HTML_TEMPLATE = """
             <span class="cart-badge" id="cartCount">0</span>
             <span class="cart-total-txt" id="cartTotalTxt">0 دینار</span>
         </div>
-        <button type="button" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
+        <button type="button" id="btnSubmitMain" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
     </div>
 
     <!-- مۆداڵی سەبەتە -->
@@ -349,7 +356,7 @@ HTML_TEMPLATE = """
             <div class="cart-items-list" id="cartItemsList"></div>
             <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; justify-content: center;" onclick="addNewPlateDivider()">➕ قاپی نوێ (هێڵ)</button>
-                <button type="button" class="btn-send-main" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">تۆمارکردن لە سیستەم</button>
+                <button type="button" id="btnSubmitModal" class="btn-send-main" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ</button>
             </div>
         </div>
     </div>
@@ -374,24 +381,44 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        // لیستی داواکارییەکان بە ڕیزبەندی (ڕێگە بە هێڵی جیاکەرەوە دەدات)
         let cartItems = []; 
-        let isUserInteracting = false;
-        let interactionTimeout = null;
+        let hasUnsavedChanges = false;
 
-        function markInteracting() {
-            isUserInteracting = true;
-            clearTimeout(interactionTimeout);
-            interactionTimeout = setTimeout(() => { isUserInteracting = false; }, 8000);
+        // ڕێکخستنەوەی ڕەنگی دوگمەکە بۆ دۆخی ئاسایی (پرتەقاڵی)
+        function setButtonStateNormal() {
+            hasUnsavedChanges = true;
+            const btnMain = document.getElementById('btnSubmitMain');
+            const btnModal = document.getElementById('btnSubmitModal');
+            if (btnMain) {
+                btnMain.classList.remove('saved-success');
+                btnMain.innerHTML = 'ناردنی داواکاری ➔';
+            }
+            if (btnModal) {
+                btnModal.classList.remove('saved-success');
+                btnModal.innerHTML = 'ناردن بۆ مەتبەخ';
+            }
+        }
+
+        // ڕێکخستنی ڕەنگی دوگمەکە بۆ سەوز دوای ناردنی سەرکەوتوو
+        function setButtonStateSaved() {
+            hasUnsavedChanges = false;
+            const btnMain = document.getElementById('btnSubmitMain');
+            const btnModal = document.getElementById('btnSubmitModal');
+            if (btnMain) {
+                btnMain.classList.add('saved-success');
+                btnMain.innerHTML = '✅ نێردرا بۆ مەتبەخ';
+            }
+            if (btnModal) {
+                btnModal.classList.add('saved-success');
+                btnModal.innerHTML = '✅ نێردرا بۆ مەتبەخ';
+            }
         }
 
         function resetInputs() {
             document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
         }
 
-        // زیادکردنی هێڵی قاپی نوێ
         function addNewPlateDivider() {
-            markInteracting();
             if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
                 alert("تکایە سەرەتا خواردنێک دیاری بکە پاشان قاپی نوێ لێبدە!");
                 return;
@@ -403,17 +430,16 @@ HTML_TEMPLATE = """
                 qty: 1,
                 cat: 'مەتبەخ'
             });
+            setButtonStateNormal();
             renderCartSummary();
             if (document.getElementById('cartModal').style.display === 'flex') {
                 renderCartModalList();
             }
-            alert("هێڵی قاپی نوێ بۆ مەتبەخ زیادکرا!");
         }
 
         function updateQty(foodName, change, price, cat) {
-            markInteracting();
+            setButtonStateNormal();
             let found = false;
-            // ئەگەر پێشتر لە کۆتا قاپدا هەبوو
             for (let i = cartItems.length - 1; i >= 0; i--) {
                 if (cartItems[i].is_divider) break;
                 if (cartItems[i].food_name === foodName) {
@@ -436,7 +462,6 @@ HTML_TEMPLATE = """
                 });
             }
 
-            // نوێکردنەوەی هەموو بڕەکان لەسەر مێنیو
             updateMenuCardInputs();
             renderCartSummary();
         }
@@ -454,7 +479,7 @@ HTML_TEMPLATE = """
         }
 
         function removeCartIndex(index) {
-            markInteracting();
+            setButtonStateNormal();
             cartItems.splice(index, 1);
             updateMenuCardInputs();
             renderCartSummary();
@@ -497,7 +522,6 @@ HTML_TEMPLATE = """
             }
 
             let plateNum = 1;
-            // نیشاندانی سەرەتای قاپی ١
             const startHeader = document.createElement('div');
             startHeader.className = 'plate-separator-row';
             startHeader.innerHTML = `<span>🍽 قاپی ١</span>`;
@@ -534,7 +558,7 @@ HTML_TEMPLATE = """
         }
 
         function modifyItemQty(index, change) {
-            markInteracting();
+            setButtonStateNormal();
             if (cartItems[index] && !cartItems[index].is_divider) {
                 cartItems[index].qty += change;
                 if (cartItems[index].qty <= 0) {
@@ -558,9 +582,13 @@ HTML_TEMPLATE = """
             }
         }
 
-        function fetchTableOrders(tableNum, isAutoSync = false) {
-            if (isAutoSync && isUserInteracting) return;
+        // کاتێک مێز دەگۆڕدرێت لە ڕێگەی Select
+        function onTableChanged(newTableNum) {
+            fetchTableOrders(newTableNum);
+        }
 
+        // هێنانی داواکارییە تۆمارکراوەکانی مێزەکە لە داتابەیس
+        function fetchTableOrders(tableNum) {
             fetch('/get_table_orders/' + tableNum)
                 .then(res => res.json())
                 .then(data => {
@@ -578,6 +606,9 @@ HTML_TEMPLATE = """
                                 cat: item.category || ''
                             });
                         });
+                        setButtonStateSaved();
+                    } else {
+                        setButtonStateNormal();
                     }
                     updateMenuCardInputs();
                     renderCartSummary();
@@ -604,9 +635,8 @@ HTML_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
-                    isUserInteracting = false;
-                    alert('داواکارییەکە بە سەرکەوتوویی لەگەڵ هێڵەکانی مەتبەخ تۆمارکرا!');
-                    fetchTableOrders(tableNum);
+                    setButtonStateSaved();
+                    alert('داواکارییەکە بە سەرکەوتوویی بۆ مەتبەخ و کاشێر تۆمارکرا!');
                 } else {
                     alert('هەڵە لە ناردن: ' + data.message);
                 }
@@ -673,10 +703,6 @@ HTML_TEMPLATE = """
 
         window.onload = function() {
             fetchTableOrders(document.getElementById('tableSelect').value);
-            setInterval(() => {
-                const tableNum = document.getElementById('tableSelect').value;
-                fetchTableOrders(tableNum, true);
-            }, 4000);
         };
     </script>
 </body>
@@ -749,7 +775,6 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # پێشتر هەموو داواکارییەکانی ئەم مێزە دەسڕێتەوە تا بەپێی ڕیزبەندی نوێ و هێڵەکان تۆمار ببێتەوە
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
