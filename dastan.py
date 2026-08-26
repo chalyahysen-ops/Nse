@@ -21,7 +21,10 @@ LOGIN_TEMPLATE = """
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- متا تەگەکانی PWA بۆ شاردنەوەی لینک و شریتی وێبگەڕ لە ئایفۆن -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>چوونەژوورەوە - شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -58,6 +61,9 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- متا تەگەکانی PWA بۆ شاردنەوەی لینک و شریتی وێبگەڕ لە ئایفۆن -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>مێنیوی شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -221,7 +227,6 @@ HTML_TEMPLATE = """
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
-        /* مۆداڵی گۆڕینی مێز */
         .modal-center-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -306,7 +311,6 @@ HTML_TEMPLATE = """
         <button type="button" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
     </div>
 
-    <!-- مۆداڵی سەبەتە -->
     <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -318,7 +322,6 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- مۆداڵی گۆڕینی ژمارەی مێز -->
     <div class="modal-center-overlay" id="changeTableModal" onclick="toggleChangeTableModal(false)">
         <div class="modal-center-card" onclick="event.stopPropagation()">
             <div class="modal-title" style="margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
@@ -497,7 +500,6 @@ HTML_TEMPLATE = """
             .catch(err => alert("کێشە لە پەیوەندی سێرڤەر!"));
         }
 
-        // 🗑 سڕینەوەی هەموو داواکارییەکانی مێزی دیاریکراو
         function clearCurrentTableOrders() {
             const currentTbl = document.getElementById('tableSelect').value;
             if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
@@ -518,7 +520,6 @@ HTML_TEMPLATE = """
             }
         }
 
-        // 🔄 گۆڕینی ژمارەی مێز
         function openChangeTableModal() {
             const currentTbl = document.getElementById('tableSelect').value;
             document.getElementById('newTableSelect').value = currentTbl;
@@ -669,7 +670,6 @@ def save_cart_order():
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
 
-# 🗑 API بۆ سڕینەوەی مێز
 @app.route('/clear_table_orders', methods=['POST'])
 def clear_table_orders():
     if not session.get('authenticated'):
@@ -689,7 +689,6 @@ def clear_table_orders():
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
 
-# 🔄 API بۆ گۆڕینی ژمارەی مێز
 @app.route('/change_table_number', methods=['POST'])
 def change_table_number():
     if not session.get('authenticated'):
