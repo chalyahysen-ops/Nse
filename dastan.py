@@ -241,7 +241,7 @@ HTML_TEMPLATE = """
         .modal-sheet {
             background: #151d30;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             border-radius: 20px 20px 0 0;
             padding: 18px 16px;
             display: flex;
@@ -251,7 +251,7 @@ HTML_TEMPLATE = """
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
         .modal-title { font-size: 16px; font-weight: 800; color: #f59e0b; }
         .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
-        .cart-items-list { overflow-y: auto; flex: 1; max-height: 50vh; margin-bottom: 14px; }
+        .cart-items-list { overflow-y: auto; flex: 1; max-height: 45vh; margin-bottom: 10px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
@@ -266,6 +266,15 @@ HTML_TEMPLATE = """
             font-size: 12px;
             font-weight: 800;
             margin: 10px 0;
+        }
+
+        .rice-selection-box {
+            background: #0f172a;
+            border:: 1px solid #334155;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 12px;
         }
 
         .modal-center-overlay {
@@ -379,8 +388,20 @@ HTML_TEMPLATE = """
                 <span class="modal-title">🛒 خواردنەکانی ناو سەبەتە</span>
                 <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
             </div>
+
+            <!-- زیادکردنی لیستی هەڵبژاردنی جۆری برنج -->
+            <div class="rice-selection-box">
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 5px;">🍚 جۆری برنجی داواکراو:</label>
+                <select id="riceTypeSelect" class="table-select" style="width: 100%; padding: 8px; font-size: 13px;">
+                    <option value="برنجی درێژ">برنجی درێژ</option>
+                    <option value="برنجی خڕ">برنجی خڕ</option>
+                    <option value="برنجی کوردی">برنجی کوردی</option>
+                    <option value="برنج بە سرکە">برنج بە سرکە</option>
+                </select>
+            </div>
+
             <div class="cart-items-list" id="cartItemsList"></div>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
                 <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; justify-content: center;" onclick="addNewPlateDivider()">➕ قاپی نوێ (هێڵ)</button>
                 <button type="button" id="btnSubmitModal" class="btn-send-main" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ</button>
             </div>
@@ -652,6 +673,8 @@ HTML_TEMPLATE = """
 
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
+            const selectedRice = document.getElementById('riceTypeSelect').value; // وەرگرتنی جۆری برنج
+            
             if (cartItems.length === 0) {
                 showToast("تکایە سەرەتا خواردن دیاری بکە!", true);
                 return;
@@ -660,14 +683,18 @@ HTML_TEMPLATE = """
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ 
+                    table_number: tableNum, 
+                    cart_items: cartItems,
+                    rice_type: selectedRice 
+                })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
                     setButtonStateSaved();
-                    showToast("✅ داواکارییەکە بۆ مەتبەخ و کاشێر تۆمارکرا");
+                    showToast("✅ داواکارییەکە لەگەڵ جۆری برنج بۆ مەتبەخ نێردرا");
                 } else {
                     showToast('هەڵە لە ناردن: ' + data.message, true);
                 }
@@ -822,6 +849,7 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
+    rice_type = data.get('rice_type', 'برنجی درێژ')  # وەرگرتنی جۆری برنج
 
     conn = get_db()
     try:
@@ -834,10 +862,13 @@ def save_cart_order():
                 price = float(item.get('price', 0))
                 cat = item.get('cat', '')
 
+                # ئەگەرت پێویست بکات جۆری برنجەکەش لەگەڵ ناوەکە یان لە ستوونێکی جیاوازدا پاشەکەوت بکەیت
+                final_food_name = food_name if item.get('is_divider') else f"{food_name} ({rice_type})"
+
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                """, (str(table_num), food_name, qty, price, cat))
+                """, (str(table_num), final_food_name, qty, price, cat))
 
             conn.commit()
         conn.close()
