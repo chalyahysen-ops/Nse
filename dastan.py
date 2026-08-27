@@ -16,6 +16,15 @@ DB_CONFIG = {
 def get_db():
     return pymysql.connect(**DB_CONFIG)
 
+def normalize_digits(text):
+    if not text:
+        return ""
+    text = str(text).strip()
+    eastern_digits = '٠١٢٣٤٥٦٧٨٩'
+    western_digits = '0123456789'
+    trans_table = str.maketrans(eastern_digits, western_digits)
+    return text.translate(trans_table)
+
 LOGIN_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -279,7 +288,6 @@ HTML_TEMPLATE = """
             text-align: center;
         }
 
-        /* نامەی ئاگاداری سەرکەوتن (Toast) */
         #toastMsg {
             position: fixed;
             top: 70px;
@@ -365,7 +373,6 @@ HTML_TEMPLATE = """
         <button type="button" id="btnSubmitMain" class="btn-send-main" onclick="submitFinalOrder()">ناردنی داواکاری ➔</button>
     </div>
 
-    <!-- مۆداڵی سەبەتە -->
     <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -380,7 +387,6 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- مۆداڵی گۆڕینی ژمارەی مێز -->
     <div class="modal-center-overlay" id="changeTableModal" onclick="toggleChangeTableModal(false)">
         <div class="modal-center-card" onclick="event.stopPropagation()">
             <div class="modal-title" style="margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
@@ -737,12 +743,33 @@ HTML_TEMPLATE = """
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        pin = request.form.get('pin')
-        if pin == '345678' or pin == '٣٤٥٦٧٨':
-            session['authenticated'] = True
-            return redirect(url_for('menu'))
+        input_pin = normalize_digits(request.form.get('pin', ''))
+        db_pin = None
+
+        try:
+            conn = get_db()
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'mobile_pin' LIMIT 1")
+                row = cursor.fetchone()
+                if row and row.get('setting_value'):
+                    db_pin = normalize_digits(row['setting_value'])
+            conn.close()
+        except Exception as ex:
+            print("Database Error in Login:", ex)
+
+        if db_pin is not None:
+            if input_pin == db_pin:
+                session['authenticated'] = True
+                return redirect(url_for('menu'))
+            else:
+                return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
         else:
-            return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
+            if input_pin in ['345678', '٣٤٥٦٧٨']:
+                session['authenticated'] = True
+                return redirect(url_for('menu'))
+            else:
+                return render_template_string(LOGIN_TEMPLATE, error='کێشە لە پەیوەندی داتابەیس یان وشەی نهێنی هەڵەیە!')
+
     return render_template_string(LOGIN_TEMPLATE)
 
 @app.route('/')
