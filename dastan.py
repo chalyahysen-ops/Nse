@@ -270,7 +270,6 @@ HTML_TEMPLATE = """
 
         .rice-selection-box {
             background: #0f172a;
-            border:: 1px solid #334155;
             border: 1px solid #334155;
             padding: 10px;
             border-radius: 10px;
@@ -389,9 +388,9 @@ HTML_TEMPLATE = """
                 <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
             </div>
 
-            <!-- زیادکردنی لیستی هەڵبژاردنی جۆری برنج -->
+            <!-- زیادکردنی لیستی هەڵبژاردنی جۆری برنج بۆ مەتبەخ -->
             <div class="rice-selection-box">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 5px;">🍚 جۆری برنجی داواکراو:</label>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 5px;">🍚 جۆری برنج بۆ ئەم ئۆردەرە:</label>
                 <select id="riceTypeSelect" class="table-select" style="width: 100%; padding: 8px; font-size: 13px;">
                     <option value="برنجی درێژ">برنجی درێژ</option>
                     <option value="برنجی خڕ">برنجی خڕ</option>
@@ -694,7 +693,7 @@ HTML_TEMPLATE = """
                 if (data.status === 'success') {
                     toggleCartModal(false);
                     setButtonStateSaved();
-                    showToast("✅ داواکارییەکە لەگەڵ جۆری برنج بۆ مەتبەخ نێردرا");
+                    showToast("✅ داواکارییەکە لەگەڵ جۆری برنج نێردرا بۆ مەتبەخ");
                 } else {
                     showToast('هەڵە لە ناردن: ' + data.message, true);
                 }
@@ -849,7 +848,7 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
-    rice_type = data.get('rice_type', 'برنجی درێژ')  # وەرگرتنی جۆری برنج
+    rice_type = data.get('rice_type', 'برنجی درێژ')  # جۆری برنج کە لە سەکۆوە دێت
 
     conn = get_db()
     try:
@@ -862,8 +861,11 @@ def save_cart_order():
                 price = float(item.get('price', 0))
                 cat = item.get('cat', '')
 
-                # ئەگەرت پێویست بکات جۆری برنجەکەش لەگەڵ ناوەکە یان لە ستوونێکی جیاوازدا پاشەکەوت بکەیت
-                final_food_name = food_name if item.get('is_divider') else f"{food_name} ({rice_type})"
+                # ئەگەر هێڵی جیاکەرەوە نەبێت، جۆری برنجەکە دەچەپێنرێتە سەر ناوەکەی تاوەکو لای شێف و لە پرێنتدا دەردەکەوێت
+                if item.get('is_divider'):
+                    final_food_name = food_name
+                else:
+                    final_food_name = f"{food_name} ({rice_type})"
 
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
