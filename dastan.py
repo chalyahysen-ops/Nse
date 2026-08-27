@@ -595,16 +595,18 @@ HTML_TEMPLATE = """
 
             let plateNum = 1;
             
-            let firstItemCat = '';
+            // دیاریکردنی بەشی یەکەم بۆ پشکنینی پەلەوەر یان کوڵاو
+            let hasRiceForFirst = false;
+            let hasChickenForFirst = false;
             for (let i = 0; i < cartItems.length; i++) {
-                if (!cartItems[i].is_divider) {
-                    firstItemCat = cartItems[i].cat;
-                    break;
-                }
+                if (cartItems[i].is_divider) break;
+                let c = cartItems[i].cat;
+                if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(c)) hasRiceForFirst = true;
+                if (c === 'پەلەوەر') hasChickenForFirst = true;
             }
 
             let firstRowHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
-            if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(firstItemCat)) {
+            if (hasRiceForFirst) {
                 let currentRice = window.defaultPlateRice || '';
                 firstRowHtml += `
                     <select class="plate-rice-select" onchange="updatePlateRice(-1, this.value)">
@@ -616,7 +618,7 @@ HTML_TEMPLATE = """
                     </select>
                 `;
             }
-            if (firstItemCat === 'پەلەوەر') {
+            if (hasChickenForFirst) {
                 let currentChicken = window.defaultPlateChicken || '';
                 firstRowHtml += `
                     <select class="plate-chicken-select" onchange="updatePlateChicken(-1, this.value)">
@@ -637,15 +639,17 @@ HTML_TEMPLATE = """
                 if (item.is_divider) {
                     plateNum++;
                     
-                    let nextCat = '';
+                    let hasRiceForNext = false;
+                    let hasChickenForNext = false;
                     for (let j = index + 1; j < cartItems.length; j++) {
                         if (cartItems[j].is_divider) break;
-                        nextCat = cartItems[j].cat;
-                        break;
+                        let c = cartItems[j].cat;
+                        if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(c)) hasRiceForNext = true;
+                        if (c === 'پەلەوەر') hasChickenForNext = true;
                     }
 
                     let sepHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
-                    if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(nextCat)) {
+                    if (hasRiceForNext) {
                         let rVal = item.rice_type || '';
                         sepHtml += `
                             <select class="plate-rice-select" onchange="updatePlateRice(${index}, this.value)">
@@ -657,7 +661,7 @@ HTML_TEMPLATE = """
                             </select>
                         `;
                     }
-                    if (nextCat === 'پەلەوەر') {
+                    if (hasChickenForNext) {
                         let cVal = item.chicken_part || '';
                         sepHtml += `
                             <select class="plate-chicken-select" onchange="updatePlateChicken(${index}, this.value)">
