@@ -251,8 +251,9 @@ HTML_TEMPLATE = """
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
         .modal-title { font-size: 16px; font-weight: 800; color: #f59e0b; }
         .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
-        .cart-items-list { overflow-y: auto; flex: 1; max-height: 45vh; margin-bottom: 10px; }
-        .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+        .cart-items-list { overflow-y: auto; flex: 1; max-height: 55vh; margin-bottom: 10px; }
+        .cart-item-row { display: flex; flex-direction: column; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; gap: 6px; border: 1px solid #334155; }
+        .cart-item-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
         .plate-separator-row {
@@ -268,12 +269,16 @@ HTML_TEMPLATE = """
             margin: 10px 0;
         }
 
-        .rice-selection-box {
-            background: #0f172a;
-            border: 1px solid #334155;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 12px;
+        .item-rice-select {
+            background: #1e293b;
+            color: #f59e0b;
+            border: 1px solid #f59e0b;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            outline: none;
+            width: 100%;
         }
 
         .modal-center-overlay {
@@ -384,21 +389,9 @@ HTML_TEMPLATE = """
     <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <span class="modal-title">🛒 خواردنەکانی ناو سەبەتە</span>
+                <span class="modal-title">🛒 خواردنەکانی ناو سەبەتە (جۆری برنج دیاری بکە)</span>
                 <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
             </div>
-
-            <!-- زیادکردنی لیستی هەڵبژاردنی جۆری برنج بۆ مەتبەخ -->
-            <div class="rice-selection-box">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 5px;">🍚 جۆری برنج بۆ ئەم ئۆردەرە:</label>
-                <select id="riceTypeSelect" class="table-select" style="width: 100%; padding: 8px; font-size: 13px;">
-                    <option value="برنجی درێژ">برنجی درێژ</option>
-                    <option value="برنجی خڕ">برنجی خڕ</option>
-                    <option value="برنجی کوردی">برنجی کوردی</option>
-                    <option value="برنج بە سرکە">برنج بە سرکە</option>
-                </select>
-            </div>
-
             <div class="cart-items-list" id="cartItemsList"></div>
             <div style="display: flex; gap: 8px; margin-top: 4px;">
                 <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; justify-content: center;" onclick="addNewPlateDivider()">➕ قاپی نوێ (هێڵ)</button>
@@ -480,7 +473,8 @@ HTML_TEMPLATE = """
                 food_name: '--- قاپی نوێ / هێڵ ---',
                 price: 0,
                 qty: 1,
-                cat: 'مەتبەخ'
+                cat: 'مەتبەخ',
+                rice_type: ''
             });
             setButtonStateNormal();
             renderCartSummary();
@@ -511,7 +505,8 @@ HTML_TEMPLATE = """
                     food_name: foodName,
                     price: price,
                     qty: 1,
-                    cat: cat || ''
+                    cat: cat || '',
+                    rice_type: 'برنجی درێژ' // بە شێوەی سەرەتایی
                 });
             }
 
@@ -537,6 +532,11 @@ HTML_TEMPLATE = """
             updateMenuCardInputs();
             renderCartSummary();
             renderCartModalList();
+        }
+
+        function updateItemRice(index, val) {
+            setButtonStateNormal();
+            cartItems[index].rice_type = val;
         }
 
         function renderCartSummary() {
@@ -594,15 +594,25 @@ HTML_TEMPLATE = """
                     const row = document.createElement('div');
                     row.className = 'cart-item-row';
                     row.innerHTML = `
-                        <div class="counter-group">
-                            <button type="button" class="del-item-btn" onclick="removeCartIndex(${index})" title="سڕینەوە">🗑</button>
-                            <button type="button" class="btn-count" onclick="modifyItemQty(${index}, -1)">-</button>
-                            <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
-                            <button type="button" class="btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
+                        <div class="cart-item-top">
+                            <div class="counter-group">
+                                <button type="button" class="del-item-btn" onclick="removeCartIndex(${index})" title="سڕینەوە">🗑</button>
+                                <button type="button" class="btn-count" onclick="modifyItemQty(${index}, -1)">-</button>
+                                <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
+                                <button type="button" class="btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
+                                <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                            </div>
                         </div>
-                        <div style="text-align: left;">
-                            <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
-                            <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                        <div style="width: 100%;">
+                            <select class="item-rice-select" onchange="updateItemRice(${index}, this.value)">
+                                <option value="برنجی درێژ" ${item.rice_type === 'برنجی درێژ' ? 'selected' : ''}>🍚 برنجی درێژ</option>
+                                <option value="برنجی خڕ" ${item.rice_type === 'برنجی خڕ' ? 'selected' : ''}>🍚 برنجی خڕ</option>
+                                <option value="برنجی کوردی" ${item.rice_type === 'برنجی کوردی' ? 'selected' : ''}>🍚 برنجی کوردی</option>
+                                <option value="برنج بە سرکە" ${item.rice_type === 'برنج بە سرکە' ? 'selected' : ''}>🍚 برنج بە سرکە</option>
+                            </select>
                         </div>
                     `;
                     list.appendChild(row);
@@ -649,12 +659,23 @@ HTML_TEMPLATE = """
                     if (data && data.length > 0) {
                         data.forEach(item => {
                             const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
+                            // هەوڵدان بۆ جیاکردنەوەی جۆری برنج ئەگەر لە ناوەکەدا هەبێت
+                            let fName = item.food_name;
+                            let rType = 'برنجی درێژ';
+                            ['برنجی درێژ', 'برنجی خڕ', 'برنجی کوردی', 'برنج بە سرکە'].forEach(r => {
+                                if (fName.includes(`(${r})`)) {
+                                    rType = r;
+                                    fName = fName.replace(` (${r})`, '').trim();
+                                }
+                            });
+
                             cartItems.push({
                                 is_divider: isDiv,
-                                food_name: item.food_name,
+                                food_name: fName,
                                 qty: parseInt(item.quantity),
                                 price: parseFloat(item.price),
-                                cat: item.category || ''
+                                cat: item.category || '',
+                                rice_type: rType
                             });
                         });
                         setButtonStateSaved();
@@ -672,7 +693,6 @@ HTML_TEMPLATE = """
 
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
-            const selectedRice = document.getElementById('riceTypeSelect').value; // وەرگرتنی جۆری برنج
             
             if (cartItems.length === 0) {
                 showToast("تکایە سەرەتا خواردن دیاری بکە!", true);
@@ -684,8 +704,7 @@ HTML_TEMPLATE = """
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     table_number: tableNum, 
-                    cart_items: cartItems,
-                    rice_type: selectedRice 
+                    cart_items: cartItems 
                 })
             })
             .then(res => res.json())
@@ -693,7 +712,7 @@ HTML_TEMPLATE = """
                 if (data.status === 'success') {
                     toggleCartModal(false);
                     setButtonStateSaved();
-                    showToast("✅ داواکارییەکە لەگەڵ جۆری برنج نێردرا بۆ مەتبەخ");
+                    showToast("✅ داواکارییەکە لەگەڵ جۆری برنج بۆ مەتبەخ نێردرا");
                 } else {
                     showToast('هەڵە لە ناردن: ' + data.message, true);
                 }
@@ -848,7 +867,6 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
-    rice_type = data.get('rice_type', 'برنجی درێژ')  # جۆری برنج کە لە سەکۆوە دێت
 
     conn = get_db()
     try:
@@ -860,9 +878,10 @@ def save_cart_order():
                 qty = int(item.get('qty', 1))
                 price = float(item.get('price', 0))
                 cat = item.get('cat', '')
+                rice_type = item.get('rice_type', '')
 
-                # ئەگەر هێڵی جیاکەرەوە نەبێت، جۆری برنجەکە دەچەپێنرێتە سەر ناوەکەی تاوەکو لای شێف و لە پرێنتدا دەردەکەوێت
-                if item.get('is_divider'):
+                # ئەگەر هێڵی جیاکەرەوە نەبێت، جۆری برنجەکە دەچەپێنرێتە سەر ناوەکەی تاوەکو لای شێف و لە وەسڵدا دەردەکەوێت
+                if item.get('is_divider') or not rice_type:
                     final_food_name = food_name
                 else:
                     final_food_name = f"{food_name} ({rice_type})"
