@@ -480,8 +480,8 @@ HTML_TEMPLATE = """
                 price: 0,
                 qty: 1,
                 cat: 'مەتبەخ',
-                rice_type: 'برنجی درێژ',
-                chicken_part: 'سینگ'
+                rice_type: '',
+                chicken_part: ''
             });
             setButtonStateNormal();
             renderCartSummary();
@@ -595,7 +595,6 @@ HTML_TEMPLATE = """
 
             let plateNum = 1;
             
-            // دیاریکردنی بەشی یەکەم بۆ پشکنینی پەلەوەر
             let firstItemCat = '';
             for (let i = 0; i < cartItems.length; i++) {
                 if (!cartItems[i].is_divider) {
@@ -606,7 +605,7 @@ HTML_TEMPLATE = """
 
             let firstRowHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
             if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(firstItemCat)) {
-                let currentRice = window.defaultPlateRice || 'برنجی درێژ';
+                let currentRice = window.defaultPlateRice || '';
                 firstRowHtml += `
                     <select class="plate-rice-select" onchange="updatePlateRice(-1, this.value)">
                         <option value="">جۆری برنج دیاریبکە</option>
@@ -618,7 +617,7 @@ HTML_TEMPLATE = """
                 `;
             }
             if (firstItemCat === 'پەلەوەر') {
-                let currentChicken = window.defaultPlateChicken || 'سینگ';
+                let currentChicken = window.defaultPlateChicken || '';
                 firstRowHtml += `
                     <select class="plate-chicken-select" onchange="updatePlateChicken(-1, this.value)">
                         <option value="">بەشی مریشک</option>
@@ -637,10 +636,7 @@ HTML_TEMPLATE = """
             cartItems.forEach((item, index) => {
                 if (item.is_divider) {
                     plateNum++;
-                    if(!item.rice_type) item.rice_type = 'برنجی درێژ';
-                    if(!item.chicken_part) item.chicken_part = 'سینگ';
                     
-                    // دۆزینەوەی بەشی خواردنەکانی پاش ئەم هێڵە
                     let nextCat = '';
                     for (let j = index + 1; j < cartItems.length; j++) {
                         if (cartItems[j].is_divider) break;
@@ -650,22 +646,24 @@ HTML_TEMPLATE = """
 
                     let sepHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
                     if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(nextCat)) {
+                        let rVal = item.rice_type || '';
                         sepHtml += `
                             <select class="plate-rice-select" onchange="updatePlateRice(${index}, this.value)">
                                 <option value="">جۆری برنج دیاریبکە</option>
-                                <option value="برنجی درێژ" ${item.rice_type === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
-                                <option value="برنجی خڕ" ${item.rice_type === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
-                                <option value="برنجی کوردی" ${item.rice_type === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
-                                <option value="برنج بە سرکە" ${item.rice_type === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                                <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
+                                <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
+                                <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
+                                <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
                             </select>
                         `;
                     }
                     if (nextCat === 'پەلەوەر') {
+                        let cVal = item.chicken_part || '';
                         sepHtml += `
                             <select class="plate-chicken-select" onchange="updatePlateChicken(${index}, this.value)">
                                 <option value="">بەشی مریشک</option>
-                                <option value="سینگ" ${item.chicken_part === 'سینگ' ? 'selected' : ''}>سینگ</option>
-                                <option value="ڕان" ${item.chicken_part === 'ڕان' ? 'selected' : ''}>ڕان</option>
+                                <option value="سینگ" ${cVal === 'سینگ' ? 'selected' : ''}>سینگ</option>
+                                <option value="ڕان" ${cVal === 'ڕان' ? 'selected' : ''}>ڕان</option>
                             </select>
                         `;
                     }
@@ -730,6 +728,8 @@ HTML_TEMPLATE = """
                 .then(data => {
                     cartItems = [];
                     resetInputs();
+                    window.defaultPlateRice = '';
+                    window.defaultPlateChicken = '';
 
                     if (data && data.length > 0) {
                         data.forEach(item => {
@@ -987,11 +987,9 @@ def save_cart_order():
                     food_name = item.get('food_name')
                     cat = item.get('cat', '')
                     
-                    # تەنها بۆ بەشەکانی کوڵاو، پەلەوەر، کوردیەکان برنج زیاد دەبێت
                     if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and current_rice:
                         food_name += f" ({current_rice})"
                     
-                    # تەنها بۆ بەشی پەلەوەر سینگ یان ڕان زیاد دەبێت
                     if cat == 'پەلەوەر' and current_chicken:
                         food_name += f" ({current_chicken})"
 
