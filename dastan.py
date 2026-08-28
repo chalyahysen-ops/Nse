@@ -24,7 +24,7 @@ namespace ShahurRestaurant
         private Color colorRed = Color.FromArgb(239, 68, 68);
         private Color colorBorder = Color.FromArgb(30, 58, 138);
 
-        // کۆنتڕۆڵە نوێیەکانی بەشی خوارەوە (زۆر بچووک و ڕێکخراو)
+        // کۆنتڕۆڵی خوارەوە (پەنێڵی زۆر بچووک و ڕێکخراو لە یەک ڕیزدا)
         private Panel pnlControlBox;
         private Label lblSelectedFoodTitle;
         private ComboBox cmbBoxRice;
@@ -68,13 +68,12 @@ namespace ShahurRestaurant
 
         private void CreateBottomControlBox()
         {
-            // دروستکردنی پەنێڵێکی بچووک و پاک لە خوارەوە کە هەموو شتێک لە یەک ڕیزدا نیشان بدات
             pnlControlBox = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 55,
+                Height = 50,
                 BackColor = Color.FromArgb(15, 23, 42),
-                Padding = new Padding(10),
+                Padding = new Padding(8),
                 Visible = false
             };
 
@@ -86,28 +85,28 @@ namespace ShahurRestaurant
             {
                 Text = "خواردن: -",
                 ForeColor = colorGold,
-                Font = new Font("Noto Kufi Arabic", 10F, FontStyle.Bold),
-                Location = new Point(15, 15),
+                Font = new Font("Noto Kufi Arabic", 9.5F, FontStyle.Bold),
+                Location = new Point(15, 13),
                 AutoSize = true
             };
 
-            Label lblR = new Label { Text = "جۆری برنج:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(320, 16), AutoSize = true };
+            Label lblR = new Label { Text = "جۆری برنج:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(310, 13), AutoSize = true };
             cmbBoxRice = new ComboBox
             {
-                Location = new Point(395, 13),
-                Width = 140,
-                Font = new Font("Noto Kufi Arabic", 9.5F, FontStyle.Regular),
+                Location = new Point(385, 10),
+                Width = 135,
+                Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             cmbBoxRice.Items.AddRange(new string[] { "", "برنجی درێژ", "برنجی خڕ", "برنجی کوردی", "برنج بە سرکە" });
             cmbBoxRice.SelectedIndexChanged += CmbBoxRice_SelectedIndexChanged;
 
-            Label lblC = new Label { Text = "بەشی مریشک:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(550, 16), AutoSize = true };
+            Label lblC = new Label { Text = "بەشی مریشک:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(535, 13), AutoSize = true };
             cmbBoxChicken = new ComboBox
             {
-                Location = new Point(635, 13),
-                Width = 110,
-                Font = new Font("Noto Kufi Arabic", 9.5F, FontStyle.Regular),
+                Location = new Point(620, 10),
+                Width = 100,
+                Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             cmbBoxChicken.Items.AddRange(new string[] { "", "سینگ", "ڕان" });
@@ -136,6 +135,9 @@ namespace ShahurRestaurant
 
             dgvOrder.DataSource = orderTable;
             dgvOrder.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            // لابردنی ڕیزی بەتاڵی خوارەوەی خشتەکە بە یەکجاری
+            dgvOrder.AllowUserToAddRows = false;
 
             if (dgvOrder.Columns.Contains("category"))
                 dgvOrder.Columns["category"].Visible = false;
@@ -170,17 +172,23 @@ namespace ShahurRestaurant
             dgvOrder.Columns["ناوی خواردن"].FillWeight = 150;
             dgvOrder.Columns["ناوی خواردن"].DefaultCellStyle.Font = new Font("Noto Kufi Arabic", 11F, FontStyle.Bold);
 
+            // ستوونی نرخی خواردن بە فۆنتی ئینگلیزی (Segoe UI) و ژمارەی ئینگلیزی
             dgvOrder.Columns["نرخی خواردن"].FillWeight = 80;
             dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.FormatProvider = enCulture;
+            dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.Format = "N0";
 
+            // ستوونی کۆی گشتی بە فۆنتی ئینگلیزی (Segoe UI) و ژمارەی ئینگلیزی
             dgvOrder.Columns["کۆی گشتی"].FillWeight = 90;
             dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.FormatProvider = enCulture;
+            dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.Format = "N0";
 
+            // ستوونی عدد بە فۆنتی ئینگلیزی
             dgvOrder.Columns["عدد"].FillWeight = 45;
             dgvOrder.Columns["عدد"].DefaultCellStyle.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             dgvOrder.Columns["عدد"].DefaultCellStyle.FormatProvider = enCulture;
+            dgvOrder.Columns["عدد"].DefaultCellStyle.Format = "N0";
 
             if (!dgvOrder.Columns.Contains("btnPlus"))
             {
@@ -224,7 +232,6 @@ namespace ShahurRestaurant
                 bool needRice = (cat == "کوڵاو" || cat == "پەلەوەر" || cat == "کوردیەکان");
                 bool needChicken = (cat == "پەلەوەر");
 
-                // ئەگەر خواردنەکە پێویستی بە برنج یان مریشک نەبوو، پەنێڵەکە بشارەوە
                 if (!needRice && !needChicken)
                 {
                     pnlControlBox.Visible = false;
@@ -376,7 +383,6 @@ namespace ShahurRestaurant
                                 string imgPath = reader["image_path"].ToString();
                                 string fCat = reader["category"] != DBNull.Value ? reader["category"].ToString() : "";
 
-                                // گەڕاندنەوەی قەبارەی وێنەکان بۆ قەبارەی سەرەکی خۆیان
                                 Panel card = new Panel
                                 {
                                     Size = new Size(142, 150),
@@ -458,7 +464,6 @@ namespace ShahurRestaurant
                 }
             }
 
-            // سەرەتا هەردوو کۆمبۆبۆکسەکە بەتاڵ دەبن (هیچ برنج یان مریشکێک بە بێ دەستنیشانکردنی پێشوەختە دانانرێت)
             string defaultRice = "";
             string defaultChicken = "";
 
@@ -473,6 +478,7 @@ namespace ShahurRestaurant
             {
                 total += Convert.ToDecimal(row["کۆی گشتی"]);
             }
+            // نیشاندانی کۆی گشتی بە ژمارەی ئینگلیزی
             lblTotal.Text = "کۆی گشتی: " + total.ToString("N0", enCulture) + " IQD";
         }
 
