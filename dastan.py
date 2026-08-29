@@ -24,11 +24,14 @@ namespace ShahurRestaurant
         private Color colorRed = Color.FromArgb(239, 68, 68);
         private Color colorBorder = Color.FromArgb(30, 58, 138);
 
-        // کۆنتڕۆڵی خوارەوە (پەنێڵی زۆر بچووک و ڕێکخراو لە یەک ڕیزدا)
+        // کۆنتڕۆڵی خوارەوە (پەنێڵی برنج، مریشک و قاپی نوێ)
         private Panel pnlControlBox;
         private Label lblSelectedFoodTitle;
+        private Label lblR;
+        private Label lblC;
         private ComboBox cmbBoxRice;
         private ComboBox cmbBoxChicken;
+        private Button btnAddPlateDivider;
         private int currentSelectedRowIndex = -1;
         private bool isUpdatingSelection = false;
 
@@ -45,7 +48,7 @@ namespace ShahurRestaurant
 
             ApplyRabarFont();
             SetupOrderGrid();
-            CreateBottomControlBox();
+            CreateBottomControlBox(); 
             LoadSidebarCategories();
             LoadCategoryFoods("هەموو");
             LoadExistingOrders();
@@ -71,7 +74,7 @@ namespace ShahurRestaurant
             pnlControlBox = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 50,
+                Height = 52,
                 BackColor = Color.FromArgb(15, 23, 42),
                 Padding = new Padding(8),
                 Visible = false
@@ -84,42 +87,63 @@ namespace ShahurRestaurant
             lblSelectedFoodTitle = new Label
             {
                 Text = "خواردن: -",
-                ForeColor = colorGold,
-                Font = new Font("Noto Kufi Arabic", 9.5F, FontStyle.Bold),
-                Location = new Point(15, 13),
+                ForeColor = colorGreen,
+                Font = new Font("Noto Kufi Arabic", 10F, FontStyle.Bold),
+                Location = new Point(15, 14),
                 AutoSize = true
             };
 
-            Label lblR = new Label { Text = "جۆری برنج:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(310, 13), AutoSize = true };
+            lblR = new Label { Text = "جۆری برنج:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(260, 15), AutoSize = true };
             cmbBoxRice = new ComboBox
             {
-                Location = new Point(385, 10),
-                Width = 135,
+                Location = new Point(330, 12),
+                Width = 115,
                 Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             cmbBoxRice.Items.AddRange(new string[] { "", "برنجی درێژ", "برنجی خڕ", "برنجی کوردی", "برنج بە سرکە" });
             cmbBoxRice.SelectedIndexChanged += CmbBoxRice_SelectedIndexChanged;
 
-            Label lblC = new Label { Text = "بەشی مریشک:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(535, 13), AutoSize = true };
+            lblC = new Label { Text = "بەشی مریشک:", ForeColor = Color.White, Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular), Location = new Point(455, 15), AutoSize = true };
             cmbBoxChicken = new ComboBox
             {
-                Location = new Point(620, 10),
-                Width = 100,
+                Location = new Point(535, 12),
+                Width = 90,
                 Font = new Font("Noto Kufi Arabic", 9F, FontStyle.Regular),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             cmbBoxChicken.Items.AddRange(new string[] { "", "سینگ", "ڕان" });
             cmbBoxChicken.SelectedIndexChanged += CmbBoxChicken_SelectedIndexChanged;
 
+            btnAddPlateDivider = new Button
+            {
+                Text = "➕ قاپی نوێ (برژاو)",
+                Location = new Point(330, 10),
+                Size = new Size(160, 32),
+                BackColor = Color.FromArgb(139, 92, 246),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Noto Kufi Arabic", 9.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Visible = false 
+            };
+            btnAddPlateDivider.FlatAppearance.BorderSize = 0;
+            btnAddPlateDivider.Click += BtnAddPlateDivider_Click;
+
             pnlControlBox.Controls.Add(lblSelectedFoodTitle);
             pnlControlBox.Controls.Add(lblR);
             pnlControlBox.Controls.Add(cmbBoxRice);
             pnlControlBox.Controls.Add(lblC);
             pnlControlBox.Controls.Add(cmbBoxChicken);
+            pnlControlBox.Controls.Add(btnAddPlateDivider);
 
             this.Controls.Add(pnlControlBox);
             pnlControlBox.BringToFront();
+        }
+
+        private void BtnAddPlateDivider_Click(object sender, EventArgs e)
+        {
+            orderTable.Rows.Add("برژاو", "--- قاپی نوێ ---", "", "", 0, 0, 1);
         }
 
         private void SetupOrderGrid()
@@ -136,8 +160,9 @@ namespace ShahurRestaurant
             dgvOrder.DataSource = orderTable;
             dgvOrder.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-            // لابردنی ڕیزی بەتاڵی خوارەوەی خشتەکە بە یەکجاری
             dgvOrder.AllowUserToAddRows = false;
+            dgvOrder.AllowUserToDeleteRows = false;
+            dgvOrder.MultiSelect = false;
 
             if (dgvOrder.Columns.Contains("category"))
                 dgvOrder.Columns["category"].Visible = false;
@@ -147,6 +172,9 @@ namespace ShahurRestaurant
 
             if (dgvOrder.Columns.Contains("بەشی مریشک"))
                 dgvOrder.Columns["بەشی مریشک"].Visible = false;
+
+            if (dgvOrder.Columns.Contains("نرخی خواردن"))
+                dgvOrder.Columns["نرخی خواردن"].Visible = false;
 
             dgvOrder.RowHeadersVisible = false;
             dgvOrder.BackgroundColor = colorTableBg;
@@ -164,29 +192,22 @@ namespace ShahurRestaurant
             dgvOrder.DefaultCellStyle.BackColor = colorTableBg;
             dgvOrder.AlternatingRowsDefaultCellStyle.BackColor = colorRowAlt;
             dgvOrder.DefaultCellStyle.ForeColor = Color.White;
-            dgvOrder.DefaultCellStyle.SelectionBackColor = Color.FromArgb(30, 58, 138);
+            
+            dgvOrder.DefaultCellStyle.SelectionBackColor = Color.FromArgb(6, 95, 70);
             dgvOrder.DefaultCellStyle.SelectionForeColor = Color.White;
             dgvOrder.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvOrder.RowTemplate.Height = 55;
 
-            dgvOrder.Columns["ناوی خواردن"].FillWeight = 150;
-            dgvOrder.Columns["ناوی خواردن"].DefaultCellStyle.Font = new Font("Noto Kufi Arabic", 11F, FontStyle.Bold);
+            dgvOrder.Columns["ناوی خواردن"].FillWeight = 180;
+            dgvOrder.Columns["ناوی خواردن"].DefaultCellStyle.Font = new Font("Noto Kufi Arabic", 11.5F, FontStyle.Bold);
 
-            // ستوونی نرخی خواردن بە فۆنتی ئینگلیزی (Segoe UI) و ژمارەی ئینگلیزی
-            dgvOrder.Columns["نرخی خواردن"].FillWeight = 80;
-            dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.FormatProvider = enCulture;
-            dgvOrder.Columns["نرخی خواردن"].DefaultCellStyle.Format = "N0";
-
-            // ستوونی کۆی گشتی بە فۆنتی ئینگلیزی (Segoe UI) و ژمارەی ئینگلیزی
-            dgvOrder.Columns["کۆی گشتی"].FillWeight = 90;
-            dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            dgvOrder.Columns["کۆی گشتی"].FillWeight = 110;
+            dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.FormatProvider = enCulture;
             dgvOrder.Columns["کۆی گشتی"].DefaultCellStyle.Format = "N0";
 
-            // ستوونی عدد بە فۆنتی ئینگلیزی
-            dgvOrder.Columns["عدد"].FillWeight = 45;
-            dgvOrder.Columns["عدد"].DefaultCellStyle.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            dgvOrder.Columns["عدد"].FillWeight = 50;
+            dgvOrder.Columns["عدد"].DefaultCellStyle.Font = new Font("Segoe UI", 13.5F, FontStyle.Bold);
             dgvOrder.Columns["عدد"].DefaultCellStyle.FormatProvider = enCulture;
             dgvOrder.Columns["عدد"].DefaultCellStyle.Format = "N0";
 
@@ -194,7 +215,7 @@ namespace ShahurRestaurant
             {
                 DataGridViewButtonColumn btnPlus = new DataGridViewButtonColumn();
                 btnPlus.Name = "btnPlus"; btnPlus.HeaderText = "+"; btnPlus.Text = "+";
-                btnPlus.UseColumnTextForButtonValue = true; btnPlus.FillWeight = 32; btnPlus.FlatStyle = FlatStyle.Flat;
+                btnPlus.UseColumnTextForButtonValue = true; btnPlus.FillWeight = 45; btnPlus.FlatStyle = FlatStyle.Flat;
                 dgvOrder.Columns.Add(btnPlus);
             }
 
@@ -202,7 +223,7 @@ namespace ShahurRestaurant
             {
                 DataGridViewButtonColumn btnMinus = new DataGridViewButtonColumn();
                 btnMinus.Name = "btnMinus"; btnMinus.HeaderText = "-"; btnMinus.Text = "-";
-                btnMinus.UseColumnTextForButtonValue = true; btnMinus.FillWeight = 32; btnMinus.FlatStyle = FlatStyle.Flat;
+                btnMinus.UseColumnTextForButtonValue = true; btnMinus.FillWeight = 45; btnMinus.FlatStyle = FlatStyle.Flat;
                 dgvOrder.Columns.Add(btnMinus);
             }
 
@@ -210,7 +231,7 @@ namespace ShahurRestaurant
             {
                 DataGridViewButtonColumn btnDelete = new DataGridViewButtonColumn();
                 btnDelete.Name = "btnDelete"; btnDelete.HeaderText = "X"; btnDelete.Text = "X";
-                btnDelete.UseColumnTextForButtonValue = true; btnDelete.FillWeight = 35; btnDelete.FlatStyle = FlatStyle.Flat;
+                btnDelete.UseColumnTextForButtonValue = true; btnDelete.FillWeight = 48; btnDelete.FlatStyle = FlatStyle.Flat;
                 dgvOrder.Columns.Add(btnDelete);
             }
 
@@ -229,10 +250,17 @@ namespace ShahurRestaurant
                 string rice = row["جۆری برنج"] != DBNull.Value ? row["جۆری برنج"].ToString() : "";
                 string chicken = row["بەشی مریشک"] != DBNull.Value ? row["بەشی مریشک"].ToString() : "";
 
+                if (foodName.Contains("--- قاپی نوێ ---"))
+                {
+                    pnlControlBox.Visible = false;
+                    return;
+                }
+
                 bool needRice = (cat == "کوڵاو" || cat == "پەلەوەر" || cat == "کوردیەکان");
                 bool needChicken = (cat == "پەلەوەر");
+                bool isGrill = (cat == "برژاو");
 
-                if (!needRice && !needChicken)
+                if (!needRice && !needChicken && !isGrill)
                 {
                     pnlControlBox.Visible = false;
                     return;
@@ -242,11 +270,21 @@ namespace ShahurRestaurant
                 pnlControlBox.Visible = true;
                 lblSelectedFoodTitle.Text = $"خواردن: {foodName}";
 
-                cmbBoxRice.Enabled = needRice;
-                cmbBoxRice.SelectedItem = needRice ? (string.IsNullOrEmpty(rice) ? null : rice) : null;
+                lblR.Visible = needRice;
+                cmbBoxRice.Visible = needRice;
+                lblC.Visible = needChicken;
+                cmbBoxChicken.Visible = needChicken;
+                btnAddPlateDivider.Visible = isGrill;
 
-                cmbBoxChicken.Enabled = needChicken;
-                cmbBoxChicken.SelectedItem = needChicken ? (string.IsNullOrEmpty(chicken) ? null : chicken) : null;
+                if (needRice)
+                {
+                    cmbBoxRice.SelectedItem = string.IsNullOrEmpty(rice) ? null : rice;
+                }
+                if (needChicken)
+                {
+                    cmbBoxChicken.SelectedItem = string.IsNullOrEmpty(chicken) ? null : chicken;
+                }
+
                 isUpdatingSelection = false;
             }
         }
@@ -275,21 +313,35 @@ namespace ShahurRestaurant
             try
             {
                 string colName = dgvOrder.Columns[e.ColumnIndex].Name;
+                DataRow row = orderTable.Rows[e.RowIndex];
+                string foodName = row["ناوی خواردن"].ToString();
+
+                if (foodName.Contains("--- قاپی نوێ ---"))
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(109, 40, 217);
+                    e.CellStyle.ForeColor = Color.White;
+                    e.CellStyle.Font = new Font("Noto Kufi Arabic", 11F, FontStyle.Bold);
+                }
+
                 if (colName == "btnPlus")
                 {
-                    e.CellStyle.ForeColor = colorGreen; e.CellStyle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+                    e.CellStyle.ForeColor = colorGreen; 
+                    e.CellStyle.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
                 }
                 else if (colName == "btnMinus")
                 {
-                    e.CellStyle.ForeColor = colorGold; e.CellStyle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+                    e.CellStyle.ForeColor = colorGold; 
+                    e.CellStyle.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
                 }
                 else if (colName == "btnDelete")
                 {
-                    e.CellStyle.ForeColor = colorRed; e.CellStyle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+                    e.CellStyle.ForeColor = colorRed; 
+                    e.CellStyle.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
                 }
-                else if (colName == "کۆی گشتی" || colName == "نرخی خواردن")
+                else if (colName == "کۆی گشتی")
                 {
-                    e.CellStyle.Font = new Font("Segoe UI", 11.5F, FontStyle.Bold);
+                    e.CellStyle.ForeColor = Color.FromArgb(52, 211, 153);
+                    e.CellStyle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
                     if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
                     {
                         e.Value = val.ToString("N0", enCulture);
@@ -298,7 +350,8 @@ namespace ShahurRestaurant
                 }
                 else if (colName == "عدد")
                 {
-                    e.CellStyle.ForeColor = colorGold; e.CellStyle.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+                    e.CellStyle.ForeColor = colorGold; 
+                    e.CellStyle.Font = new Font("Segoe UI", 13.5F, FontStyle.Bold);
                     if (e.Value != null && int.TryParse(e.Value.ToString(), out int val))
                     {
                         e.Value = val.ToString(enCulture);
@@ -340,8 +393,8 @@ namespace ShahurRestaurant
             Button btn = new Button
             {
                 Text = $"{icon}  {catName}",
-                Size = new Size(135, 48),
-                Margin = new Padding(4, 3, 4, 3),
+                Size = new Size(130, 42),
+                Margin = new Padding(3),
                 BackColor = colorGold,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -452,15 +505,19 @@ namespace ShahurRestaurant
 
         private void AddToOrder(string foodName, decimal price, string category = "")
         {
-            foreach (DataRow row in orderTable.Rows)
+            if (!foodName.Contains("--- قاپی نوێ ---"))
             {
-                if (row["ناوی خواردن"].ToString() == foodName)
+                foreach (DataRow row in orderTable.Rows)
                 {
-                    int qty = Convert.ToInt32(row["عدد"]) + 1;
-                    row["عدد"] = qty;
-                    row["کۆی گشتی"] = qty * price;
-                    CalculateTotal();
-                    return;
+                    string existingName = row["ناوی خواردن"].ToString();
+                    if (existingName == foodName)
+                    {
+                        int qty = Convert.ToInt32(row["عدد"]) + 1;
+                        row["عدد"] = qty;
+                        row["کۆی گشتی"] = qty * price;
+                        CalculateTotal();
+                        return;
+                    }
                 }
             }
 
@@ -476,9 +533,12 @@ namespace ShahurRestaurant
             decimal total = 0;
             foreach (DataRow row in orderTable.Rows)
             {
-                total += Convert.ToDecimal(row["کۆی گشتی"]);
+                string name = row["ناوی خواردن"] != DBNull.Value ? row["ناوی خواردن"].ToString() : "";
+                if (!name.Contains("--- قاپی نوێ ---"))
+                {
+                    total += Convert.ToDecimal(row["کۆی گشتی"]);
+                }
             }
-            // نیشاندانی کۆی گشتی بە ژمارەی ئینگلیزی
             lblTotal.Text = "کۆی گشتی: " + total.ToString("N0", enCulture) + " IQD";
         }
 
@@ -503,6 +563,12 @@ namespace ShahurRestaurant
                                 string cat = reader["category"] != DBNull.Value ? reader["category"].ToString() : "";
                                 int qty = Convert.ToInt32(reader["total_qty"]);
                                 decimal price = Convert.ToDecimal(reader["price"]);
+
+                                if (fullName.Contains("--- قاپی نوێ ---"))
+                                {
+                                    orderTable.Rows.Add(cat, fullName, "", "", 0, 0, 1);
+                                    continue;
+                                }
 
                                 string rType = "";
                                 string cPart = "";
@@ -543,20 +609,36 @@ namespace ShahurRestaurant
             {
                 string colName = dgvOrder.Columns[e.ColumnIndex].Name;
                 DataRow row = orderTable.Rows[e.RowIndex];
-                decimal price = Convert.ToDecimal(row["نرخی خواردن"]);
-                int currentQty = Convert.ToInt32(row["عدد"]);
+                string foodName = row["ناوی خواردن"].ToString();
 
                 if (colName == "btnPlus")
                 {
-                    row["عدد"] = currentQty + 1;
-                    row["کۆی گشتی"] = (currentQty + 1) * price;
+                    if (!foodName.Contains("--- قاپی نوێ ---"))
+                    {
+                        int currentQty = Convert.ToInt32(row["عدد"]);
+                        decimal price = Convert.ToDecimal(row["نرخی خواردن"]);
+                        row["عدد"] = currentQty + 1;
+                        row["کۆی گشتی"] = (currentQty + 1) * price;
+                        CalculateTotal();
+                    }
                 }
                 else if (colName == "btnMinus")
                 {
-                    if (currentQty > 1)
+                    if (!foodName.Contains("--- قاپی نوێ ---"))
                     {
-                        row["عدد"] = currentQty - 1;
-                        row["کۆی گشتی"] = (currentQty - 1) * price;
+                        int currentQty = Convert.ToInt32(row["عدد"]);
+                        decimal price = Convert.ToDecimal(row["نرخی خواردن"]);
+                        if (currentQty > 1)
+                        {
+                            row["عدد"] = currentQty - 1;
+                            row["کۆی گشتی"] = (currentQty - 1) * price;
+                        }
+                        else
+                        {
+                            orderTable.Rows.RemoveAt(e.RowIndex);
+                            pnlControlBox.Visible = false;
+                        }
+                        CalculateTotal();
                     }
                     else
                     {
@@ -568,9 +650,8 @@ namespace ShahurRestaurant
                 {
                     orderTable.Rows.RemoveAt(e.RowIndex);
                     pnlControlBox.Visible = false;
+                    CalculateTotal();
                 }
-
-                CalculateTotal();
             }
         }
 
@@ -605,13 +686,16 @@ namespace ShahurRestaurant
                         string chickenPart = row["بەشی مریشک"] != null ? row["بەشی مریشک"].ToString() : "";
 
                         string finalFoodName = fName;
-                        if ((cat == "کوڵاو" || cat == "پەلەوەر" || cat == "کوردیەکان") && !string.IsNullOrEmpty(riceType))
+                        if (!fName.Contains("--- قاپی نوێ ---"))
                         {
-                            finalFoodName += $" ({riceType})";
-                        }
-                        if (cat == "پەلەوەر" && !string.IsNullOrEmpty(chickenPart))
-                        {
-                            finalFoodName += $" ({chickenPart})";
+                            if ((cat == "کوڵاو" || cat == "پەلەوەر" || cat == "کوردیەکان") && !string.IsNullOrEmpty(riceType))
+                            {
+                                finalFoodName += $" ({riceType})";
+                            }
+                            if (cat == "پەلەوەر" && !string.IsNullOrEmpty(chickenPart))
+                            {
+                                finalFoodName += $" ({chickenPart})";
+                            }
                         }
 
                         string insertQuery = @"INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
@@ -626,17 +710,20 @@ namespace ShahurRestaurant
                             cmdInsert.ExecuteNonQuery();
                         }
 
-                        string queryTomar = @"INSERT INTO tomar (record_date, food_name, quantity, total_price) 
-                                              VALUES (CURDATE(), @name, @qty, @total)
-                                              ON DUPLICATE KEY UPDATE 
-                                                  quantity = quantity + VALUES(quantity),
-                                                  total_price = total_price + VALUES(total_price)";
-                        using (MySqlCommand cmdTomar = new MySqlCommand(queryTomar, conn))
+                        if (!fName.Contains("--- قاپی نوێ ---"))
                         {
-                            cmdTomar.Parameters.AddWithValue("@name", finalFoodName);
-                            cmdTomar.Parameters.AddWithValue("@qty", qty);
-                            cmdTomar.Parameters.AddWithValue("@total", qty * price);
-                            cmdTomar.ExecuteNonQuery();
+                            string queryTomar = @"INSERT INTO tomar (record_date, food_name, quantity, total_price) 
+                                                  VALUES (CURDATE(), @name, @qty, @total)
+                                                  ON DUPLICATE KEY UPDATE 
+                                                      quantity = quantity + VALUES(quantity),
+                                                      total_price = total_price + VALUES(total_price)";
+                            using (MySqlCommand cmdTomar = new MySqlCommand(queryTomar, conn))
+                            {
+                                cmdTomar.Parameters.AddWithValue("@name", finalFoodName);
+                                cmdTomar.Parameters.AddWithValue("@qty", qty);
+                                cmdTomar.Parameters.AddWithValue("@total", qty * price);
+                                cmdTomar.ExecuteNonQuery();
+                            }
                         }
                     }
                 }
