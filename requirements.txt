@@ -1,3 +1,5 @@
 streamlit
 PyMySQL
 mysql-connector-python
+flask
+gunicorn
