@@ -534,20 +534,25 @@ DESKTOP_TEMPLATE = """
         .desktop-btn-count { width: 32px; height: 32px; border-radius: 6px; border: none; background: #1e293b; color: var(--text-main); font-size: 16px; font-weight: 700; cursor: pointer; }
         .desktop-btn-count.plus { background: var(--gold); color: var(--bg-main); }
         .desktop-qty-val { width: 35px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text-main); background: transparent; border: none; outline: none; }
-        .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; }
-        .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-right: 4px; }
+        
+        /* تێبینی ٣: زیادکردنی سکڕۆڵ بۆ بەشی دەستی ڕاست (سەبەتە) */
+        .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
+        .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-right: 4px; scrollbar-width: thin; }
+        .cart-items-container::-webkit-scrollbar { width: 5px; }
+        .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
         .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .desktop-cart-top { display: flex; justify-content: space-between; align-items: center; }
         .desktop-cart-options { display: flex; gap: 6px; width: 100%; }
         .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1px solid var(--border-color); padding: 5px; border-radius: 6px; font-size: 11px; font-weight: 700; outline: none; }
         .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
-        .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
         .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
         .cart-total-val { color: var(--success); font-size: 18px; }
         .btn-send-desktop { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; }
         .btn-send-desktop.saved-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; color: #ffffff !important; }
-        .btn-add-plate-desktop { background: #8b5cf6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: none; }
+        .btn-add-plate-desktop { background: #8b5cf6; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: none; flex-shrink: 0; margin-bottom: 8px; }
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #ffffff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; opacity: 0; transition: opacity 0.3s ease; }
     </style>
 </head>
@@ -640,6 +645,8 @@ DESKTOP_TEMPLATE = """
 
     <script>
         let cartItems = [];
+        let originalTableOrders = []; // بۆ بەراوردکردن و ناردنی تەنها شتە زیادکراو یان سڕدراوەکان
+
         function showToast(text, isError = false) {
             const toast = document.getElementById('toastMsg');
             toast.innerText = text;
@@ -806,6 +813,7 @@ DESKTOP_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     cartItems = [];
+                    originalTableOrders = [];
                     resetInputs();
                     if (data && data.length > 0) {
                         data.forEach(item => {
@@ -817,11 +825,10 @@ DESKTOP_TEMPLATE = """
                             ['سینگ', 'ڕان'].forEach(c => {
                                 if (fName.includes(`(${c})`)) { cPart = c; fName = fName.replace(` (${c})`, '').trim(); }
                             });
-                            if (isDiv) {
-                                cartItems.push({ is_divider: true, food_name: fName, price: 0, qty: 1, cat: 'مەتبەخ' });
-                            } else {
-                                cartItems.push({ is_divider: false, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart });
-                            }
+                            
+                            let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
+                            cartItems.push(parsedItem);
+                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
                         });
                         setButtonStateSaved();
                     } else { setButtonStateNormal(); }
@@ -833,15 +840,17 @@ DESKTOP_TEMPLATE = """
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
             if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
+            
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     setButtonStateSaved();
+                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
                 } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
             }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
@@ -898,11 +907,9 @@ DESKTOP_TEMPLATE = """
 def login():
     if request.method == 'POST':
         input_pin = normalize_digits(request.form.get('pin', ''))
-        
         if input_pin in ['22', '٢٢']:
             session['authenticated'] = True
             return redirect(url_for('desktop_menu'))
-
         if input_pin in ['345678', '٣٤٥٦٧٨']:
             session['authenticated'] = True
             return redirect(url_for('menu'))
@@ -931,16 +938,14 @@ def login():
 def menu():
     if not session.get('authenticated'):
         return redirect(url_for('login'))
-
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # ڕیزکردنی خواردنەکان بەپێی پۆل و ناو بۆ ئەوەی بە هیچ شێوازێک تێکەڵ نەبن
-            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != '' ORDER BY category, food_name")
+            # تێبینی ٤: ڕیزکردنەکان بە هەمان داتابەیس و خشتەی nse
+            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != ''")
             foods = cursor.fetchall()
         conn.close()
 
-        # بەکارهێنانی OrderedDict یان ڕیزبەندی دروست بۆ پۆلەکان
         categories = {}
         for food in foods:
             cat = food['category'].strip() if food['category'] and food['category'].strip() else 'گشتی'
@@ -956,11 +961,11 @@ def menu():
 def desktop_menu():
     if not session.get('authenticated'):
         return redirect(url_for('login'))
-
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != '' ORDER BY category, food_name")
+            # تێبینی ٤: هێنانەوەی ڕیزبەندی ڕەسەنی nse
+            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != ''")
             foods = cursor.fetchall()
         conn.close()
 
@@ -979,7 +984,6 @@ def desktop_menu():
 def get_table_orders(table_num):
     if not session.get('authenticated'):
         return jsonify([])
-
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -1002,10 +1006,32 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
+    original_items = data.get('original_items', [])
+
+    # دروستکردنی دیکشێنەری کۆن و نوێ بۆ بەراوردکردن (تێبینی ١ و ٢)
+    def make_map(items):
+        mp = {}
+        for it in items:
+            name = "--- قاپی نوێ ---" if it.get('is_divider') else it.get('food_name')
+            cat = it.get('cat', '')
+            rice = it.get('rice_type', '')
+            chicken = it.get('chicken_part', '')
+            full_name = name
+            if not it.get('is_divider'):
+                if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice:
+                    full_name += f" ({rice})"
+                if cat == 'پەلەوەر' and chicken:
+                    full_name += f" ({chicken})"
+            mp[full_name] = {'qty': int(it.get('qty', 1)), 'price': float(it.get('price', 0)), 'cat': cat}
+        return mp
+
+    old_map = make_map(original_items)
+    new_map = make_map(cart_items)
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
+            # ١. پاشەکەوتکردن یان نوێکردنەوەی تەواوی سەبەتە لە خشتەی froshtn
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1022,7 +1048,6 @@ def save_cart_order():
                     
                     if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice_type:
                         food_name += f" ({rice_type})"
-                    
                     if cat == 'پەلەوەر' and chicken_part:
                         food_name += f" ({chicken_part})"
 
@@ -1033,6 +1058,30 @@ def save_cart_order():
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
+
+            # ٢. پشکنینی جیاوازی بۆ چاپکردنی تەنها ئەوەی زیادکراوە یان سڕدراوە بۆ مەتبەخ
+            all_keys = set(old_map.keys()).union(set(new_map.keys()))
+            for key in all_keys:
+                old_qty = old_map.get(key, {}).get('qty', 0)
+                new_qty = new_map.get(key, {}).get('qty', 0)
+                diff = new_qty - old_qty
+                
+                if diff != '' and diff != 0 and key != "--- قاپی نوێ ---":
+                    cat_val = new_map.get(key, {}).get('cat') or old_map.get(key, {}).get('cat', 'گشتی')
+                    price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
+                    
+                    if diff > 0:
+                        # زیادکردنی بڕی نوێ بۆ مەتبەخ (تێبینی ١)
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                        """, (str(table_num) + " [زیادکراو]", key, diff, price_val, cat_val))
+                    else:
+                        # ئاماژەدان بە سڕینەوە بۆ مەتبەخ (تێبینی ٢)
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                        """, (str(table_num) + " [سڕاوەتەوە]", f"سڕاوەتەوە: {key}", abs(diff), price_val, cat_val))
 
             conn.commit()
         conn.close()
@@ -1045,10 +1094,8 @@ def save_cart_order():
 def clear_table_orders():
     if not session.get('authenticated'):
         return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
-
     data = request.get_json()
     table_num = data.get('table_number')
-
     conn = get_db()
     try:
         with conn.cursor() as cursor:
@@ -1062,14 +1109,11 @@ def clear_table_orders():
 
 @app.route('/change_table_number', methods=['POST'])
 def change_table_number():
-    (sp)
     if not session.get('authenticated'):
-        return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
-
+        return jsonify({'status': 'error', 'system': 'ڕێگەپێنەدراو'})
     data = request.get_json()
     old_tbl = data.get('old_table')
     new_tbl = data.get('new_table')
-
     conn = get_db()
     try:
         with conn.cursor() as cursor:
