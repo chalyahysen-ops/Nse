@@ -517,8 +517,8 @@ DESKTOP_TEMPLATE = """
         .btn-top-action { background: #1e293b; color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .btn-top-action.danger { color: var(--danger); border-color: rgba(239,68,68,0.4); }
         
-        /* فراوانکردنی بەشی سەبەتە و بچووککردنەوەی وێنەکان */
-        .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
+        /* فراوانکردنی بەشی سەبەتە (چەپ 1fr و ڕاست 540px) */
+        .desktop-main-layout { display: grid; grid-template-columns: 1fr 540px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
@@ -526,49 +526,52 @@ DESKTOP_TEMPLATE = """
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
-        /* قەبارەی کاردی خواردنەکان و وێنەی بچووکتر */
-        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding-bottom: 10px; }
-        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s, border-color 0.2s; }
+        /* 3 وێنە لە یەک ڕیزدا بە قەبارەی گەورەتر و جوانتر */
+        .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-bottom: 10px; }
+        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, border-color 0.2s; }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         
-        .desktop-food-img { width: 100%; height: 85px; border-radius: 8px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+        .desktop-food-img { width: 100%; height: 115px; border-radius: 10px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
         .desktop-food-img:hover { opacity: 0.9; transform: scale(1.02); }
         .desktop-food-img:active { transform: scale(0.98); }
 
-        .desktop-food-info { display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: center; }
-        .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
+        .desktop-food-info { display: flex; flex-direction: column; gap: 3px; flex: 1; text-align: center; }
+        .desktop-food-name { font-size: 14px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .desktop-food-price { font-size: 13px; font-weight: 700; color: var(--success); }
 
-        /* بەشی سەبەتە (Sidebar) فراوانتر */
-        .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 18px; height: 100%; overflow: hidden; }
-        .cart-sidebar-header { font-size: 17px; font-weight: 800; color: var(--gold); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        /* بەشی سەبەتە (Sidebar) گەورەتر و فراوانتر */
+        .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; height: 100%; overflow: hidden; }
+        .cart-sidebar-header { font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
-        .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+        /* تێبینی: ناوی خواردنەکانی ناو سەبەتە ئێستا گەورەتر کراون تاوەکو هێڵی مێز پڕبکەنەوە */
+        .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
         .desktop-cart-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         
         .desktop-counter-group { display: flex; align-items: center; background: var(--bg-main); border-radius: 8px; border: 1.5px solid var(--border-color); padding: 2px; gap: 4px; }
-        .desktop-btn-count { width: 32px; height: 32px; border-radius: 6px; border: none; background: #1e293b; color: var(--text-main); font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .desktop-btn-count { width: 34px; height: 34px; border-radius: 6px; border: none; background: #1e293b; color: var(--text-main); font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .desktop-btn-count.plus { background: var(--gold); color: var(--bg-main); }
-        .desktop-cart-qty-val { width: 32px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text-main); }
+        .desktop-cart-qty-val { width: 34px; text-align: center; font-size: 16px; font-weight: 800; color: var(--text-main); }
         
-        .desktop-del-btn { background: var(--danger); color: #fff; border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .desktop-cart-options { display: flex; gap: 6px; width: 100%; margin-top: 2px; }
-        .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--border-color); padding: 6px; border-radius: 8px; font-size: 11px; font-weight: 700; outline: none; }
+        .desktop-del-btn { background: var(--danger); color: #fff; border: none; width: 34px; height: 34px; border-radius: 8px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        /* تێبینی: جۆری برنج و بەشی مریشک باریکتر کراون بۆ ئەوەی خشتەکە بەرز نەبێتەوە */
+        .desktop-cart-options { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
+        .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--border-color); padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; outline: none; height: 28px; }
         
         .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
         
         .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
-        .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
-        .cart-total-val { color: var(--success); font-size: 18px; }
+        .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 800; }
+        .cart-total-val { color: var(--success); font-size: 20px; }
         
-        /* ڕیزکردنی دوگمەی ناردن و قاپی نوێ لە تەنیشت یەکدی لە خوارەوە */
+        /* دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە خوارەوە لە تەنیشت یەکدی */
         .cart-actions-bottom { display: flex; gap: 8px; width: 100%; }
-        .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.2); }
+        .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.2); }
         .btn-send-desktop.saved-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; color: #ffffff !important; }
-        .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; display: none; text-align: center; transition: opacity 0.2s; }
+        .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #ffffff; border: none; padding: 13px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; display: none; text-align: center; transition: opacity 0.2s; }
         
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #ffffff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; opacity: 0; transition: opacity 0.3s ease; }
     </style>
@@ -626,7 +629,7 @@ DESKTOP_TEMPLATE = """
             </div>
         </div>
 
-        <!-- بەشی سەبەتە (Sidebar) فراوانتر -->
+        <!-- بەشی سەبەتەی فراوانتر و گەورەتر -->
         <div class="cart-sidebar">
             <div class="cart-sidebar-header">
                 <span>🛒 داواکارییەکانی مێز</span>
@@ -642,7 +645,7 @@ DESKTOP_TEMPLATE = """
                     <span>کۆی گشتی:</span>
                     <span class="cart-total-val" id="cartTotalTxt">0 دینار</span>
                 </div>
-                <!-- دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە تەنیشت یەکدی -->
+                <!-- دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە خوارەوە لە تەنیشت یەکدی -->
                 <div class="cart-actions-bottom">
                     <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
@@ -799,8 +802,8 @@ DESKTOP_TEMPLATE = """
                                 <button type="button" class="desktop-btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
                             </div>
                             <div style="text-align: left;">
-                                <div style="font-weight:800; font-size:13px; color:#fff;">${item.food_name}</div>
-                                <div style="color:var(--success); font-size:11px; font-weight:700;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                                <div style="font-weight:800; font-size:14px; color:#fff;">${item.food_name}</div>
+                                <div style="color:var(--success); font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} دینار</div>
                             </div>
                         </div>
                         ${optionsHtml}`;
