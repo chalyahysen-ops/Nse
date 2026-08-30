@@ -891,7 +891,7 @@ def login():
     if request.method == 'POST':
         input_pin = normalize_digits(request.form.get('pin', ''))
         
-        # پشکنینی ڕاستەوخۆ بۆ کۆدی 22 پێش پرسیارکردن لە داتابەیس
+        # پشکنینی ڕاستەوخۆ بۆ کۆدی 22 (بە هەردوو شێوازی عەرەبی و ئینگلیزی)
         if input_pin in ['22', '٢٢']:
             session['authenticated'] = True
             return redirect(url_for('desktop_menu'))
