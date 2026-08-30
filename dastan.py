@@ -517,7 +517,8 @@ DESKTOP_TEMPLATE = """
         .btn-top-action { background: #1e293b; color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .btn-top-action.danger { color: var(--danger); border-color: rgba(239,68,68,0.4); }
         
-        .desktop-main-layout { display: grid; grid-template-columns: 1fr 440px; flex: 1; overflow: hidden; }
+        /* فراوانکردنی بەشی سەبەتە و بچووککردنەوەی وێنەکان */
+        .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
@@ -525,53 +526,49 @@ DESKTOP_TEMPLATE = """
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
-        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; padding-bottom: 10px; }
-        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s, border-color 0.2s; }
+        /* قەبارەی کاردی خواردنەکان و وێنەی بچووکتر */
+        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding-bottom: 10px; }
+        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s, border-color 0.2s; }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         
-        /* وێنەی خواردن کە بە کلیک کردن زیاد دەبێت */
-        .desktop-food-img { width: 100%; height: 110px; border-radius: 10px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+        .desktop-food-img { width: 100%; height: 85px; border-radius: 8px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
         .desktop-food-img:hover { opacity: 0.9; transform: scale(1.02); }
         .desktop-food-img:active { transform: scale(0.98); }
 
-        .desktop-food-info { display: flex; flex-direction: column; gap: 4px; flex: 1; text-align: center; }
-        .desktop-food-name { font-size: 14px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .desktop-food-price { font-size: 13px; font-weight: 700; color: var(--success); }
-        .desktop-qty-indicator { background: #0b0f19; color: var(--gold); border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; text-align: center; font-size: 13px; font-weight: 800; }
+        .desktop-food-info { display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: center; }
+        .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
-        /* بەشی سەبەتە (Sidebar) گەورەتر و ڕێکخراوتر */
+        /* بەشی سەبەتە (Sidebar) فراوانتر */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 18px; height: 100%; overflow: hidden; }
-        .cart-sidebar-header { font-size: 17px; font-weight: 800; color: var(--gold); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; padding-right: 4px; scrollbar-width: thin; }
+        .cart-sidebar-header { font-size: 17px; font-weight: 800; color: var(--gold); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
-        .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .desktop-cart-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         
-        /* دوگمەکانی زیاد و کەم و سڕینەوەی گەورەتر لە سەبەتەدا */
-        .desktop-counter-group { display: flex; align-items: center; background: var(--bg-main); border-radius: 8px; border: 1.5px solid var(--border-color); padding: 3px; gap: 4px; }
-        .desktop-btn-count { width: 34px; height: 34px; border-radius: 6px; border: none; background: #1e293b; color: var(--text-main); font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-        .desktop-btn-count:hover { background: #334155; }
+        .desktop-counter-group { display: flex; align-items: center; background: var(--bg-main); border-radius: 8px; border: 1.5px solid var(--border-color); padding: 2px; gap: 4px; }
+        .desktop-btn-count { width: 32px; height: 32px; border-radius: 6px; border: none; background: #1e293b; color: var(--text-main); font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .desktop-btn-count.plus { background: var(--gold); color: var(--bg-main); }
-        .desktop-btn-count.plus:hover { background: var(--gold-dark); }
-        .desktop-cart-qty-val { width: 36px; text-align: center; font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .desktop-cart-qty-val { width: 32px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text-main); }
         
-        .desktop-del-btn { background: #ef4444; color: #fff; border: none; width: 34px; height: 34px; border-radius: 8px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
-        .desktop-del-btn:hover { opacity: 0.85; }
-
-        .desktop-cart-options { display: flex; gap: 8px; width: 100%; margin-top: 4px; }
-        .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--border-color); padding: 7px; border-radius: 8px; font-size: 12px; font-weight: 700; outline: none; }
+        .desktop-del-btn { background: var(--danger); color: #fff; border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .desktop-cart-options { display: flex; gap: 6px; width: 100%; margin-top: 2px; }
+        .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--border-color); padding: 6px; border-radius: 8px; font-size: 11px; font-weight: 700; outline: none; }
         
-        .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
+        .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
         
-        .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 14px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
-        .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 800; }
-        .cart-total-val { color: var(--success); font-size: 20px; }
+        .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
+        .cart-total-val { color: var(--success); font-size: 18px; }
         
-        .btn-send-desktop { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.2); }
-        .btn-send-desktop.saved-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; color: #ffffff !important; box-shadow: 0 4px 15px rgba(16,185,129,0.2); }
-        .btn-add-plate-desktop { background: #8b5cf6; color: #ffffff; border: none; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; display: none; flex-shrink: 0; margin-bottom: 8px; }
+        /* ڕیزکردنی دوگمەی ناردن و قاپی نوێ لە تەنیشت یەکدی لە خوارەوە */
+        .cart-actions-bottom { display: flex; gap: 8px; width: 100%; }
+        .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.2); }
+        .btn-send-desktop.saved-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; color: #ffffff !important; }
+        .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; display: none; text-align: center; transition: opacity 0.2s; }
         
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #ffffff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; opacity: 0; transition: opacity 0.3s ease; }
     </style>
@@ -610,7 +607,7 @@ DESKTOP_TEMPLATE = """
                     <div class="food-grid">
                         {% for item in items %}
                         <div class="desktop-food-card">
-                            <!-- کلیک کردن لەسەر وێنەکە خواردن زیاد دەکات -->
+                            <!-- کلیک لەسەر وێنەکە خواردن زیاد دەکات -->
                             <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" 
                                  class="desktop-food-img" 
                                  onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
@@ -621,7 +618,6 @@ DESKTOP_TEMPLATE = """
                                 <div class="desktop-food-name">{{ item.food_name }}</div>
                                 <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
                             </div>
-                            <div class="desktop-qty-indicator" id="desktop_qty_{{ item.food_name }}">بڕ: 0</div>
                         </div>
                         {% endfor %}
                     </div>
@@ -630,22 +626,27 @@ DESKTOP_TEMPLATE = """
             </div>
         </div>
 
-        <!-- بەشی سەبەتەی گەورەکراو و ڕێکخراو -->
+        <!-- بەشی سەبەتە (Sidebar) فراوانتر -->
         <div class="cart-sidebar">
             <div class="cart-sidebar-header">
                 <span>🛒 داواکارییەکانی مێز</span>
                 <span id="cartCountBadge" style="background: var(--gold); color: var(--bg-main); padding: 3px 10px; border-radius: 12px; font-size: 13px;">0</span>
             </div>
-            <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ (بۆ برژاو)</button>
+            
             <div class="cart-items-container" id="cartItemsList">
                 <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">سەبەتە بەتاڵە</div>
             </div>
+            
             <div class="cart-sidebar-footer">
                 <div class="cart-total-box">
                     <span>کۆی گشتی:</span>
                     <span class="cart-total-val" id="cartTotalTxt">0 دینار</span>
                 </div>
-                <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+                <!-- دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە تەنیشت یەکدی -->
+                <div class="cart-actions-bottom">
+                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
+                    <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+                </div>
             </div>
         </div>
     </div>
@@ -689,9 +690,6 @@ DESKTOP_TEMPLATE = """
             const btn = document.getElementById('btnSubmitDesktop');
             if (btn) { btn.classList.add('saved-success'); btn.innerHTML = '✅ نێردرا بۆ مەتبەخ'; }
         }
-        function resetInputs() { 
-            document.querySelectorAll('.desktop-qty-indicator').forEach(el => el.innerText = 'بڕ: 0'); 
-        }
         function checkHasGrill() {
             let hasGrill = cartItems.some(i => !i.is_divider && i.cat === 'برژاو');
             document.getElementById('btnAddPlateDesktop').style.display = hasGrill ? 'block' : 'none';
@@ -722,26 +720,12 @@ DESKTOP_TEMPLATE = """
             if (!found && change > 0) {
                 cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '', rice_type: '', chicken_part: '' });
             }
-            updateMenuCardIndicators();
             checkHasGrill();
             renderCart();
-        }
-        function updateMenuCardIndicators() {
-            resetInputs();
-            cartItems.forEach(item => {
-                if (!item.is_divider) {
-                    const ind = document.getElementById('desktop_qty_' + item.food_name);
-                    if (ind) {
-                        let currentQty = parseInt(ind.innerText.replace('بڕ: ', '')) || 0;
-                        ind.innerText = 'بڕ: ' + (currentQty + item.qty);
-                    }
-                }
-            });
         }
         function removeCartIndex(index) {
             setButtonStateNormal();
             cartItems.splice(index, 1);
-            updateMenuCardIndicators();
             checkHasGrill();
             renderCart();
         }
@@ -750,7 +734,6 @@ DESKTOP_TEMPLATE = """
             if (cartItems[index] && !cartItems[index].is_divider) {
                 cartItems[index].qty += change;
                 if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
-                updateMenuCardIndicators();
                 checkHasGrill();
                 renderCart();
             }
@@ -773,7 +756,7 @@ DESKTOP_TEMPLATE = """
                     plateNum++;
                     const sep = document.createElement('div');
                     sep.className = 'plate-sep-desktop';
-                    sep.innerHTML = `<span>🍽 قاپی ${plateNum}</span> <button type="button" style="background:var(--danger); color:#fff; border:none; width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center;" onclick="removeCartIndex(${index})">✕</button>`;
+                    sep.innerHTML = `<span>🍽 قاپی ${plateNum}</span> <button type="button" style="background:var(--danger); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center;" onclick="removeCartIndex(${index})">✕</button>`;
                     list.appendChild(sep);
                 } else {
                     total += (item.qty * item.price);
@@ -816,8 +799,8 @@ DESKTOP_TEMPLATE = """
                                 <button type="button" class="desktop-btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
                             </div>
                             <div style="text-align: left;">
-                                <div style="font-weight:800; font-size:14px; color:#fff;">${item.food_name}</div>
-                                <div style="color:var(--success); font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                                <div style="font-weight:800; font-size:13px; color:#fff;">${item.food_name}</div>
+                                <div style="color:var(--success); font-size:11px; font-weight:700;">${(item.qty * item.price).toLocaleString()} دینار</div>
                             </div>
                         </div>
                         ${optionsHtml}`;
@@ -827,7 +810,6 @@ DESKTOP_TEMPLATE = """
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
             document.getElementById('cartCountBadge').innerText = count;
         }
-
         function filterCat(catId, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -844,7 +826,6 @@ DESKTOP_TEMPLATE = """
                 .then(data => {
                     cartItems = [];
                     originalTableOrders = [];
-                    resetInputs();
                     if (data && data.length > 0) {
                         data.forEach(item => {
                             const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
@@ -862,7 +843,6 @@ DESKTOP_TEMPLATE = """
                         });
                         setButtonStateSaved();
                     } else { setButtonStateNormal(); }
-                    updateMenuCardIndicators();
                     checkHasGrill();
                     renderCart();
                 }).catch(() => {});
