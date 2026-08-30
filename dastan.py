@@ -150,13 +150,13 @@ HTML_TEMPLATE = """
     <div class="categories-scroll">
         <a href="javascript:void(0)" class="cat-chip active" onclick="filterCat('all', this)">هەموو</a>
         {% for cat in categories.keys() %}
-            <a href="javascript:void(0)" class="cat-chip" onclick="filterCat('cat-{{ loop.index }}', this)">{{ cat }}</a>
+            <a href="javascript:void(0)" class="cat-chip" onclick="filterCat('cat-group-{{ loop.index }}', this)">{{ cat }}</a>
         {% endfor %}
     </div>
 
     <div class="menu-container">
         {% for cat, items in categories.items() %}
-        <div class="category-block" id="cat-{{ loop.index }}">
+        <div class="category-block category-group-item" id="cat-group-{{ loop.index }}" data-cat-name="{{ cat }}">
             <div class="category-title">{{ cat }}</div>
             {% for item in items %}
             <div class="food-card">
@@ -384,7 +384,7 @@ HTML_TEMPLATE = """
         function filterCat(catId, btn) {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
-            const blocks = document.querySelectorAll('.category-block');
+            const blocks = document.querySelectorAll('.category-group-item');
             if (catId === 'all') { blocks.forEach(b => b.style.display = 'block'); }
             else { blocks.forEach(b => b.style.display = (b.id === catId) ? 'block' : 'none'); }
         }
@@ -574,13 +574,13 @@ DESKTOP_TEMPLATE = """
             <div class="categories-tabs" id="categoriesTabs">
                 <button type="button" class="tab-btn active" onclick="filterCat('all', this)">هەموو</button>
                 {% for cat in categories.keys() %}
-                    <button type="button" class="tab-btn" onclick="filterCat('cat-{{ loop.index }}', this)">{{ cat }}</button>
+                    <button type="button" class="tab-btn" onclick="filterCat('cat-group-{{ loop.index }}', this)">{{ cat }}</button>
                 {% endfor %}
             </div>
             
             <div class="menu-container-desktop">
                 {% for cat, items in categories.items() %}
-                <div class="category-desktop-group" id="cat-{{ loop.index }}">
+                <div class="category-desktop-group category-group-item" id="cat-group-{{ loop.index }}" data-cat-name="{{ cat }}">
                     <div class="category-desktop-title">{{ cat }}</div>
                     <div class="food-grid">
                         {% for item in items %}
@@ -794,7 +794,7 @@ DESKTOP_TEMPLATE = """
         function filterCat(catId, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const groups = document.querySelectorAll('.category-desktop-group');
+            const groups = document.querySelectorAll('.category-group-item');
             groups.forEach(group => {
                 if (catId === 'all') { group.style.display = 'block'; }
                 else { group.style.display = (group.id === catId) ? 'block' : 'none'; }
@@ -935,13 +935,15 @@ def menu():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != ''")
+            # ڕیزکردنی خواردنەکان بەپێی پۆل و ناو بۆ ئەوەی بە هیچ شێوازێک تێکەڵ نەبن
+            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != '' ORDER BY category, food_name")
             foods = cursor.fetchall()
         conn.close()
 
+        # بەکارهێنانی OrderedDict یان ڕیزبەندی دروست بۆ پۆلەکان
         categories = {}
         for food in foods:
-            cat = food['category'] if food['category'] else 'گشتی'
+            cat = food['category'].strip() if food['category'] and food['category'].strip() else 'گشتی'
             if cat not in categories:
                 categories[cat] = []
             categories[cat].append(food)
@@ -958,13 +960,13 @@ def desktop_menu():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != ''")
+            cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != '' ORDER BY category, food_name")
             foods = cursor.fetchall()
         conn.close()
 
         categories = {}
         for food in foods:
-            cat = food['category'] if food['category'] else 'گشتی'
+            cat = food['category'].strip() if food['category'] and food['category'].strip() else 'گشتی'
             if cat not in categories:
                 categories[cat] = []
             categories[cat].append(food)
@@ -1060,6 +1062,7 @@ def clear_table_orders():
 
 @app.route('/change_table_number', methods=['POST'])
 def change_table_number():
+    (sp)
     if not session.get('authenticated'):
         return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
 
