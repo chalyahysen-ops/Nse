@@ -517,8 +517,8 @@ DESKTOP_TEMPLATE = """
         .btn-top-action { background: #1e293b; color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .btn-top-action.danger { color: var(--danger); border-color: rgba(239,68,68,0.4); }
         
-        /* فراوانکردنی بەشی سەبەتە (چەپ 1fr و ڕاست 540px) */
-        .desktop-main-layout { display: grid; grid-template-columns: 1fr 540px; flex: 1; overflow: hidden; }
+        /* تێبینی: فراوانکردنی بەشی سەبەتە و تەرخانکردنی بۆشایی زیاتر بۆ مێنیو */
+        .desktop-main-layout { display: grid; grid-template-columns: 1fr 580px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
@@ -526,27 +526,27 @@ DESKTOP_TEMPLATE = """
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
-        /* 3 وێنە لە یەک ڕیزدا بە قەبارەی گەورەتر و جوانتر */
-        .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-bottom: 10px; }
-        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, border-color 0.2s; }
+        /* تێبینی: ٤ وێنە لە یەک ڕیزدا بە قەبارەیەکی گونجاو */
+        .food-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-bottom: 10px; }
+        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s, border-color 0.2s; }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         
-        .desktop-food-img { width: 100%; height: 115px; border-radius: 10px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+        .desktop-food-img { width: 100%; height: 95px; border-radius: 8px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
         .desktop-food-img:hover { opacity: 0.9; transform: scale(1.02); }
         .desktop-food-img:active { transform: scale(0.98); }
 
-        .desktop-food-info { display: flex; flex-direction: column; gap: 3px; flex: 1; text-align: center; }
-        .desktop-food-name { font-size: 14px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .desktop-food-price { font-size: 13px; font-weight: 700; color: var(--success); }
+        .desktop-food-info { display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: center; }
+        .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
-        /* بەشی سەبەتە (Sidebar) گەورەتر و فراوانتر */
+        /* بەشی سەبەتە (Sidebar) فراوانتر و گەورەتر */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; height: 100%; overflow: hidden; }
         .cart-sidebar-header { font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
-        /* تێبینی: ناوی خواردنەکانی ناو سەبەتە ئێستا گەورەتر کراون تاوەکو هێڵی مێز پڕبکەنەوە */
+        /* تێبینی: خواردنە ئۆردەرکراوەکان گەورەتر و پانییەکەی هاوسەنگ لەگەڵ هێڵی مێز */
         .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
         .desktop-cart-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         
@@ -557,7 +557,7 @@ DESKTOP_TEMPLATE = """
         
         .desktop-del-btn { background: var(--danger); color: #fff; border: none; width: 34px; height: 34px; border-radius: 8px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        /* تێبینی: جۆری برنج و بەشی مریشک باریکتر کراون بۆ ئەوەی خشتەکە بەرز نەبێتەوە */
+        /* تێبینی: جۆری برنج و بەشی مریشک باریکتر کراون بۆ کەمکردنەوەی بەرزی خشتەکە */
         .desktop-cart-options { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
         .desktop-select-opt { flex: 1; background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--border-color); padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; outline: none; height: 28px; }
         
@@ -567,7 +567,7 @@ DESKTOP_TEMPLATE = """
         .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 800; }
         .cart-total-val { color: var(--success); font-size: 20px; }
         
-        /* دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە خوارەوە لە تەنیشت یەکدی */
+        /* تێبینی: دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە تەنیشت یەکدی لە خوارەوە */
         .cart-actions-bottom { display: flex; gap: 8px; width: 100%; }
         .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border: none; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.2); }
         .btn-send-desktop.saved-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%) !important; color: #ffffff !important; }
@@ -629,7 +629,7 @@ DESKTOP_TEMPLATE = """
             </div>
         </div>
 
-        <!-- بەشی سەبەتەی فراوانتر و گەورەتر -->
+        <!-- بەشی سەبەتە (Sidebar) فراوانتر و گەورەتر -->
         <div class="cart-sidebar">
             <div class="cart-sidebar-header">
                 <span>🛒 داواکارییەکانی مێز</span>
@@ -645,7 +645,7 @@ DESKTOP_TEMPLATE = """
                     <span>کۆی گشتی:</span>
                     <span class="cart-total-val" id="cartTotalTxt">0 دینار</span>
                 </div>
-                <!-- دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە خوارەوە لە تەنیشت یەکدی -->
+                <!-- دوگمەی قاپی نوێ و ناردن بۆ مەتبەخ لە تەنیشت یەکدی -->
                 <div class="cart-actions-bottom">
                     <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
@@ -672,7 +672,6 @@ DESKTOP_TEMPLATE = """
 
     <script>
         let cartItems = [];
-        let originalTableOrders = [];
 
         function showToast(text, isError = false) {
             const toast = document.getElementById('toastMsg');
@@ -828,7 +827,6 @@ DESKTOP_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     cartItems = [];
-                    originalTableOrders = [];
                     if (data && data.length > 0) {
                         data.forEach(item => {
                             const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
@@ -842,7 +840,6 @@ DESKTOP_TEMPLATE = """
                             
                             let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
                             cartItems.push(parsedItem);
-                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
                         });
                         setButtonStateSaved();
                     } else { setButtonStateNormal(); }
@@ -857,20 +854,19 @@ DESKTOP_TEMPLATE = """
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     setButtonStateSaved();
-                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
                 } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
             }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
         }
         function clearCurrentTableOrders() {
             const currentTbl = document.getElementById('tableSelect').value;
-            if (confirm("ئایا دڵنیایت لە سڕینەوەی تەواوی مێزی " + currentTbl + "؟")) {
+            if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
                 fetch('/clear_table_orders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1017,30 +1013,11 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
-    original_items = data.get('original_items', [])
-
-    def make_map(items):
-        mp = {}
-        for it in items:
-            name = "--- قاپی نوێ ---" if it.get('is_divider') else it.get('food_name')
-            cat = it.get('cat', '')
-            rice = it.get('rice_type', '')
-            chicken = it.get('chicken_part', '')
-            full_name = name
-            if not it.get('is_divider'):
-                if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice:
-                    full_name += f" ({rice})"
-                if cat == 'پەلەوەر' and chicken:
-                    full_name += f" ({chicken})"
-            mp[full_name] = {'qty': int(it.get('qty', 1)), 'price': float(it.get('price', 0)), 'cat': cat}
-        return mp
-
-    old_map = make_map(original_items)
-    new_map = make_map(cart_items)
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
+            # پاککردنەوە و ناردنی ڕاستەوخۆی ئۆردەری تەواوی مێزەکە بەبێ دروستکردنی پرینتی زیادە
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1067,27 +1044,6 @@ def save_cart_order():
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
-
-            all_keys = set(old_map.keys()).union(set(new_map.keys()))
-            for key in all_keys:
-                old_qty = old_map.get(key, {}).get('qty', 0)
-                new_qty = new_map.get(key, {}).get('qty', 0)
-                diff = new_qty - old_qty
-                
-                if diff != 0 and key != "--- قاپی نوێ ---":
-                    cat_val = new_map.get(key, {}).get('cat') or old_map.get(key, {}).get('cat', 'گشتی')
-                    price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
-                    
-                    if diff > 0:
-                        cursor.execute("""
-                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                        """, (str(table_num) + " [زیادکراو]", key, diff, price_val, cat_val))
-                    else:
-                        cursor.execute("""
-                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                        """, (str(table_num) + " [سڕاوەتەوە]", f"سڕاوەتەوە: {key}", abs(diff), price_val, cat_val))
 
             conn.commit()
         conn.close()
