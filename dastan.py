@@ -1,4 +1,12 @@
-from flask import Flask, jsonify, redirect, render_template_string, request, session, url_for
+from flask import (
+    Flask,
+    jsonify,
+    redirect,
+    render_template_string,
+    request,
+    session,
+    url_for,
+)
 import pymysql
 
 app = Flask(__name__)
@@ -51,7 +59,7 @@ LOGIN_TEMPLATE = """
 <body>
     <div class="login-card">
         <div class="logo">✨ شاهور ڕێستۆرانت</div>
-        <div class="subtitle">تکایە وشەی نهێنی بنووسە (مۆبایل یان کۆمپیوتەر)</div>
+        <div class="subtitle">تکایە وشەی نهێنی بنووسە (مۆبایل 0 یان کۆمپیوتەر 55)</div>
         <form method="POST" action="/login">
             <input type="password" name="pin" class="pin-input" placeholder="••••" inputmode="numeric" required autofocus>
             <button type="submit" class="btn-submit">چوونەژوورەوە</button>
@@ -64,7 +72,7 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
-# دیزاینی تایبەت بە کۆمپیوتەر (Desktop View)
+# دیزاینی کۆمپیوتەر (Desktop View - Luxury POS Theme)
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -75,52 +83,53 @@ DESKTOP_TEMPLATE = """
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background-color: #0b0f19; color: #f8fafc; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 350px; background: #151d30; border-left: 1px solid #334155; display: flex; flex-direction: column; padding: 20px; z-index: 10; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; }
-        .app-header { font-size: 22px; font-weight: 800; color: #f59e0b; margin-bottom: 15px; text-align: center; }
-        .table-box { background: #1e293b; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
-        .table-box label { font-weight: 700; font-size: 14px; }
-        .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 16px; font-weight: 700; width: 100%; margin-top: 5px; outline: none; }
-        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; border: 1px solid #334155; border-radius: 8px; padding: 10px; background: #0f172a; max-height: 40vh; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
-        .btn-main { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; margin-top: 5px; }
+        .sidebar { width: 380px; background: #151d30; border-left: 1px solid #334155; display: flex; flex-direction: column; padding: 15px; z-index: 10; }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 15px; }
+        .app-header { font-size: 20px; font-weight: 800; color: #f59e0b; margin-bottom: 10px; text-align: center; }
+        .table-box { background: #1e293b; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #334155; }
+        .table-box label { font-weight: 700; font-size: 13px; }
+        .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 6px; border-radius: 8px; font-size: 15px; font-weight: 700; width: 100%; margin-top: 4px; outline: none; }
+        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 10px; border: 1px solid #334155; border-radius: 8px; padding: 8px; background: #0f172a; max-height: 45vh; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; border: 1px solid #243048; }
+        .btn-main { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; }
         .btn-main.saved { background: #10b981; color: #fff; }
-        .categories { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .cat-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 13px; }
+        .categories { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .cat-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 13px; }
         .cat-btn.active { background: #f59e0b; color: #0b0f19; font-weight: 800; border-color: #f59e0b; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 15px; }
-        .food-card { background: #151d30; border: 1px solid #243048; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .food-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #0b0f19; margin-bottom: 8px; border: 1px solid #334155; }
-        .food-name { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-        .food-price { font-size: 13px; color: #10b981; font-weight: 700; margin-bottom: 10px; }
-        .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 8px; border: 1px solid #334155; padding: 4px; gap: 8px; width: 100%; justify-content: center; }
-        .btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: 700; cursor: pointer; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .food-card { background: #151d30; border: 1px solid #243048; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: 0.2s; }
+        .food-card:hover { border-color: #f59e0b; }
+        .food-img { width: 75px; height: 75px; border-radius: 8px; object-fit: cover; background: #0b0f19; margin-bottom: 6px; border: 1px solid #334155; }
+        .food-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+        .food-price { font-size: 12px; color: #10b981; font-weight: 700; margin-bottom: 8px; }
+        .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 6px; border: 1px solid #334155; padding: 2px; gap: 6px; width: 100%; justify-content: center; }
+        .btn-count { width: 26px; height: 26px; border-radius: 4px; border: none; background: #1e293b; color: #fff; font-weight: 700; cursor: pointer; }
         .btn-count.plus { background: #f59e0b; color: #0b0f19; }
-        .qty-val { width: 35px; text-align: center; font-weight: 700; color: #fff; background: transparent; border: none; }
+        .qty-val { width: 30px; text-align: center; font-weight: 700; color: #fff; background: transparent; border: none; font-size: 13px; }
         .plate-separator { background: #8b5cf6; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
-        .select-opt { background: #0f172a; color: #fff; border: 1px solid #fff; padding: 2px 4px; border-radius: 4px; font-size: 11px; }
-        #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: #fff; padding: 10px 20px; border-radius: 20px; font-weight: bold; z-index: 1000; display: none; }
+        .select-opt { background: #0f172a; color: #fff; border: 1px solid #fff; padding: 2px 4px; border-radius: 4px; font-size: 11px; outline: none; }
+        #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: #fff; padding: 10px 20px; border-radius: 20px; font-weight: bold; z-index: 1000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
     </style>
 </head>
 <body>
     <div id="toastMsg">بەسەرکەوتوویی جێبەجێکرا</div>
     <div class="sidebar">
-        <div class="app-header">🖥 شاهور - کۆمپیوتەر</div>
+        <div class="app-header">✨ شاهور - ڕێستۆرانت (کۆمپیوتەر)</div>
         <div class="table-box">
-            <label>📍 دیاریکردنی مێز:</label>
+            <label>📍 مێزی:</label>
             <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
                 {% for num in range(1, 91) %}
                     <option value="{{ num }}">مێزی {{ num }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button onclick="addNewPlateDivider()" style="flex:1; background:#8b5cf6; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ قاپی نوێ</button>
-            <button onclick="clearTableOrders()" style="flex:1; background:#ef4444; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">🗑 سڕینەوە</button>
+        <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+            <button onclick="addNewPlateDivider()" style="flex:1; background:#8b5cf6; color:#fff; border:none; padding:7px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px;">➕ قاپی نوێ</button>
+            <button onclick="clearTableOrders()" style="flex:1; background:#ef4444; color:#fff; border:none; padding:7px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px;">🗑 بەتاڵکردنەوە</button>
         </div>
         <div class="cart-list" id="cartList"></div>
         <div style="margin-top: auto;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 8px;">
                 <span>کۆی گشتی:</span>
                 <span id="cartTotal" style="color: #10b981;">0 دینار</span>
             </div>
@@ -135,15 +144,15 @@ DESKTOP_TEMPLATE = """
             {% endfor %}
         </div>
         {% for cat, items in categories.items() %}
-        <div class="cat-block" id="cat-{{ loop.index }}" style="margin-bottom: 25px;">
-            <h3 style="color: #f59e0b; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 5px;">{{ cat }}</h3>
+        <div class="cat-block" id="cat-{{ loop.index }}" style="margin-bottom: 20px;" data-category-name="{{ cat }}">
+            <h3 style="color: #f59e0b; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 15px;">{{ cat }}</h3>
             <div class="menu-grid">
                 {% for item in items %}
-                <div class="food-card">
+                <div class="food-card" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">
                     <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="food-img">
                     <div class="food-name">{{ item.food_name }}</div>
                     <div class="food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
-                    <div class="counter-group">
+                    <div class="counter-group" onclick="event.stopPropagation()">
                         <button class="btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
                         <input type="text" id="qty_{{ item.food_name }}" value="0" class="qty-val" readonly>
                         <button class="btn-count plus" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
@@ -203,7 +212,7 @@ DESKTOP_TEMPLATE = """
                 showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
                 return;
             }
-            cartItems.push({ is_divider: true, food_name: 'قاپی نوێ', price: 0, qty: 1, cat: 'مەتبەخ', rice_type: '', chicken_part: '' });
+            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ', rice_type: '', chicken_part: '' });
             renderCart();
         }
         function renderCart() {
@@ -227,7 +236,7 @@ DESKTOP_TEMPLATE = """
             let defChic = window.defChic || '';
             if(hasRiceFirst) {
                 html += `<select class="select-opt" onchange="window.defRice=this.value">
-                    <option value="">برنج</option>
+                    <option value="">جۆری برنج</option>
                     <option value="برنجی درێژ" ${defRice=='برنجی درێژ'?'selected':''}>درێژ</option>
                     <option value="برنجی خڕ" ${defRice=='برنجی خڕ'?'selected':''}>خڕ</option>
                     <option value="برنجی کوردی" ${defRice=='برنجی کوردی'?'selected':''}>کوردی</option>
@@ -305,7 +314,7 @@ DESKTOP_TEMPLATE = """
                         });
                         cartItems.push({
                             is_divider: isDiv,
-                            food_name: fName,
+                            food_name: fName.trim(),
                             qty: parseInt(item.quantity) || 1,
                             price: parseFloat(item.price) || 0,
                             cat: item.category || '',
@@ -375,7 +384,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# دیزاینی مۆبایل (Mobile View) کە بە تەواوی ڕاستکراوەتەوە و سەبەتە و هێڵەکان بە باشترین شێوە کار دەکەن
+# دیزاینی مۆبایل وەک خۆی بە بێ هیچ کێشەیەک
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -396,7 +405,6 @@ HTML_TEMPLATE = """
         .table-info label { font-weight: 700; font-size: 13px; color: #f8fafc; }
         .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; }
         .table-actions { display: flex; align-items: center; gap: 6px; }
-        .btn-action { border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .btn-clear-tbl { background: #ef4444; color: #ffffff; }
         .btn-add-plate { background: #8b5cf6; color: #ffffff; border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .categories-scroll { display: flex; overflow-x: auto; gap: 8px; padding: 4px 16px 12px; scrollbar-width: none; }
@@ -429,7 +437,6 @@ HTML_TEMPLATE = """
         .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
         .cart-items-list { overflow-y: auto; flex: 1; max-height: 60vh; margin-bottom: 10px; }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; }
-        .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
         .plate-separator-row { display: flex; align-items: center; justify-content: space-between; background: #8b5cf6; color: #ffffff; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; margin: 12px 0 6px 0; gap: 6px; flex-wrap: wrap; }
         .plate-options-container { display: flex; gap: 4px; align-items: center; }
         .plate-rice-select, .plate-chicken-select { background: #0f172a; color: #fff; border: 1px solid #fff; padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; outline: none; }
@@ -621,11 +628,11 @@ HTML_TEMPLATE = """
                 let currentRice = window.defaultPlateRice || '';
                 firstRowHtml += `
                     <select class="plate-rice-select" onchange="updatePlateRice(-1, this.value)">
-                        <option value="">جۆری برنج دیاریبکە</option>
-                        <option value="برنجی درێژ" ${currentRice === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
-                        <option value="برنجی خڕ" ${currentRice === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
-                        <option value="برنجی کوردی" ${currentRice === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
-                        <option value="برنج بە سرکە" ${currentRice === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                        <option value="">برنج</option>
+                        <option value="برنجی درێژ" ${currentRice === 'برنجی درێژ' ? 'selected' : ''}>درێژ</option>
+                        <option value="برنجی خڕ" ${currentRice === 'برنجی خڕ' ? 'selected' : ''}>خڕ</option>
+                        <option value="برنجی کوردی" ${currentRice === 'برنجی کوردی' ? 'selected' : ''}>کوردی</option>
+                        <option value="برنج بە سرکە" ${currentRice === 'برنج بە سرکە' ? 'selected' : ''}>سرکە</option>
                     </select>
                 `;
             }
@@ -633,7 +640,7 @@ HTML_TEMPLATE = """
                 let currentChicken = window.defaultPlateChicken || '';
                 firstRowHtml += `
                     <select class="plate-chicken-select" onchange="updatePlateChicken(-1, this.value)">
-                        <option value="">بەشی مریشک</option>
+                        <option value="">مریشک</option>
                         <option value="سینگ" ${currentChicken === 'سینگ' ? 'selected' : ''}>سینگ</option>
                         <option value="ڕان" ${currentChicken === 'ڕان' ? 'selected' : ''}>ڕان</option>
                     </select>
@@ -660,11 +667,11 @@ HTML_TEMPLATE = """
                         let rVal = item.rice_type || '';
                         sepHtml += `
                             <select class="plate-rice-select" onchange="updatePlateRice(${index}, this.value)">
-                                <option value="">جۆری برنج دیاریبکە</option>
-                                <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
-                                <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
-                                <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
-                                <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                                <option value="">برنج</option>
+                                <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>درێژ</option>
+                                <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>خڕ</option>
+                                <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>کوردی</option>
+                                <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>سرکە</option>
                             </select>
                         `;
                     }
@@ -672,7 +679,7 @@ HTML_TEMPLATE = """
                         let cVal = item.chicken_part || '';
                         sepHtml += `
                             <select class="plate-chicken-select" onchange="updatePlateChicken(${index}, this.value)">
-                                <option value="">بەشی مریشک</option>
+                                <option value="">مریشک</option>
                                 <option value="سینگ" ${cVal === 'سینگ' ? 'selected' : ''}>سینگ</option>
                                 <option value="ڕان" ${cVal === 'ڕان' ? 'selected' : ''}>ڕان</option>
                             </select>
@@ -889,7 +896,7 @@ def get_table_orders(table_num):
     with conn.cursor() as cursor:
       cursor.execute(
           "SELECT food_name, price, category, quantity FROM froshtn WHERE"
-          " table_cabin = %s",
+          " table_cabin = %s AND food_name NOT LIKE '%❌%'",
           (str(table_num),),
       )
       orders = cursor.fetchall()
@@ -913,12 +920,23 @@ def save_cart_order():
   conn = get_db()
   try:
     with conn.cursor() as cursor:
+      # هێنانی داواکارییە کۆنەکان بۆ بەراوردکردن (هاوشێوەی سی شاڕپ بۆ چاپکردن و دیاریکردنی is_printed = 0)
       cursor.execute(
-          "DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),)
+          "SELECT order_id, food_name, quantity, category FROM froshtn WHERE"
+          " table_cabin = %s AND food_name NOT LIKE '%❌%'",
+          (str(table_num),),
       )
+      db_existing = {}
+      for rdr in cursor.fetchall():
+        db_existing[rdr["order_id"]] = (
+            rdr["food_name"].strip(),
+            rdr["quantity"],
+            rdr["category"],
+        )
 
       current_rice = default_rice
       current_chicken = default_chicken
+      current_screen_items = []
 
       for item in cart_items:
         if item.get("is_divider"):
@@ -931,16 +949,36 @@ def save_cart_order():
         else:
           food_name = item.get("food_name")
           cat = item.get("cat", "")
+          r_type = item.get("rice_type", "")
+          c_part = item.get("chicken_part", "")
 
-          if cat in ["کوڵاو", "پەلەوەر", "کوردیەکان"] and current_rice:
-            food_name += f" ({current_rice})"
+          # ئەگەر لە خشتەکەدا دیاری کرابوون، ئەوا بەکاربێنە، ئەگەر نەخێر ئەوا دەیفۆڵتی سەری قاپەکە
+          chosen_rice = r_type if r_type else current_rice
+          chosen_chicken = c_part if c_part else current_chicken
 
-          if cat == "پەلەوەر" and current_chicken:
-            food_name += f" ({current_chicken})"
+          if (
+              cat in ["کوڵاو", "پەلەوەر", "کوردیەکان"]
+              and chosen_rice
+              and not f"({chosen_rice})" in food_name
+          ):
+            food_name += f" ({chosen_rice})"
+
+          if (
+              cat == "پەلەوەر"
+              and chosen_chicken
+              and not f"({chosen_chicken})" in food_name
+          ):
+            food_name += f" ({chosen_chicken})"
 
           qty = int(item.get("qty", 1))
           price = float(item.get("price", 0))
 
+        current_screen_items.append((food_name, qty, price, cat))
+
+      # سڕینەوەی داتای کۆن و نوێکردنەوەیان بە شێوازێکی زۆر پاک و ڕێک
+      cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+
+      for food_name, qty, price, cat in current_screen_items:
         cursor.execute(
             """
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
