@@ -75,50 +75,37 @@ DESKTOP_TEMPLATE = """
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background-color: #0b0f19; color: #f8fafc; display: flex; height: 100vh; overflow: hidden; }
-        
         .sidebar { width: 350px; background: #151d30; border-left: 1px solid #334155; display: flex; flex-direction: column; padding: 20px; z-index: 10; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; }
-
         .app-header { font-size: 22px; font-weight: 800; color: #f59e0b; margin-bottom: 15px; text-align: center; }
         .table-box { background: #1e293b; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
         .table-box label { font-weight: 700; font-size: 14px; }
         .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 8px; border-radius: 8px; font-size: 16px; font-weight: 700; width: 100%; margin-top: 5px; outline: none; }
-
         .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; border: 1px solid #334155; border-radius: 8px; padding: 10px; background: #0f172a; max-height: 40vh; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
-        
         .btn-main { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; margin-top: 5px; }
         .btn-main.saved { background: #10b981; color: #fff; }
-
         .categories { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
         .cat-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: 600; white-space: nowrap; font-size: 13px; }
         .cat-btn.active { background: #f59e0b; color: #0b0f19; font-weight: 800; border-color: #f59e0b; }
-
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 15px; }
         .food-card { background: #151d30; border: 1px solid #243048; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
         .food-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #0b0f19; margin-bottom: 8px; border: 1px solid #334155; }
         .food-name { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
         .food-price { font-size: 13px; color: #10b981; font-weight: 700; margin-bottom: 10px; }
-        
         .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 8px; border: 1px solid #334155; padding: 4px; gap: 8px; width: 100%; justify-content: center; }
         .btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: 700; cursor: pointer; }
         .btn-count.plus { background: #f59e0b; color: #0b0f19; }
         .qty-val { width: 35px; text-align: center; font-weight: 700; color: #fff; background: transparent; border: none; }
-        
         .plate-separator { background: #8b5cf6; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
         .select-opt { background: #0f172a; color: #fff; border: 1px solid #fff; padding: 2px 4px; border-radius: 4px; font-size: 11px; }
-        
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: #fff; padding: 10px 20px; border-radius: 20px; font-weight: bold; z-index: 1000; display: none; }
     </style>
 </head>
 <body>
-
     <div id="toastMsg">بەسەرکەوتوویی جێبەجێکرا</div>
-
-    <!-- لای چەپ: سەبەتە و مێزەکان -->
     <div class="sidebar">
         <div class="app-header">🖥 شاهور - کۆمپیوتەر</div>
-        
         <div class="table-box">
             <label>📍 دیاریکردنی مێز:</label>
             <select id="tableSelect" class="table-select" onchange="fetchTableOrders(this.value)">
@@ -127,14 +114,11 @@ DESKTOP_TEMPLATE = """
                 {% endfor %}
             </select>
         </div>
-
         <div style="display: flex; gap: 5px; margin-bottom: 10px;">
             <button onclick="addNewPlateDivider()" style="flex:1; background:#8b5cf6; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ قاپی نوێ</button>
             <button onclick="clearTableOrders()" style="flex:1; background:#ef4444; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer;">🗑 سڕینەوە</button>
         </div>
-
         <div class="cart-list" id="cartList"></div>
-
         <div style="margin-top: auto;">
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
                 <span>کۆی گشتی:</span>
@@ -143,8 +127,6 @@ DESKTOP_TEMPLATE = """
             <button id="submitBtn" class="btn-main" onclick="submitOrder()">ناردن بۆ مەتبەخ ➔</button>
         </div>
     </div>
-
-    <!-- لای ڕاست: مێنیوو و خواردنەکان -->
     <div class="main-content">
         <div class="categories" id="catScroll">
             <button class="cat-btn active" onclick="filterCat('all', this)">هەموو</button>
@@ -152,9 +134,8 @@ DESKTOP_TEMPLATE = """
                 <button class="cat-btn" onclick="filterCat('cat-{{ loop.index }}', this)">{{ cat }}</button>
             {% endfor %}
         </div>
-
         {% for cat, items in categories.items() %}
-        <div class="cat-block" id="cat-{{ loop.index }}" data-cat-name="{{ cat }}" style="margin-bottom: 25px;">
+        <div class="cat-block" id="cat-{{ loop.index }}" style="margin-bottom: 25px;">
             <h3 style="color: #f59e0b; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 5px;">{{ cat }}</h3>
             <div class="menu-grid">
                 {% for item in items %}
@@ -162,7 +143,6 @@ DESKTOP_TEMPLATE = """
                     <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="food-img">
                     <div class="food-name">{{ item.food_name }}</div>
                     <div class="food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
-                    
                     <div class="counter-group">
                         <button class="btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
                         <input type="text" id="qty_{{ item.food_name }}" value="0" class="qty-val" readonly>
@@ -174,10 +154,8 @@ DESKTOP_TEMPLATE = """
         </div>
         {% endfor %}
     </div>
-
     <script>
         let cartItems = [];
-
         function showToast(msg, isErr=false) {
             let t = document.getElementById('toastMsg');
             t.innerText = msg;
@@ -185,7 +163,6 @@ DESKTOP_TEMPLATE = """
             t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 2500);
         }
-
         function filterCat(catId, btn) {
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -193,11 +170,9 @@ DESKTOP_TEMPLATE = """
                 b.style.display = (catId === 'all' || b.id === catId) ? 'block' : 'none';
             });
         }
-
         function updateQty(name, change, price, cat) {
             document.getElementById('submitBtn').classList.remove('saved');
             document.getElementById('submitBtn').innerText = 'ناردن بۆ مەتبەخ ➔';
-            
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
                 if (cartItems[i].is_divider) break;
@@ -214,7 +189,6 @@ DESKTOP_TEMPLATE = """
             updateInputs();
             renderCart();
         }
-
         function updateInputs() {
             document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
             cartItems.forEach(item => {
@@ -224,7 +198,6 @@ DESKTOP_TEMPLATE = """
                 }
             });
         }
-
         function addNewPlateDivider() {
             if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
                 showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
@@ -233,7 +206,6 @@ DESKTOP_TEMPLATE = """
             cartItems.push({ is_divider: true, food_name: 'قاپی نوێ', price: 0, qty: 1, cat: 'مەتبەخ', rice_type: '', chicken_part: '' });
             renderCart();
         }
-
         function renderCart() {
             let list = document.getElementById('cartList');
             list.innerHTML = '';
@@ -242,10 +214,7 @@ DESKTOP_TEMPLATE = """
                 document.getElementById('cartTotal').innerText = '0 دینار';
                 return;
             }
-
-            let plateNum = 1;
-            let total = 0;
-            
+            let plateNum = 1, total = 0;
             let hasRiceFirst = false, hasChickenFirst = false;
             for(let i=0; i<cartItems.length; i++) {
                 if(cartItems[i].is_divider) break;
@@ -253,7 +222,6 @@ DESKTOP_TEMPLATE = """
                 if(['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(c)) hasRiceFirst = true;
                 if(c === 'پەلەوەر') hasChickenFirst = true;
             }
-
             let html = `<div class="plate-separator"><span>🍽 قاپی ${plateNum}</span><div>`;
             let defRice = window.defRice || '';
             let defChic = window.defChic || '';
@@ -274,7 +242,6 @@ DESKTOP_TEMPLATE = """
                 </select>`;
             }
             html += `</div></div>`;
-
             cartItems.forEach((item, idx) => {
                 if(item.is_divider) {
                     plateNum++;
@@ -315,11 +282,9 @@ DESKTOP_TEMPLATE = """
                     `;
                 }
             });
-
             list.innerHTML = html;
             document.getElementById('cartTotal').innerText = total.toLocaleString() + ' دینار';
         }
-
         function fetchTableOrders(tblNum) {
             fetch('/get_table_orders/' + tblNum)
             .then(res => res.json())
@@ -338,7 +303,6 @@ DESKTOP_TEMPLATE = """
                         ['سینگ', 'ڕان'].forEach(x => {
                             if(fName.includes(`(${x})`)) { c = x; fName = fName.replace(` (${x})`, ''); }
                         });
-
                         cartItems.push({
                             is_divider: isDiv,
                             food_name: fName,
@@ -359,7 +323,6 @@ DESKTOP_TEMPLATE = """
                 renderCart();
             });
         }
-
         function submitOrder() {
             let tblNum = document.getElementById('tableSelect').value;
             if(cartItems.length === 0) {
@@ -387,7 +350,6 @@ DESKTOP_TEMPLATE = """
                 }
             });
         }
-
         function clearTableOrders() {
             let tblNum = document.getElementById('tableSelect').value;
             if(confirm("ئایا دڵنیایت لە بەتاڵکردنی مێزی " + tblNum + "؟")) {
@@ -405,7 +367,6 @@ DESKTOP_TEMPLATE = """
                 });
             }
         }
-
         window.onload = function() {
             fetchTableOrders(document.getElementById('tableSelect').value);
         }
@@ -414,13 +375,14 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# HTML_TEMPLATEـی پێشوو بۆ مۆبایل وەک خۆی دەمێنێتەوە
+# دیزاینی مۆبایل (Mobile View) کە بە تەواوی ڕاستکراوەتەوە و سەبەتە و هێڵەکان بە باشترین شێوە کار دەکەن
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>مێنیوی شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -435,7 +397,6 @@ HTML_TEMPLATE = """
         .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; }
         .table-actions { display: flex; align-items: center; gap: 6px; }
         .btn-action { border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .btn-change-tbl { background: #0284c7; color: #ffffff; }
         .btn-clear-tbl { background: #ef4444; color: #ffffff; }
         .btn-add-plate { background: #8b5cf6; color: #ffffff; border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .categories-scroll { display: flex; overflow-x: auto; gap: 8px; padding: 4px 16px 12px; scrollbar-width: none; }
@@ -492,7 +453,6 @@ HTML_TEMPLATE = """
         </div>
         <div class="table-actions">
             <button type="button" class="btn-add-plate" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
-            <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
             <button type="button" class="btn-action btn-clear-tbl" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
         </div>
     </div>
@@ -553,13 +513,40 @@ HTML_TEMPLATE = """
             toast.style.display = 'block';
             setTimeout(() => toast.style.display = 'none', 2500);
         }
+        function setButtonStateNormal() {
+            const btnMain = document.getElementById('btnSubmitMain');
+            const btnModal = document.getElementById('btnSubmitModal');
+            if (btnMain) { btnMain.classList.remove('saved-success'); btnMain.innerHTML = 'ناردنی داواکاری ➔'; }
+            if (btnModal) { btnModal.classList.remove('saved-success'); btnModal.innerHTML = 'ناردن بۆ مەتبەخ'; }
+        }
+        function setButtonStateSaved() {
+            const btnMain = document.getElementById('btnSubmitMain');
+            const btnModal = document.getElementById('btnSubmitModal');
+            if (btnMain) { btnMain.classList.add('saved-success'); btnMain.innerHTML = '✅ نێردرا بۆ مەتبەخ'; }
+            if (btnModal) { btnModal.classList.add('saved-success'); btnModal.innerHTML = '✅ نێردرا بۆ مەتبەخ'; }
+        }
+        function resetInputs() {
+            document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
+        }
+        function addNewPlateDivider() {
+            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
+                showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
+                return;
+            }
+            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ', rice_type: '', chicken_part: '' });
+            setButtonStateNormal();
+            renderCartSummary();
+            if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
+            showToast("هێڵی قاپی نوێ زیادکرا");
+        }
         function updateQty(foodName, change, price, cat) {
+            setButtonStateNormal();
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
                 if (cartItems[i].is_divider) break;
                 if (cartItems[i].food_name === foodName) {
                     cartItems[i].qty += change;
-                    if (cartItems[i].qty <= 0) cartItems.splice(i, 1);
+                    if (cartItems[i].qty <= 0) { cartItems.splice(i, 1); }
                     found = true;
                     break;
                 }
@@ -571,18 +558,30 @@ HTML_TEMPLATE = """
             renderCartSummary();
         }
         function updateMenuCardInputs() {
-            document.querySelectorAll('.qty-val').forEach(el => el.value = 0);
+            resetInputs();
             cartItems.forEach(item => {
                 if (!item.is_divider) {
-                    let input = document.getElementById('qty_' + item.food_name);
-                    if (input) input.value = item.qty;
+                    const input = document.getElementById('qty_' + item.food_name);
+                    if (input) { input.value = (parseInt(input.value) || 0) + item.qty; }
                 }
             });
         }
-        function addNewPlateDivider() {
-            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) return;
-            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ', rice_type: '', chicken_part: '' });
+        function removeCartIndex(index) {
+            setButtonStateNormal();
+            cartItems.splice(index, 1);
+            updateMenuCardInputs();
             renderCartSummary();
+            renderCartModalList();
+        }
+        function updatePlateRice(dividerIndex, val) {
+            setButtonStateNormal();
+            if (dividerIndex === -1) { window.defaultPlateRice = val; }
+            else if (cartItems[dividerIndex] && cartItems[dividerIndex].is_divider) { cartItems[dividerIndex].rice_type = val; }
+        }
+        function updatePlateChicken(dividerIndex, val) {
+            setButtonStateNormal();
+            if (dividerIndex === -1) { window.defaultPlateChicken = val; }
+            else if (cartItems[dividerIndex] && cartItems[dividerIndex].is_divider) { cartItems[dividerIndex].chicken_part = val; }
         }
         function renderCartSummary() {
             let total = 0, count = 0;
@@ -592,51 +591,214 @@ HTML_TEMPLATE = """
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
             document.getElementById('cartCount').innerText = count;
         }
-        function openCartModal() { document.getElementById('cartModal').style.display = 'flex'; }
-        function toggleCartModal(show) { document.getElementById('cartModal').style.display = show ? 'flex' : 'none'; }
-        function closeCartModal(e) { if (e.target.id === 'cartModal') toggleCartModal(false); }
+        function openCartModal() {
+            renderCartModalList();
+            toggleCartModal(true);
+        }
+        function toggleCartModal(show) {
+            document.getElementById('cartModal').style.display = show ? 'flex' : 'none';
+        }
+        function closeCartModal(e) {
+            if (e.target.id === 'cartModal') toggleCartModal(false);
+        }
+        function renderCartModalList() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            if (cartItems.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">سەبەتە بەتاڵە!</div>';
+                return;
+            }
+            let plateNum = 1;
+            let hasRiceForFirst = false, hasChickenForFirst = false;
+            for (let i = 0; i < cartItems.length; i++) {
+                if (cartItems[i].is_divider) break;
+                let c = cartItems[i].cat;
+                if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(c)) hasRiceForFirst = true;
+                if (c === 'پەلەوەر') hasChickenForFirst = true;
+            }
+            let firstRowHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
+            if (hasRiceForFirst) {
+                let currentRice = window.defaultPlateRice || '';
+                firstRowHtml += `
+                    <select class="plate-rice-select" onchange="updatePlateRice(-1, this.value)">
+                        <option value="">جۆری برنج دیاریبکە</option>
+                        <option value="برنجی درێژ" ${currentRice === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
+                        <option value="برنجی خڕ" ${currentRice === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
+                        <option value="برنجی کوردی" ${currentRice === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
+                        <option value="برنج بە سرکە" ${currentRice === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                    </select>
+                `;
+            }
+            if (hasChickenForFirst) {
+                let currentChicken = window.defaultPlateChicken || '';
+                firstRowHtml += `
+                    <select class="plate-chicken-select" onchange="updatePlateChicken(-1, this.value)">
+                        <option value="">بەشی مریشک</option>
+                        <option value="سینگ" ${currentChicken === 'سینگ' ? 'selected' : ''}>سینگ</option>
+                        <option value="ڕان" ${currentChicken === 'ڕان' ? 'selected' : ''}>ڕان</option>
+                    </select>
+                `;
+            }
+            firstRowHtml += `</div>`;
+            const startHeader = document.createElement('div');
+            startHeader.className = 'plate-separator-row';
+            startHeader.innerHTML = firstRowHtml;
+            list.appendChild(startHeader);
+
+            cartItems.forEach((item, index) => {
+                if (item.is_divider) {
+                    plateNum++;
+                    let hasRiceForNext = false, hasChickenForNext = false;
+                    for (let j = index + 1; j < cartItems.length; j++) {
+                        if (cartItems[j].is_divider) break;
+                        let c = cartItems[j].cat;
+                        if (['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(c)) hasRiceForNext = true;
+                        if (c === 'پەلەوەر') hasChickenForNext = true;
+                    }
+                    let sepHtml = `<span>🍽 قاپی ${plateNum}</span><div class="plate-options-container">`;
+                    if (hasRiceForNext) {
+                        let rVal = item.rice_type || '';
+                        sepHtml += `
+                            <select class="plate-rice-select" onchange="updatePlateRice(${index}, this.value)">
+                                <option value="">جۆری برنج دیاریبکە</option>
+                                <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
+                                <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
+                                <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
+                                <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                            </select>
+                        `;
+                    }
+                    if (hasChickenForNext) {
+                        let cVal = item.chicken_part || '';
+                        sepHtml += `
+                            <select class="plate-chicken-select" onchange="updatePlateChicken(${index}, this.value)">
+                                <option value="">بەشی مریشک</option>
+                                <option value="سینگ" ${cVal === 'سینگ' ? 'selected' : ''}>سینگ</option>
+                                <option value="ڕان" ${cVal === 'ڕان' ? 'selected' : ''}>ڕان</option>
+                            </select>
+                        `;
+                    }
+                    sepHtml += `</div><button type="button" class="del-item-btn" style="background:#ef4444; color:#fff; width:24px; height:24px; font-size:11px;" onclick="removeCartIndex(${index})">✕</button>`;
+                    const sep = document.createElement('div');
+                    sep.className = 'plate-separator-row';
+                    sep.innerHTML = sepHtml;
+                    list.appendChild(sep);
+                } else {
+                    const row = document.createElement('div');
+                    row.className = 'cart-item-row';
+                    row.innerHTML = `
+                        <div class="counter-group">
+                            <button type="button" class="del-item-btn" onclick="removeCartIndex(${index})" title="سڕینەوە">🗑</button>
+                            <button type="button" class="btn-count" onclick="modifyItemQty(${index}, -1)">-</button>
+                            <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
+                            <button type="button" class="btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
+                            <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
+                        </div>
+                    `;
+                    list.appendChild(row);
+                }
+            });
+        }
+        function modifyItemQty(index, change) {
+            setButtonStateNormal();
+            if (cartItems[index] && !cartItems[index].is_divider) {
+                cartItems[index].qty += change;
+                if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
+                updateMenuCardInputs();
+                renderCartSummary();
+                renderCartModalList();
+            }
+        }
         function filterCat(catId, btn) {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
-            document.querySelectorAll('.category-block').forEach(b => {
-                b.style.display = (catId === 'all' || b.id === catId) ? 'block' : 'none';
-            });
+            const blocks = document.querySelectorAll('.category-block');
+            if (catId === 'all') { blocks.forEach(b => b.style.display = 'block'); }
+            else { blocks.forEach(b => b.style.display = (b.id === catId) ? 'block' : 'none'); }
         }
         function fetchTableOrders(tableNum) {
             fetch('/get_table_orders/' + tableNum)
             .then(res => res.json())
             .then(data => {
                 cartItems = [];
+                resetInputs();
+                window.defaultPlateRice = '';
+                window.defaultPlateChicken = '';
                 if (data && data.length > 0) {
                     data.forEach(item => {
-                        let isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
+                        const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
+                        let fName = item.food_name, rType = '', cPart = '';
+                        ['برنجی درێژ', 'برنجی خڕ', 'برنجی کوردی', 'برنج بە سرکە'].forEach(r => {
+                            if (fName.includes(`(${r})`)) { rType = r; fName = fName.replace(` (${r})`, '').trim(); }
+                        });
+                        ['سینگ', 'ڕان'].forEach(c => {
+                            if (fName.includes(`(${c})`)) { cPart = c; fName = fName.replace(` (${c})`, '').trim(); }
+                        });
                         cartItems.push({
                             is_divider: isDiv,
-                            food_name: item.food_name,
+                            food_name: fName,
                             qty: parseInt(item.quantity),
                             price: parseFloat(item.price),
-                            cat: item.category || ''
+                            cat: item.category || '',
+                            rice_type: rType,
+                            chicken_part: cPart
                         });
                     });
+                    setButtonStateSaved();
+                } else {
+                    setButtonStateNormal();
                 }
                 updateMenuCardInputs();
                 renderCartSummary();
+                if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
             });
         }
         function submitFinalOrder() {
-            let tableNum = document.getElementById('tableSelect').value;
+            const tableNum = document.getElementById('tableSelect').value;
+            if (cartItems.length === 0) {
+                showToast("تکایە سەرەتا خواردن دیاری بکە!", true);
+                return;
+            }
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ 
+                    table_number: tableNum, 
+                    cart_items: cartItems,
+                    default_rice: window.defaultPlateRice || '',
+                    default_chicken: window.defaultPlateChicken || ''
+                })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     toggleCartModal(false);
+                    setButtonStateSaved();
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
+                } else {
+                    showToast('هەڵە لە ناردن: ' + data.message, true);
                 }
             });
+        }
+        function clearCurrentTableOrders() {
+            const currentTbl = document.getElementById('tableSelect').value;
+            if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
+                fetch('/clear_table_orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table_number: currentTbl })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
+                        fetchTableOrders(currentTbl);
+                    }
+                });
+            }
         }
         window.onload = function() { fetchTableOrders(document.getElementById('tableSelect').value); };
     </script>
@@ -650,7 +812,6 @@ def login():
   if request.method == "POST":
     input_pin = normalize_digits(request.form.get("pin", ""))
 
-    # پشکنینی پینی کۆمپیوتەر (55) یان مۆبایل (0 یان داتابەیس)
     if input_pin in ["55", "٥٥"]:
       session["authenticated"] = True
       session["device_type"] = "desktop"
@@ -661,7 +822,6 @@ def login():
       session["device_type"] = "mobile"
       return redirect(url_for("menu"))
 
-    # پشکنینی داتابەیس بۆ پینی مۆبایل
     db_pin = None
     try:
       conn = get_db()
@@ -711,7 +871,6 @@ def menu():
         categories[cat] = []
       categories[cat].append(food)
 
-    # دیاریکردنی جۆری ڕوکار بەپێی پین کۆدەکە (کۆمپیوتەر یان مۆبایل)
     if session.get("device_type") == "desktop":
       return render_template_string(DESKTOP_TEMPLATE, categories=categories)
     else:
