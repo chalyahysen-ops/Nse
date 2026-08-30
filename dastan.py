@@ -72,7 +72,7 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
-# دیزاینی کۆمپیوتەر (Desktop View - Luxury POS Theme)
+# دیزاینی کۆمپیوتەر (Desktop View)
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -144,7 +144,7 @@ DESKTOP_TEMPLATE = """
             {% endfor %}
         </div>
         {% for cat, items in categories.items() %}
-        <div class="cat-block" id="cat-{{ loop.index }}" style="margin-bottom: 20px;" data-category-name="{{ cat }}">
+        <div class="cat-block" id="cat-{{ loop.index }}" style="margin-bottom: 20px;">
             <h3 style="color: #f59e0b; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 15px;">{{ cat }}</h3>
             <div class="menu-grid">
                 {% for item in items %}
@@ -384,7 +384,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# دیزاینی مۆبایل وەک خۆی بە بێ هیچ کێشەیەک
+# دیزاینی مۆبایل (Mobile View)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -896,13 +896,14 @@ def get_table_orders(table_num):
     with conn.cursor() as cursor:
       cursor.execute(
           "SELECT food_name, price, category, quantity FROM froshtn WHERE"
-          " table_cabin = %s AND food_name NOT LIKE '%❌%'",
-          (str(table_num),),
+          " CAST(table_cabin AS CHAR) = %s AND food_name NOT LIKE '%❌%'",
+          (str(table_num).strip(),),
       )
       orders = cursor.fetchall()
     conn.close()
     return jsonify(orders)
-  except:
+  except Exception as e:
+    print("Error in get_table_orders:", e)
     return jsonify([])
 
 
@@ -920,20 +921,6 @@ def save_cart_order():
   conn = get_db()
   try:
     with conn.cursor() as cursor:
-      # هێنانی داواکارییە کۆنەکان بۆ بەراوردکردن (هاوشێوەی سی شاڕپ بۆ چاپکردن و دیاریکردنی is_printed = 0)
-      cursor.execute(
-          "SELECT order_id, food_name, quantity, category FROM froshtn WHERE"
-          " table_cabin = %s AND food_name NOT LIKE '%❌%'",
-          (str(table_num),),
-      )
-      db_existing = {}
-      for rdr in cursor.fetchall():
-        db_existing[rdr["order_id"]] = (
-            rdr["food_name"].strip(),
-            rdr["quantity"],
-            rdr["category"],
-        )
-
       current_rice = default_rice
       current_chicken = default_chicken
       current_screen_items = []
@@ -952,7 +939,6 @@ def save_cart_order():
           r_type = item.get("rice_type", "")
           c_part = item.get("chicken_part", "")
 
-          # ئەگەر لە خشتەکەدا دیاری کرابوون، ئەوا بەکاربێنە، ئەگەر نەخێر ئەوا دەیفۆڵتی سەری قاپەکە
           chosen_rice = r_type if r_type else current_rice
           chosen_chicken = c_part if c_part else current_chicken
 
@@ -975,8 +961,10 @@ def save_cart_order():
 
         current_screen_items.append((food_name, qty, price, cat))
 
-      # سڕینەوەی داتای کۆن و نوێکردنەوەیان بە شێوازێکی زۆر پاک و ڕێک
-      cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+      cursor.execute(
+          "DELETE FROM froshtn WHERE CAST(table_cabin AS CHAR) = %s",
+          (str(table_num).strip(),),
+      )
 
       for food_name, qty, price, cat in current_screen_items:
         cursor.execute(
@@ -984,7 +972,7 @@ def save_cart_order():
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """,
-            (str(table_num), food_name, qty, price, cat),
+            (str(table_num).strip(), food_name, qty, price, cat),
         )
 
       conn.commit()
@@ -1007,7 +995,10 @@ def clear_table_orders():
   conn = get_db()
   try:
     with conn.cursor() as cursor:
-      cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+      cursor.execute(
+          "DELETE FROM froshtn WHERE CAST(table_cabin AS CHAR) = %s",
+          (str(table_num).strip(),),
+      )
       conn.commit()
     conn.close()
     return jsonify({"status": "success"})
