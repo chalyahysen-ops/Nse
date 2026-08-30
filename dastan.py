@@ -521,7 +521,9 @@ DESKTOP_TEMPLATE = """
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .tab-btn.active { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,158,11,0.25); }
-        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; padding-bottom: 30px; }
+        .category-desktop-group { margin-bottom: 24px; }
+        .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; padding-bottom: 10px; }
         .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s, border-color 0.2s; }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         .desktop-food-img { width: 100%; height: 120px; border-radius: 10px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); }
@@ -575,22 +577,28 @@ DESKTOP_TEMPLATE = """
                     <button type="button" class="tab-btn" onclick="filterCat('cat-{{ loop.index }}', this)">{{ cat }}</button>
                 {% endfor %}
             </div>
-            <div class="food-grid">
+            
+            <div class="menu-container-desktop">
                 {% for cat, items in categories.items() %}
-                    {% for item in items %}
-                    <div class="desktop-food-card category-item" data-cat="cat-{{ loop.index0 + 1 }}">
-                        <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="desktop-food-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
-                        <div class="desktop-food-info">
-                            <div class="desktop-food-name">{{ item.food_name }}</div>
-                            <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
+                <div class="category-desktop-group" id="cat-{{ loop.index }}">
+                    <div class="category-desktop-title">{{ cat }}</div>
+                    <div class="food-grid">
+                        {% for item in items %}
+                        <div class="desktop-food-card">
+                            <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="desktop-food-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
+                            <div class="desktop-food-info">
+                                <div class="desktop-food-name">{{ item.food_name }}</div>
+                                <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
+                            </div>
+                            <div class="desktop-counter-group">
+                                <button type="button" class="desktop-btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
+                                <input type="text" id="qty_{{ item.food_name }}" value="0" class="desktop-qty-val" readonly>
+                                <button type="button" class="desktop-btn-count plus" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
+                            </div>
                         </div>
-                        <div class="desktop-counter-group">
-                            <button type="button" class="desktop-btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
-                            <input type="text" id="qty_{{ item.food_name }}" value="0" class="desktop-qty-val" readonly>
-                            <button type="button" class="desktop-btn-count plus" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                </div>
                 {% endfor %}
             </div>
         </div>
@@ -786,10 +794,10 @@ DESKTOP_TEMPLATE = """
         function filterCat(catId, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const items = document.querySelectorAll('.category-item');
-            items.forEach(card => {
-                if (catId === 'all') { card.style.display = 'flex'; }
-                else { card.style.display = (card.getAttribute('data-cat') === catId) ? 'flex' : 'none'; }
+            const groups = document.querySelectorAll('.category-desktop-group');
+            groups.forEach(group => {
+                if (catId === 'all') { group.style.display = 'block'; }
+                else { group.style.display = (group.id === catId) ? 'block' : 'none'; }
             });
         }
         function onTableChanged(tableNum) { fetchTableOrders(tableNum); }
@@ -891,7 +899,6 @@ def login():
     if request.method == 'POST':
         input_pin = normalize_digits(request.form.get('pin', ''))
         
-        # پشکنینی ڕاستەوخۆ بۆ کۆدی 22 (بە هەردوو شێوازی عەرەبی و ئینگلیزی)
         if input_pin in ['22', '٢٢']:
             session['authenticated'] = True
             return redirect(url_for('desktop_menu'))
