@@ -945,9 +945,9 @@ def login():
             return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
 
     return render_template_string(LOGIN_TEMPLATE)
-
 @app.route('/menu')
 def menu():
+    # ئەگەر سەشن نەبوو، ڕاستەوخۆ بگەڕێوە بۆ لۆگین
     if not session.get('authenticated'):
         return redirect(url_for('login'))
     try:
@@ -970,6 +970,7 @@ def menu():
 
 @app.route('/desktop')
 def desktop_menu():
+    # ئەگەر سەشن نەبوو، ڕاستەوخۆ بگەڕێوە بۆ لۆگین
     if not session.get('authenticated'):
         return redirect(url_for('login'))
     try:
@@ -990,6 +991,11 @@ def desktop_menu():
     except Exception as e:
         return f"<h3 style='color:red; text-align:center;'>کێشەی داتابەیس: {str(e)}</h3>"
 
+# زیادکردنی ڕووتی لۆگۆت (Logout) بۆ تاقیکردنەوە و پاککردنەوەی سەشن
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 @app.route('/get_table_orders/<table_num>')
 def get_table_orders(table_num):
     if not session.get('authenticated'):
