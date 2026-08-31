@@ -509,10 +509,10 @@ DESKTOP_TEMPLATE = """
         }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* تێبینی: لابردنی تایتڵی سەرەوەی لای ڕاست ("شاهور ڕێستۆرانت") بۆ پاکتر نیشاندانی هێڵی سەرەوە */
-        .desktop-header { background: linear-gradient(180deg, #161f32 0%, var(--bg-main) 100%); padding: 10px 24px; border-bottom: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: flex-end; height: 65px; flex-shrink: 0; }
+        /* تێبینی: لابردنی تەواوی هەדרە زیادەکە، هێڵی سەرەوە پوخت و پاک کرایەوە */
+        .desktop-header { display: none; }
         
-        /* تێبینی: ٤ وێنە لە یەک ڕیزدا لە بەشی مێنیودا */
+        /* تێبینی: ٤ وێنە لە یەک ڕیزدا */
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 500px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -533,7 +533,7 @@ DESKTOP_TEMPLATE = """
         .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
-        /* تێبینی: بەشی سەبەتە (Sidebar) - گواستنەوەی دوگمەکانی مێز و کۆی گشتی بۆ سەرەوە و خوارەوە بۆ زۆرترین بۆشایی */
+        /* تێبینی: بەشی سەبەتە (Sidebar) - گواستنەوەی دوگمەکانی مێز بۆ سەرەوە و کۆی گشتی و ناردن بۆ خوارەوە */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-shrink: 0; gap: 6px; }
@@ -543,7 +543,7 @@ DESKTOP_TEMPLATE = """
 
         .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
-        /* تێبینی: بەشی لیستەکە زۆرترین بڵندیی هەبێت بۆ نیشاندانی زۆرترین خواردنی ئۆردەرکراو */
+        /* تێبینی: بەشی لیستەکە زۆرترین بڵندیی هەیە بۆ ئەوەی زۆرترین خواردنی ئۆردەرکراو نیشان بدات */
         .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
@@ -562,7 +562,7 @@ DESKTOP_TEMPLATE = """
         
         .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
         
-        /* تێبینی: گواستنەوەی کۆی گشتی بۆ خوارەوە بۆ شوێنی پێشووی دوگمەکان */
+        /* تێبینی: گواستنەوەی کۆی گشتی بۆ خوارەوە پێش دوگمەی ناردن بۆ مەتبەخ */
         .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
         .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
         .cart-total-val { color: var(--success); font-size: 18px; }
@@ -577,19 +577,6 @@ DESKTOP_TEMPLATE = """
 </head>
 <body>
     <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
-    
-    <header class="desktop-header">
-        <div class="table-control-bar">
-            <label style="color:var(--cream); font-weight:700; font-size:13px;">مێزی:</label>
-            <select id="tableSelect" class="table-dropdown" onchange="onTableChanged(this.value)">
-                {% for num in range(1, 91) %}
-                    <option value="{{ num }}">مێزی {{ num }}</option>
-                {% endfor %}
-            </select>
-            <button type="button" class="btn-top-action" onclick="openChangeTableModal()">🔄 گواستنەوە</button>
-            <button type="button" class="btn-top-action danger" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
-        </div>
-    </header>
 
     <div class="desktop-main-layout">
         <div class="menu-section">
@@ -625,8 +612,23 @@ DESKTOP_TEMPLATE = """
             </div>
         </div>
 
-        <!-- بەشی سەبەتەی گەورەکراو (Sidebar) -->
+        <!-- بەشی سەبەتە (Sidebar) - دوگمەکانی مێز و کۆی گشتی لێرە ڕێکخراون -->
         <div class="cart-sidebar">
+            <div class="cart-top-bar">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="color:var(--cream); font-weight:700; font-size:12px;">مێزی:</label>
+                    <select id="tableSelect" class="table-dropdown" onchange="onTableChanged(this.value)">
+                        {% for num in range(1, 91) %}
+                            <option value="{{ num }}">مێزی {{ num }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display:flex; gap:4px;">
+                    <button type="button" class="btn-top-action" onclick="openChangeTableModal()">🔄 گواستنەوە</button>
+                    <button type="button" class="btn-top-action danger" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
+                </div>
+            </div>
+
             <div class="cart-sidebar-header">
                 <span>🛒 داواکارییەکانی مێز</span>
                 <span id="cartCountBadge" style="background: var(--gold); color: var(--bg-main); padding: 2px 8px; border-radius: 10px; font-size: 12px;">0</span>
@@ -1020,6 +1022,7 @@ def save_cart_order():
                     qty = 1
                     price = 0
                     cat = 'مەتبەخ'
+                    printer_name = 'XP-80'
                 else:
                     food_name = item.get('food_name')
                     cat = item.get('cat', '')
@@ -1034,10 +1037,17 @@ def save_cart_order():
                     qty = int(item.get('qty', 1))
                     price = float(item.get('price', 0))
 
+                    # تێبینی: پۆلی برژاو دەچێتە سەر پرینتەری XP-80(COPY1)، و ئەوانی تر دەچنە سەر XP-80
+                    if cat == 'برژاو':
+                        printer_name = 'XP-80(COPY1)'
+                    else:
+                        printer_name = 'XP-80'
+
+                # تێبینی: ناردنی printer_name بۆ ناو خشتەی froshtn
                 cursor.execute("""
-                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                """, (str(table_num), food_name, qty, price, cat))
+                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed, printer_name)
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 0, %s)
+                """, (str(table_num), food_name, qty, price, cat, printer_name))
 
             conn.commit()
         conn.close()
