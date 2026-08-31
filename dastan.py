@@ -383,17 +383,6 @@ HTML_TEMPLATE = """
                 }
             });
         }
-        function modifyItemQty(index, change) {
-            setButtonStateNormal();
-            if (cartItems[index] && !cartItems[index].is_divider) {
-                cartItems[index].qty += change;
-                if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
-                updateMenuCardInputs();
-                checkHasGrill();
-                renderCartSummary();
-                renderCartModalList();
-            }
-        }
         function filterCat(catId, btn) {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
@@ -603,10 +592,10 @@ DESKTOP_TEMPLATE = """
                         {% for item in items %}
                         <div class="desktop-food-card">
                             <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" 
-                                 class="desktop-food-img" 
-                                 onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
-                                 onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'"
-                                 title="کلیک بکە بۆ زیادکردن">
+                                   class="desktop-food-img" 
+                                   onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
+                                   onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'"
+                                   title="کلیک بکە بۆ زیادکردن">
                             
                             <div class="desktop-food-info">
                                 <div class="desktop-food-name">{{ item.food_name }}</div>
@@ -920,6 +909,12 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
+@app.route('/')
+def index():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    return redirect(url_for('menu'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -951,7 +946,7 @@ def login():
 
     return render_template_string(LOGIN_TEMPLATE)
 
-@app.route('/')
+@app.route('/menu')
 def menu():
     if not session.get('authenticated'):
         return redirect(url_for('login'))
@@ -1045,7 +1040,6 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی froshtn بەبێ پرینتی دووەم
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1073,7 +1067,6 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. بەراوردکردن و دەرخستنی تەنها بڕی زیادکراو یاخود سڕدراو بۆ پرینتەری گونجاو بێ وەسڵی زیادە
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1085,13 +1078,11 @@ def save_cart_order():
                     price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
                     
                     if diff > 0:
-                        # تەنها وەسڵی زیادکردن (+) بە بێ پرینتی گشتی
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                         """, (str(table_num) + " [زیادکراو]", f"+ {key}", diff, price_val, cat_val))
                     else:
-                        # تەنها وەسڵی سڕینەوە
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
