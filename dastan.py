@@ -909,7 +909,6 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# ڕووتی سەرەکی - هەرگیز ناهێڵێت هیچ کەسێک بێ لۆگین بچێتە ناو مێنیو
 @app.route('/')
 def index():
     session.clear()
@@ -919,36 +918,40 @@ def index():
 def login():
     if request.method == 'POST':
         input_pin = normalize_digits(request.form.get('pin', ''))
-        if input_pin in ['22', '٢٢']:
-            session['authenticated'] = True
-            return redirect(url_for('desktop_menu'))
-        if input_pin in ['345678', '٣٤٥٦٧٨']:
-            session['authenticated'] = True
-            return redirect(url_for('menu'))
-
-        db_pin = None
+        
+        # پشکنینی پین لەناو داتابەیس (مۆبایل و دیسکتۆپ)
+        db_mobile_pin = None
+        db_desktop_pin = None
         try:
             conn = get_db()
             with conn.cursor() as cursor:
-                cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'mobile_pin' LIMIT 1")
-                row = cursor.fetchone()
-                if row and row.get('setting_value'):
-                    db_pin = normalize_digits(row['setting_value'])
+                cursor.execute("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('mobile_pin', 'desktop_pin')")
+                rows = cursor.fetchall()
+                for row in rows:
+                    if row['setting_key'] == 'mobile_pin' and row.get('setting_value'):
+                        db_mobile_pin = normalize_digits(row['setting_value'])
+                    elif row['setting_key'] == 'desktop_pin' and row.get('setting_value'):
+                        db_desktop_pin = normalize_digits(row['setting_value'])
             conn.close()
         except Exception as ex:
             print("Database Error in Login:", ex)
 
-        if db_pin is not None and input_pin == db_pin:
+        # 1. چوونەژوورەوە بۆ دیسکتۆپ / کۆمپیوتەر
+        if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
+            session['authenticated'] = True
+            return redirect(url_for('desktop_menu'))
+
+        # 2. چوونەژوورەوە بۆ مۆبایل
+        if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session['authenticated'] = True
             return redirect(url_for('menu'))
-        else:
-            return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
+
+        return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
 
     return render_template_string(LOGIN_TEMPLATE)
 
 @app.route('/menu')
 def menu():
-    # پشکنینی توند: ئەگەر لۆگینی نەکردبوو، سەشنەکە دەسڕدرێتەوە و دەچێتە لۆگین
     if not session.get('authenticated'):
         session.clear()
         return redirect(url_for('login'))
@@ -972,7 +975,6 @@ def menu():
 
 @app.route('/desktop')
 def desktop_menu():
-    # پشکنینی توند بۆ دیسکتۆپیش
     if not session.get('authenticated'):
         session.clear()
         return redirect(url_for('login'))
@@ -1044,7 +1046,7 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. نوێکردنەوەی تەواوی داتای مێزەکە لە خشتەی سەرەکی بۆ زەخیرەکردن و حیسابات
+            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی بەبێ پرینتی دووەم
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1072,7 +1074,7 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. بەراوردکردن: تەنها جیاوازییەکان (زیادکراو یاخود سڕدراو) دەخەینە ناو خشتە تاوەکو پرێنتەری مەتبەخ بیریان بكات
+            # 2. بەراوردکردن و دەرخستنی تەنها بڕی زیادکراو یاخود سڕدراو بۆ پرینتەری مەتبەخ بێ وەسڵی زیادە
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1084,13 +1086,11 @@ def save_cart_order():
                     price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
                     
                     if diff > 0:
-                        # تەنها ئەو بڕەی زیادکراوە وەک وەسڵی نوێ دەردەکەوێت
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                         """, (str(table_num) + " [زیادکراو]", f"+ {key}", diff, price_val, cat_val))
                     else:
-                        # تەنها ئەو بڕەی سڕدراوەتەوە وەک وەسڵی کەمکردنەوە دەردەکەوێت
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
@@ -1102,6 +1102,7 @@ def save_cart_order():
     except Exception as e:
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/clear_table_orders', methods=['POST'])
 def clear_table_orders():
     if not session.get('authenticated'):
