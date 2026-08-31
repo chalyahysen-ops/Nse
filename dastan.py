@@ -1045,7 +1045,7 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی (بێ چاپکردنی دووەم)
+            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی froshtn بەبێ پرینتی دووەم
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1073,7 +1073,7 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. تەنها دەرخستن و تۆمارکردنی جیاوازییەکان (زیادکراو یان سڕدراو) بۆ ناردن بە تەنها یەک وەسڵ/فەرمان
+            # 2. بەراوردکردن و دەرخستنی تەنها بڕی زیادکراو یاخود سڕدراو بۆ پرینتەری گونجاو بێ وەسڵی زیادە
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1085,7 +1085,7 @@ def save_cart_order():
                     price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
                     
                     if diff > 0:
-                        # تەنها وەسڵی زیادکردن (+)
+                        # تەنها وەسڵی زیادکردن (+) بە بێ پرینتی گشتی
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
