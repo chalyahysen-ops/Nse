@@ -1044,6 +1044,7 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
+            # 1. نوێکردنەوەی تەواوی داتای مێزەکە لە خشتەی سەرەکی بۆ زەخیرەکردن و حیسابات
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1068,9 +1069,10 @@ def save_cart_order():
 
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
-                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (str(table_num), food_name, qty, price, cat))
 
+            # 2. بەراوردکردن: تەنها جیاوازییەکان (زیادکراو یاخود سڕدراو) دەخەینە ناو خشتە تاوەکو پرێنتەری مەتبەخ بیریان بكات
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1082,11 +1084,13 @@ def save_cart_order():
                     price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
                     
                     if diff > 0:
+                        # تەنها ئەو بڕەی زیادکراوە وەک وەسڵی نوێ دەردەکەوێت
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                         """, (str(table_num) + " [زیادکراو]", f"+ {key}", diff, price_val, cat_val))
                     else:
+                        # تەنها ئەو بڕەی سڕدراوەتەوە وەک وەسڵی کەمکردنەوە دەردەکەوێت
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
@@ -1098,7 +1102,6 @@ def save_cart_order():
     except Exception as e:
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
-
 @app.route('/clear_table_orders', methods=['POST'])
 def clear_table_orders():
     if not session.get('authenticated'):
