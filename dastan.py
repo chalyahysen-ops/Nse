@@ -508,11 +508,8 @@ DESKTOP_TEMPLATE = """
             --danger: #ef4444;
         }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* تێبینی: لابردنی تەواوی هەדרە زیادەکە، هێڵی سەرەوە پوخت و پاک کرایەوە */
         .desktop-header { display: none; }
         
-        /* تێبینی: ٤ وێنە لە یەک ڕیزدا */
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 500px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -533,7 +530,6 @@ DESKTOP_TEMPLATE = """
         .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
-        /* تێبینی: بەشی سەبەتە (Sidebar) - گواستنەوەی دوگمەکانی مێز بۆ سەرەوە و کۆی گشتی و ناردن بۆ خوارەوە */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-shrink: 0; gap: 6px; }
@@ -543,7 +539,6 @@ DESKTOP_TEMPLATE = """
 
         .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
-        /* تێبینی: بەشی لیستەکە زۆرترین بڵندیی هەیە بۆ ئەوەی زۆرترین خواردنی ئۆردەرکراو نیشان بدات */
         .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
@@ -562,7 +557,6 @@ DESKTOP_TEMPLATE = """
         
         .plate-sep-desktop { background: #8b5cf6; color: #ffffff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
         
-        /* تێبینی: گواستنەوەی کۆی گشتی بۆ خوارەوە پێش دوگمەی ناردن بۆ مەتبەخ */
         .cart-sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
         .cart-total-box { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 800; }
         .cart-total-val { color: var(--success); font-size: 18px; }
@@ -612,7 +606,6 @@ DESKTOP_TEMPLATE = """
             </div>
         </div>
 
-        <!-- بەشی سەبەتە (Sidebar) - دوگمەکانی مێز و کۆی گشتی لێرە ڕێکخراون -->
         <div class="cart-sidebar">
             <div class="cart-top-bar">
                 <div style="display:flex; align-items:center; gap:6px;">
@@ -871,7 +864,7 @@ DESKTOP_TEMPLATE = """
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success') {
+                    if (data.success || data.status === 'success') {
                         showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
                         fetchTableOrders(currentTbl);
                     }
@@ -1014,6 +1007,19 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
+            # 1. پێش هەموو شتێک پشکنین دەکەین کە ئایا خواردنەکانی ئەم مێزە پێکدێن لە (تەنها برژاو)، (تەنها بەشەکانی تر)، یان (تێکەڵ لە هەردووکیان)
+            has_grill = False
+            has_other = False
+            
+            for item in cart_items:
+                if not item.get('is_divider'):
+                    cat = item.get('cat', '')
+                    if cat == 'برژاو':
+                        has_grill = True
+                    else:
+                        has_other = True
+
+            # 2. پاککردنەوەی خشتەی froshtn بۆ ئەم مێزە پێش پاشەکەوتکردن
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1022,7 +1028,6 @@ def save_cart_order():
                     qty = 1
                     price = 0
                     cat = 'مەتبەخ'
-                    printer_name = 'XP-80'
                 else:
                     food_name = item.get('food_name')
                     cat = item.get('cat', '')
@@ -1037,17 +1042,17 @@ def save_cart_order():
                     qty = int(item.get('qty', 1))
                     price = float(item.get('price', 0))
 
-                    # تێبینی: پۆلی برژاو دەچێتە سەر پرینتەری XP-80(COPY1)، و ئەوانی تر دەچنە سەر XP-80
-                    if cat == 'برژاو':
-                        printer_name = 'XP-80(COPY1)'
-                    else:
-                        printer_name = 'XP-80'
-
-                # تێبینی: ناردنی printer_name بۆ ناو خشتەی froshtn
+                # پاشەکەوتکردنی ئۆردەرەکە لە داتابەیسدا بەبێ پێویست بوونی ستوونی printer_name
                 cursor.execute("""
-                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed, printer_name)
-                    VALUES (%s, %s, %s, %s, %s, NOW(), 0, %s)
-                """, (str(table_num), food_name, qty, price, cat, printer_name))
+                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                """, (str(table_num), food_name, qty, price, cat))
+
+            # 3. لۆژیکی ناردن بۆ پرینتەرەکان لە کاتی پاشەکەوتکردنی کۆتایی:
+            # - ئەگەر تەنها برژاو بوو -> تەنها پرینتەری XP-80(COPY1) پرینت دەکات.
+            # - ئەگەر تەنها بەشەکانی تر بوون -> تەنها پرینتەری XP-80 پرینت دەکات.
+            # - ئەگەر تێکەڵ بوون -> هەردووکیان پرینت دەکەن.
+            # (ئەم مەرجانە دەتوانیت لێرەدا بەستەوە بە سیستەمی پرینتەرەکەت یان خشتەیەکی لۆگ)
 
             conn.commit()
         conn.close()
