@@ -217,6 +217,8 @@ HTML_TEMPLATE = """
 
     <script>
         let cartItems = []; 
+        let originalTableOrders = [];
+
         function checkHasGrill() {
             let hasGrill = cartItems.some(i => !i.is_divider && i.cat === 'برژاو');
             document.getElementById('btnAddPlate').style.display = hasGrill ? 'flex' : 'none';
@@ -293,6 +295,17 @@ HTML_TEMPLATE = """
             checkHasGrill();
             renderCartSummary();
             renderCartModalList();
+        }
+        function modifyItemQty(index, change) {
+            setButtonStateNormal();
+            if (cartItems[index] && !cartItems[index].is_divider) {
+                cartItems[index].qty += change;
+                if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
+                updateMenuCardInputs();
+                checkHasGrill();
+                renderCartSummary();
+                renderCartModalList();
+            }
         }
         function updateItemRice(index, val) { setButtonStateNormal(); cartItems[index].rice_type = val; }
         function updateItemChicken(index, val) { setButtonStateNormal(); cartItems[index].chicken_part = val; }
@@ -394,6 +407,7 @@ HTML_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     cartItems = [];
+                    originalTableOrders = [];
                     resetInputs();
                     if (data && data.length > 0) {
                         data.forEach(item => {
@@ -405,11 +419,10 @@ HTML_TEMPLATE = """
                             ['سینگ', 'ڕان'].forEach(c => {
                                 if (fName.includes(`(${c})`)) { cPart = c; fName = fName.replace(` (${c})`, '').trim(); }
                             });
-                            if (isDiv) {
-                                cartItems.push({ is_divider: true, food_name: fName, price: 0, qty: 1, cat: 'مەتبەخ' });
-                            } else {
-                                cartItems.push({ is_divider: false, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart });
-                            }
+                            
+                            let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
+                            cartItems.push(parsedItem);
+                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
                         });
                         setButtonStateSaved();
                     } else { setButtonStateNormal(); }
@@ -422,16 +435,17 @@ HTML_TEMPLATE = """
         function submitFinalOrder() {
             const tableNum = document.getElementById('tableSelect').value;
             if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
+            
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    toggleCartModal(false);
                     setButtonStateSaved();
+                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
                 } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
             }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
@@ -446,17 +460,17 @@ HTML_TEMPLATE = """
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success') {
+                    if (data.success || data.status === 'success') {
                         showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
                         fetchTableOrders(currentTbl);
-                    } else { showToast("هەڵە: " + data.message, true); }
+                    }
                 });
             }
         }
         function openChangeTableModal() {
             const currentTbl = document.getElementById('tableSelect').value;
             document.getElementById('newTableSelect').value = currentTbl;
-            toggleChangeTableModal(true);
+            document.getElementById('changeTableModal').style.display = 'flex';
         }
         function toggleChangeTableModal(show) { document.getElementById('changeTableModal').style.display = show ? 'flex' : 'none'; }
         function confirmChangeTable() {
@@ -472,10 +486,10 @@ HTML_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     toggleChangeTableModal(false);
-                    showToast("داواکارییەکان گوازرانەوە بۆ مێزی " + newTbl);
+                    showToast("گوازرایەوە بۆ مێزی " + newTbl);
                     document.getElementById('tableSelect').value = newTbl;
                     fetchTableOrders(newTbl);
-                } else { showToast("هەڵە لە گواستنەوە: " + data.message, true); }
+                }
             });
         }
         window.onload = function() { fetchTableOrders(document.getElementById('tableSelect').value); };
@@ -510,6 +524,7 @@ DESKTOP_TEMPLATE = """
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .desktop-header { display: none; }
         
+        /* 4 وێنە لە یەک ڕیزدا */
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 500px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -530,6 +545,7 @@ DESKTOP_TEMPLATE = """
         .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
+        /* بەشی سەبەتە (Sidebar) */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-shrink: 0; gap: 6px; }
@@ -662,6 +678,7 @@ DESKTOP_TEMPLATE = """
 
     <script>
         let cartItems = [];
+        let originalTableOrders = [];
 
         function showToast(text, isError = false) {
             const toast = document.getElementById('toastMsg');
@@ -817,6 +834,7 @@ DESKTOP_TEMPLATE = """
                 .then(res => res.json())
                 .then(data => {
                     cartItems = [];
+                    originalTableOrders = [];
                     if (data && data.length > 0) {
                         data.forEach(item => {
                             const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
@@ -830,6 +848,7 @@ DESKTOP_TEMPLATE = """
                             
                             let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
                             cartItems.push(parsedItem);
+                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
                         });
                         setButtonStateSaved();
                     } else { setButtonStateNormal(); }
@@ -844,12 +863,13 @@ DESKTOP_TEMPLATE = """
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     setButtonStateSaved();
+                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
                 } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
             }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
@@ -1003,23 +1023,32 @@ def save_cart_order():
     data = request.get_json()
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
+    original_items = data.get('original_items', [])
+
+    # دروستکردنی دیکشێنەر بۆ بەراوردکردنی بڕی خواردنەکان (Diff)
+    def make_map(items):
+        mp = {}
+        for it in items:
+            name = "--- قاپی نوێ ---" if it.get('is_divider') else it.get('food_name')
+            cat = it.get('cat', '')
+            rice = it.get('rice_type', '')
+            chicken = it.get('chicken_part', '')
+            full_name = name
+            if not it.get('is_divider'):
+                if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice:
+                    full_name += f" ({rice})"
+                if cat == 'پەلەوەر' and chicken:
+                    full_name += f" ({chicken})"
+            mp[full_name] = {'qty': int(it.get('qty', 1)), 'price': float(it.get('price', 0)), 'cat': cat}
+        return mp
+
+    old_map = make_map(original_items)
+    new_map = make_map(cart_items)
 
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. پێش هەموو شتێک پشکنین دەکەین کە ئایا خواردنەکانی ئەم مێزە پێکدێن لە (تەنها برژاو)، (تەنها بەشەکانی تر)، یان (تێکەڵ لە هەردووکیان)
-            has_grill = False
-            has_other = False
-            
-            for item in cart_items:
-                if not item.get('is_divider'):
-                    cat = item.get('cat', '')
-                    if cat == 'برژاو':
-                        has_grill = True
-                    else:
-                        has_other = True
-
-            # 2. پاککردنەوەی خشتەی froshtn بۆ ئەم مێزە پێش پاشەکەوتکردن
+            # 1. پاشەکەوتکردنی تەواوی مێزەکە لە خشتەی سەرەکی froshtn
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1042,17 +1071,34 @@ def save_cart_order():
                     qty = int(item.get('qty', 1))
                     price = float(item.get('price', 0))
 
-                # پاشەکەوتکردنی ئۆردەرەکە لە داتابەیسدا بەبێ پێویست بوونی ستوونی printer_name
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 3. لۆژیکی ناردن بۆ پرینتەرەکان لە کاتی پاشەکەوتکردنی کۆتایی:
-            # - ئەگەر تەنها برژاو بوو -> تەنها پرینتەری XP-80(COPY1) پرینت دەکات.
-            # - ئەگەر تەنها بەشەکانی تر بوون -> تەنها پرینتەری XP-80 پرینت دەکات.
-            # - ئەگەر تێکەڵ بوون -> هەردووکیان پرینت دەکەن.
-            # (ئەم مەرجانە دەتوانیت لێرەدا بەستەوە بە سیستەمی پرینتەرەکەت یان خشتەیەکی لۆگ)
+            # 2. بەراوردکردن بۆ دەرخستنی تەنها زیادکراو و سڕدراوەکان و ناردنیان بۆ پرینتەری گونجاو
+            all_keys = set(old_map.keys()).union(set(new_map.keys()))
+            for key in all_keys:
+                old_qty = old_map.get(key, {}).get('qty', 0)
+                new_qty = new_map.get(key, {}).get('qty', 0)
+                diff = new_qty - old_qty
+                
+                if diff != 0 and key != "--- قاپی نوێ ---":
+                    cat_val = new_map.get(key, {}).get('cat') or old_map.get(key, {}).get('cat', 'گشتی')
+                    price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
+                    
+                    # دیاریکردنی پرینتەر بەپێی پۆل (برژاو -> COPY1، بێجگە لە برژاو -> XP-80)
+                    # ئەگەر مێزەکە تێکەڵ بوو، لۆژیکەکە هەردووکیان پاشەکەوت دەکات بۆ پرینت
+                    if diff > 0:
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                        """, (str(table_num) + " [زیادکراو]", key, diff, price_val, cat_val))
+                    else:
+                        cursor.execute("""
+                            INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
+                            VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                        """, (str(table_num) + " [سڕاوەتەوە]", f"سڕاوەتەوە: {key}", abs(diff), price_val, cat_val))
 
             conn.commit()
         conn.close()
