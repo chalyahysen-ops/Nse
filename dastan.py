@@ -909,9 +909,9 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
+# ڕووتی سەرەکی - هەرگیز ناهێڵێت هیچ کەسێک بێ لۆگین بچێتە ناو مێنیو
 @app.route('/')
 def index():
-    # لە هەموو بارودۆخێکدا سەشن پاک دەكاتەوە و دەیگوازێتەوە بۆ لۆگین
     session.clear()
     return redirect(url_for('login'))
 
@@ -948,7 +948,9 @@ def login():
 
 @app.route('/menu')
 def menu():
+    # پشکنینی توند: ئەگەر لۆگینی نەکردبوو، سەشنەکە دەسڕدرێتەوە و دەچێتە لۆگین
     if not session.get('authenticated'):
+        session.clear()
         return redirect(url_for('login'))
     try:
         conn = get_db()
@@ -970,7 +972,9 @@ def menu():
 
 @app.route('/desktop')
 def desktop_menu():
+    # پشکنینی توند بۆ دیسکتۆپیش
     if not session.get('authenticated'):
+        session.clear()
         return redirect(url_for('login'))
     try:
         conn = get_db()
