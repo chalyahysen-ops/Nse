@@ -524,7 +524,6 @@ DESKTOP_TEMPLATE = """
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .desktop-header { display: none; }
         
-        /* 4 وێنە لە یەک ڕیزدا */
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 500px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
         .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -545,7 +544,6 @@ DESKTOP_TEMPLATE = """
         .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
 
-        /* بەشی سەبەتە (Sidebar) */
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-shrink: 0; gap: 6px; }
@@ -1025,7 +1023,6 @@ def save_cart_order():
     cart_items = data.get('cart_items', [])
     original_items = data.get('original_items', [])
 
-    # دروستکردنی دیکشێنەر بۆ بەراوردکردنی بڕی خواردنەکان (Diff)
     def make_map(items):
         mp = {}
         for it in items:
@@ -1048,7 +1045,7 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. پاشەکەوتکردنی تەواوی مێزەکە لە خشتەی سەرەکی froshtn
+            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی (بێ چاپکردنی دووەم)
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1076,7 +1073,7 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. بەراوردکردن بۆ دەرخستنی تەنها زیادکراو و سڕدراوەکان و ناردنیان بۆ پرینتەری گونجاو
+            # 2. تەنها دەرخستن و تۆمارکردنی جیاوازییەکان (زیادکراو یان سڕدراو) بۆ ناردن بە تەنها یەک وەسڵ/فەرمان
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1087,14 +1084,14 @@ def save_cart_order():
                     cat_val = new_map.get(key, {}).get('cat') or old_map.get(key, {}).get('cat', 'گشتی')
                     price_val = new_map.get(key, {}).get('price') or old_map.get(key, {}).get('price', 0)
                     
-                    # دیاریکردنی پرینتەر بەپێی پۆل (برژاو -> COPY1، بێجگە لە برژاو -> XP-80)
-                    # ئەگەر مێزەکە تێکەڵ بوو، لۆژیکەکە هەردووکیان پاشەکەوت دەکات بۆ پرینت
                     if diff > 0:
+                        # تەنها وەسڵی زیادکردن (+)
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                        """, (str(table_num) + " [زیادکراو]", key, diff, price_val, cat_val))
+                        """, (str(table_num) + " [زیادکراو]", f"+ {key}", diff, price_val, cat_val))
                     else:
+                        # تەنها وەسڵی سڕینەوە
                         cursor.execute("""
                             INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                             VALUES (%s, %s, %s, %s, %s, NOW(), 0)
