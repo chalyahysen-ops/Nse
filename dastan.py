@@ -38,7 +38,7 @@ LOGIN_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; padding: 16px; }
+        body { background-color: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
         .login-card { background: #151d30; border: 1px solid #334155; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .logo { color: #f59e0b; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
@@ -64,25 +64,80 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
+# پەڕەی نوێکراوەی مێزەکان کە لەسەر ئایپاد سکرۆڵی نەرمی بۆ دانراوە بەبێ کێشە
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>هەڵبژاردنی مێز - شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #e2e8f0; color: #0f172a; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .header-bar { background-color: #f1f5f9; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #cbd5e1; flex-shrink: 0; }
+        html, body { 
+            background-color: #e2e8f0; 
+            color: #0f172a; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+        }
+        .header-bar { 
+            background-color: #f1f5f9; 
+            padding: 12px 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 2px solid #cbd5e1; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
         .header-title { font-size: 16px; font-weight: 800; color: #0f172a; text-align: center; flex: 1; }
         .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
-        .tables-grid-wrapper { flex: 1; padding: 12px; overflow-y: auto; display: flex; align-items: stretch; justify-content: center; }
-        .tables-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 6px; width: 100%; height: 100%; }
-        .table-box { background-color: #ffffff; border: 1.5px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; font-family: 'Segoe UI', Arial, sans-serif; color: #000000; text-decoration: none; transition: background-color 0.2s, transform 0.1s; cursor: pointer; user-select: none; }
-        .table-box:hover { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .table-box.active-occupied { background-color: #10b981 !important; color: #ffffff !important; border-color: #059669 !important; }
+        
+        .tables-grid-wrapper { 
+            flex: 1; 
+            padding: 12px 14px 40px; 
+            width: 100%;
+        }
+        .tables-grid { 
+            display: grid; 
+            grid-template-columns: repeat(15, 1fr); 
+            gap: 7px; 
+            width: 100%; 
+        }
+        .table-box { 
+            background-color: #ffffff; 
+            border: 1.5px solid #94a3b8; 
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 24px; 
+            font-weight: 800; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            color: #000000; 
+            text-decoration: none; 
+            min-height: 65px;
+            aspect-ratio: 1 / 0.85;
+            transition: background-color 0.2s, transform 0.1s; 
+            cursor: pointer; 
+            user-select: none; 
+        }
+        .table-box:hover, .table-box:active { 
+            transform: scale(1.02); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+        }
+        .table-box.active-occupied { 
+            background-color: #10b981 !important; 
+            color: #ffffff !important; 
+            border-color: #059669 !important; 
+        }
     </style>
 </head>
 <body>
@@ -151,14 +206,13 @@ DESKTOP_TEMPLATE = """
         }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
-        .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; }
+        .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .categories-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .tab-btn.active { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,158,11,0.25); }
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
-        /* قەبارەی یەکدەست و ڕێکخراو بۆ هەموو بەشەکان لەسەر ئایپاد و دیسکتۆپ */
         .food-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); 
@@ -179,7 +233,6 @@ DESKTOP_TEMPLATE = """
         }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         
-        /* گەورەکردن و جێگیرکردنی قەبارەی وێنە وەک بەشی کوردییەکان */
         .desktop-food-img { 
             width: 100%; 
             height: 125px; 
@@ -207,7 +260,7 @@ DESKTOP_TEMPLATE = """
 
         .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
-        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; }
+        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-right: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
         .cart-items-container::-webkit-scrollbar { width: 6px; }
         .cart-items-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
