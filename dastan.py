@@ -1,8 +1,12 @@
 from flask import Flask, render_template_string, request, jsonify, redirect, url_for, session
+from datetime import timedelta
 import pymysql
 
 app = Flask(__name__)
 app.secret_key = 'shahoor_secret_key_super_secure'
+
+# دیاریکردنی ماوەی بەسەرچوونی سەشن بۆ بیست خولەک
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=20)
 
 DB_CONFIG = {
     'host': 'sakura.proxy.rlwy.net',
@@ -909,6 +913,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
+# ڕووتی سەرەکی هەمیشە بەکارهێنەر ڕەوانەی چوونەژوورەوە دەکات
 @app.route('/')
 def index():
     session.clear()
@@ -919,7 +924,6 @@ def login():
     if request.method == 'POST':
         input_pin = normalize_digits(request.form.get('pin', ''))
         
-        # پشکنینی پین لەناو داتابەیس (مۆبایل و دیسکتۆپ)
         db_mobile_pin = None
         db_desktop_pin = None
         try:
@@ -938,11 +942,13 @@ def login():
 
         # 1. چوونەژوورەوە بۆ دیسکتۆپ / کۆمپیوتەر
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
+            session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('desktop_menu'))
 
         # 2. چوونەژوورەوە بۆ مۆبایل
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
+            session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('menu'))
 
@@ -1046,7 +1052,7 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی بەبێ پرینتی دووەم
+            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1074,7 +1080,7 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. بەراوردکردن و دەرخستنی تەنها بڕی زیادکراو یاخود سڕدراو بۆ پرینتەری مەتبەخ بێ وەسڵی زیادە
+            # 2. بەراوردکردن: تەنها جیاوازییە نوێیەکان لەگەڵ is_printed = 0 دەنێردرێن
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
