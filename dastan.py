@@ -64,79 +64,90 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
-# پەڕەی نوێکراوەی مێزەکان کە لەسەر ئایپاد سکرۆڵی نەرمی بۆ دانراوە بەبێ کێشە
+# پەڕەی مێزەکان بە قەبارەی گەورە و شیک و توانای سکرۆڵکردنی سەر و خوار
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>هەڵبژاردنی مێز - شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { 
-            background-color: #e2e8f0; 
+            background-color: #f1f5f9; 
             color: #0f172a; 
-            min-height: 100vh;
-            display: flex; 
-            flex-direction: column; 
-            overflow-y: auto; 
+            min-height: 100%;
+            height: auto;
+            overflow-x: hidden;
+            overflow-y: scroll;
             -webkit-overflow-scrolling: touch; 
         }
         .header-bar { 
-            background-color: #f1f5f9; 
-            padding: 12px 20px; 
+            background-color: #ffffff; 
+            padding: 14px 24px; 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
             border-bottom: 2px solid #cbd5e1; 
             position: sticky;
             top: 0;
-            z-index: 100;
-            flex-shrink: 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
-        .header-title { font-size: 16px; font-weight: 800; color: #0f172a; text-align: center; flex: 1; }
-        .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .header-title { font-size: 17px; font-weight: 800; color: #1e293b; text-align: center; flex: 1; }
+        .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
+        .btn-exit:active { opacity: 0.8; }
         
         .tables-grid-wrapper { 
-            flex: 1; 
-            padding: 12px 14px 40px; 
+            padding: 18px 20px 80px 20px; 
             width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
         }
+        /* گەورەکردنی لەیبڵەکان بۆ ١٠ ستوون لە بری ١٥ بۆ ئەوەی بە جوانی سەروخوار بکرێت */
         .tables-grid { 
             display: grid; 
-            grid-template-columns: repeat(15, 1fr); 
-            gap: 7px; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 12px; 
             width: 100%; 
         }
         .table-box { 
             background-color: #ffffff; 
-            border: 1.5px solid #94a3b8; 
-            border-radius: 6px; 
+            border: 2px solid #cbd5e1; 
+            border-radius: 10px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 24px; 
+            font-size: 28px; 
             font-weight: 800; 
             font-family: 'Segoe UI', Arial, sans-serif; 
-            color: #000000; 
+            color: #1e293b; 
             text-decoration: none; 
-            min-height: 65px;
-            aspect-ratio: 1 / 0.85;
-            transition: background-color 0.2s, transform 0.1s; 
+            height: 90px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.04);
+            transition: all 0.15s ease;
             cursor: pointer; 
             user-select: none; 
         }
         .table-box:hover, .table-box:active { 
-            transform: scale(1.02); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+            transform: translateY(-2px); 
+            border-color: #f59e0b;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.1); 
         }
+        /* کاتێک مێزەکە خواردنی تێدایە سەوزێکی زۆر گەش و جوان دەبێت */
         .table-box.active-occupied { 
-            background-color: #10b981 !important; 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
             color: #ffffff !important; 
-            border-color: #059669 !important; 
+            border-color: #047857 !important; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+        }
+
+        /* گونجاندنی شاشە بچووکترەکان */
+        @media (max-width: 900px) {
+            .tables-grid { grid-template-columns: repeat(8, 1fr); gap: 10px; }
+            .table-box { height: 80px; font-size: 24px; }
         }
     </style>
 </head>
@@ -1085,11 +1096,13 @@ def login():
         except Exception as ex:
             print("Database Error in Login:", ex)
 
+        # 1. کۆدی کۆمپیوتەر -> سەرەتا پەڕەی مێزەکان
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('desktop_tables'))
 
+        # 2. کۆدی مۆبایل
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
