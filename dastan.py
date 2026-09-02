@@ -65,7 +65,7 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
-# پەڕەی نوێی هەڵبژاردنی مێزەکان بە دیزاینی تۆڕی وێنەکەت
+# پەڕەی هەڵبژاردنی مێزەکان لەسەر دیسکتۆپ
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -122,7 +122,7 @@ DESKTOP_TABLES_TEMPLATE = """
                 }).catch(() => {});
         }
         refreshTableStatus();
-        setInterval(refreshTableStatus, 4000); // نوێکردنەوەی خۆکارانەی ڕەنگەکان
+        setInterval(refreshTableStatus, 4000);
     </script>
 </body>
 </html>
@@ -177,6 +177,7 @@ DESKTOP_TEMPLATE = """
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; flex-shrink: 0; gap: 6px; }
         .table-badge-header { background: var(--gold); color: var(--bg-main); padding: 5px 12px; border-radius: 6px; font-size: 15px; font-weight: 800; }
         .btn-top-action { background: #1e293b; color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .btn-top-action.change { color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
         .btn-top-action.danger { color: var(--danger); border-color: rgba(239,68,68,0.4); }
 
         .cart-sidebar-header { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
@@ -209,6 +210,7 @@ DESKTOP_TEMPLATE = """
         .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #ffffff; border: none; padding: 11px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: none; text-align: center; transition: opacity 0.2s; }
         
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #ffffff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .table-dropdown { background: var(--bg-main); color: var(--gold); border: 1.5px solid var(--gold); padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 800; outline: none; }
     </style>
 </head>
 <body>
@@ -255,6 +257,7 @@ DESKTOP_TEMPLATE = """
                     <input type="hidden" id="currentTableNum" value="{{ selected_table }}">
                 </div>
                 <div style="display:flex; gap:4px;">
+                    <button type="button" class="btn-top-action change" onclick="openChangeTableModal()">🔄 گۆڕین</button>
                     <a href="/desktop/tables" class="btn-top-action">⬅️ مێزەکان</a>
                     <button type="button" class="btn-top-action danger" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
                 </div>
@@ -278,6 +281,23 @@ DESKTOP_TEMPLATE = """
                     <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مۆداڵی گۆڕین و گواستنەوەی مێز لەسەر دیسکتۆپ -->
+    <div id="changeTableModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:500; display:none; align-items:center; justify-content:center;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; width: 100%; max-width: 380px; text-align: center;">
+            <div style="font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">ژمارەی ئەو مێزە نوێیە دیاری بکە کە ئۆردەرەکەی بۆ دەگوازیتەوە:</p>
+            <select id="newTableSelect" class="table-dropdown" style="width: 100%; padding: 10px; margin-bottom: 18px;">
+                {% for num in range(1, 91) %}
+                    <option value="{{ num }}">مێزی {{ num }}</option>
+                {% endfor %}
+            </select>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-send-desktop" style="flex: 1; padding: 10px;" onclick="confirmChangeTable()">گواستنەوە</button>
+                <button type="button" class="btn-top-action" style="flex: 1; justify-content: center;" onclick="toggleChangeTableModal(false)">پاشگەزبوونەوە</button>
             </div>
         </div>
     </div>
@@ -474,7 +494,6 @@ DESKTOP_TEMPLATE = """
             .then(data => {
                 if (data.status === 'success') {
                     showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
-                    // ڕاستەوخۆ دەگەڕێتەوە بۆ سەر فۆڕمی مێزەکان
                     setTimeout(() => {
                         window.location.href = '/desktop/tables';
                     }, 800);
@@ -497,6 +516,41 @@ DESKTOP_TEMPLATE = """
                 });
             }
         }
+
+        // بەشی گۆڕین و گواستنەوەی مێز
+        function openChangeTableModal() {
+            document.getElementById('newTableSelect').value = tableNum;
+            toggleChangeTableModal(true);
+        }
+        function toggleChangeTableModal(show) {
+            document.getElementById('changeTableModal').style.display = show ? 'flex' : 'none';
+        }
+        function confirmChangeTable() {
+            const oldTbl = tableNum;
+            const newTbl = document.getElementById('newTableSelect').value;
+            if (oldTbl === newTbl) {
+                showToast("تکایە ژمارەیەکی جیاواز دیاری بکە!", true);
+                return;
+            }
+            fetch('/change_table_number', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_table: oldTbl, new_table: newTbl })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    toggleChangeTableModal(false);
+                    showToast("گوازرایەوە بۆ مێزی " + newTbl);
+                    setTimeout(() => {
+                        window.location.href = '/desktop?table=' + newTbl;
+                    }, 600);
+                } else {
+                    showToast("هەڵە لە گواستنەوە: " + data.message, true);
+                }
+            }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
+        }
+
         window.onload = function() { fetchTableOrders(); };
     </script>
 </body>
@@ -585,7 +639,7 @@ HTML_TEMPLATE = """
         <div class="table-actions">
             <button type="button" class="btn-add-plate" onclick="addNewPlateDivider()" id="btnAddPlate" style="display:none;">➕ قاپی نوێ</button>
             <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
-            <button type="button" class="btn-action btn-clear-tbl" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
+            <button type="button" class="btn-clear-tbl btn-action" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
         </div>
     </div>
 
@@ -955,7 +1009,7 @@ def login():
         except Exception as ex:
             print("Database Error in Login:", ex)
 
-        # 1. چوونەژوورەوە بۆ دیسکتۆپ / کۆمپیوتەر -> ڕاستەوخۆ دەیباتە پەڕەی مێزەکان
+        # 1. چوونەژوورەوە بۆ دیسکتۆپ / کۆمپیوتەر -> ڕاستەوخۆ دەچێتە سەر پەڕەی مێزەکان
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
@@ -1006,7 +1060,6 @@ def desktop_menu():
         session.clear()
         return redirect(url_for('login'))
     
-    # ئەگەر ژمارەی مێز لە لینکدا نەبوو، ڕەوانەی هەڵبژاردنی مێزی دەکاتەوە
     selected_table = request.args.get('table')
     if not selected_table:
         return redirect(url_for('desktop_tables'))
