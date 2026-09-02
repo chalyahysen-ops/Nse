@@ -104,7 +104,6 @@ DESKTOP_TABLES_TEMPLATE = """
 
     <script>
         function refreshTableStatus() {
-            // بەکارهێنانی timestamp بۆ ئەوەی براوسەر داتاکە کێش نەکات
             fetch('/get_active_tables?t=' + new Date().getTime())
                 .then(res => res.json())
                 .then(activeTables => {
@@ -151,25 +150,52 @@ DESKTOP_TEMPLATE = """
             --danger: #ef4444;
         }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .desktop-main-layout { display: grid; grid-template-columns: 1fr 500px; flex: 1; overflow: hidden; }
-        .menu-section { display: flex; flex-direction: column; padding: 16px 24px; overflow-y: auto; }
-        .categories-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
+        .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; }
+        .categories-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
         .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .tab-btn.active { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,158,11,0.25); }
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
-        .food-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-bottom: 10px; }
-        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s, border-color 0.2s; }
+        /* قەبارەی یەکدەست و ڕێکخراو بۆ هەموو بەشەکان لەسەر ئایپاد و دیسکتۆپ */
+        .food-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); 
+            gap: 14px; 
+            padding-bottom: 12px; 
+        }
+        .desktop-food-card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            transition: transform 0.2s, border-color 0.2s;
+            min-height: 215px;
+            justify-content: space-between;
+        }
         .desktop-food-card:hover { border-color: var(--gold); transform: translateY(-2px); }
         
-        .desktop-food-img { width: 100%; height: 95px; border-radius: 8px; object-fit: cover; background: var(--bg-main); border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+        /* گەورەکردن و جێگیرکردنی قەبارەی وێنە وەک بەشی کوردییەکان */
+        .desktop-food-img { 
+            width: 100%; 
+            height: 125px; 
+            border-radius: 8px; 
+            object-fit: cover; 
+            background: var(--bg-main); 
+            border: 1px solid var(--border-color); 
+            cursor: pointer; 
+            transition: opacity 0.2s, transform 0.1s; 
+        }
         .desktop-food-img:hover { opacity: 0.9; transform: scale(1.02); }
         .desktop-food-img:active { transform: scale(0.98); }
 
-        .desktop-food-info { display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: center; }
-        .desktop-food-name { font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .desktop-food-price { font-size: 12px; font-weight: 700; color: var(--success); }
+        .desktop-food-info { display: flex; flex-direction: column; gap: 3px; text-align: center; }
+        .desktop-food-name { font-size: 13.5px; font-weight: 700; color: var(--text-main); white-space: normal; line-height: 1.3; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+        .desktop-food-price { font-size: 13px; font-weight: 800; color: var(--success); }
 
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         
@@ -231,10 +257,10 @@ DESKTOP_TEMPLATE = """
                     <div class="food-grid">
                         {% for item in items %}
                         <div class="desktop-food-card">
-                            <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" 
+                            <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" 
                                    class="desktop-food-img" 
                                    onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
-                                   onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'"
+                                   onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'"
                                    title="کلیک بکە بۆ زیادکردن">
                             
                             <div class="desktop-food-info">
@@ -1006,13 +1032,11 @@ def login():
         except Exception as ex:
             print("Database Error in Login:", ex)
 
-        # 1. کۆدی کۆمپیوتەر -> سەرەتا پەڕەی هەڵبژاردنی مێزەکان
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('desktop_tables'))
 
-        # 2. کۆدی مۆبایل
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
@@ -1029,7 +1053,6 @@ def desktop_tables():
         return redirect(url_for('login'))
     return render_template_string(DESKTOP_TABLES_TEMPLATE)
 
-# هێنانی تەنها ئەو مێزانەی کە ئێستا لە داتابەیس خواردنی ڕاستەقینەیان تێدایە
 @app.route('/get_active_tables')
 def get_active_tables():
     if not session.get('authenticated'):
@@ -1037,7 +1060,6 @@ def get_active_tables():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # تەنها ئەو مێزانەی کە خواردنی ئەسڵییان تێدایە بەبێ پاشگرەکانی وەسڵ
             cursor.execute("""
                 SELECT DISTINCT table_cabin 
                 FROM froshtn 
@@ -1218,7 +1240,6 @@ def clear_table_orders():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # سڕینەوەی مێزەکە و هەر پاشگرێکی [زیادکراو] و [سڕاوەتەوە] کە پەیوەستە پێیەوە
             cursor.execute("""
                 DELETE FROM froshtn 
                 WHERE table_cabin = %s 
@@ -1241,10 +1262,8 @@ def change_table_number():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. گواستنەوەی خواردنە سەرەکییەکانی مێز
             cursor.execute("UPDATE froshtn SET table_cabin = %s WHERE table_cabin = %s", (new_tbl, old_tbl))
             
-            # 2. نوێکردنەوەی ناونیشانی وەسڵە چاپکراوەکانیش تا لەسەر مێزە کۆنەکە نەمێننەوە
             cursor.execute("""
                 UPDATE froshtn 
                 SET table_cabin = REPLACE(table_cabin, %s, %s) 
