@@ -5,7 +5,6 @@ import pymysql
 app = Flask(__name__)
 app.secret_key = 'shahoor_secret_key_super_secure'
 
-# دیاریکردنی ماوەی بەسەرچوونی سەشن بۆ بیست خولەک
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=20)
 
 DB_CONFIG = {
@@ -65,7 +64,6 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
-# پەڕەی هەڵبژاردنی مێزەکان لەسەر دیسکتۆپ
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -82,7 +80,7 @@ DESKTOP_TABLES_TEMPLATE = """
         .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .tables-grid-wrapper { flex: 1; padding: 12px; overflow-y: auto; display: flex; align-items: stretch; justify-content: center; }
         .tables-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 6px; width: 100%; height: 100%; }
-        .table-box { background-color: #ffffff; border: 1.5px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; font-family: 'Segoe UI', Arial, sans-serif; color: #000000; text-decoration: none; transition: transform 0.1s, box-shadow 0.1s; cursor: pointer; user-select: none; }
+        .table-box { background-color: #ffffff; border: 1.5px solid #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; font-family: 'Segoe UI', Arial, sans-serif; color: #000000; text-decoration: none; transition: background-color 0.2s, transform 0.1s; cursor: pointer; user-select: none; }
         .table-box:hover { transform: scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .table-box.active-occupied { background-color: #10b981 !important; color: #ffffff !important; border-color: #059669 !important; }
     </style>
@@ -106,7 +104,8 @@ DESKTOP_TABLES_TEMPLATE = """
 
     <script>
         function refreshTableStatus() {
-            fetch('/get_active_tables')
+            // بەکارهێنانی timestamp بۆ ئەوەی براوسەر داتاکە کێش نەکات
+            fetch('/get_active_tables?t=' + new Date().getTime())
                 .then(res => res.json())
                 .then(activeTables => {
                     for (let i = 1; i <= 90; i++) {
@@ -122,7 +121,7 @@ DESKTOP_TABLES_TEMPLATE = """
                 }).catch(() => {});
         }
         refreshTableStatus();
-        setInterval(refreshTableStatus, 4000);
+        setInterval(refreshTableStatus, 2500);
     </script>
 </body>
 </html>
@@ -285,7 +284,6 @@ DESKTOP_TEMPLATE = """
         </div>
     </div>
 
-    <!-- مۆداڵی گۆڕین و گواستنەوەی مێز لەسەر دیسکتۆپ -->
     <div id="changeTableModal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:500; display:none; align-items:center; justify-content:center;">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; width: 100%; max-width: 380px; text-align: center;">
             <div style="font-size: 18px; font-weight: 800; color: var(--gold); margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
@@ -517,7 +515,6 @@ DESKTOP_TEMPLATE = """
             }
         }
 
-        // بەشی گۆڕین و گواستنەوەی مێز
         function openChangeTableModal() {
             document.getElementById('newTableSelect').value = tableNum;
             toggleChangeTableModal(true);
@@ -1009,13 +1006,13 @@ def login():
         except Exception as ex:
             print("Database Error in Login:", ex)
 
-        # 1. چوونەژوورەوە بۆ دیسکتۆپ / کۆمپیوتەر -> ڕاستەوخۆ دەچێتە سەر پەڕەی مێزەکان
+        # 1. کۆدی کۆمپیوتەر -> سەرەتا پەڕەی هەڵبژاردنی مێزەکان
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('desktop_tables'))
 
-        # 2. چوونەژوورەوە بۆ مۆبایل
+        # 2. کۆدی مۆبایل
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
@@ -1025,7 +1022,6 @@ def login():
 
     return render_template_string(LOGIN_TEMPLATE)
 
-# ڕووتی هەڵبژاردنی مێزەکان لەسەر دیسکتۆپ
 @app.route('/desktop/tables')
 def desktop_tables():
     if not session.get('authenticated'):
@@ -1033,7 +1029,7 @@ def desktop_tables():
         return redirect(url_for('login'))
     return render_template_string(DESKTOP_TABLES_TEMPLATE)
 
-# هێنانی لیستەی ئەو مێزانەی کە ئێستا لە داتابەیس خواردنیان تێدایە (بۆ سەوزکردن)
+# هێنانی تەنها ئەو مێزانەی کە ئێستا لە داتابەیس خواردنی ڕاستەقینەیان تێدایە
 @app.route('/get_active_tables')
 def get_active_tables():
     if not session.get('authenticated'):
@@ -1041,15 +1037,18 @@ def get_active_tables():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin IS NOT NULL AND table_cabin != ''")
+            # تەنها ئەو مێزانەی کە خواردنی ئەسڵییان تێدایە بەبێ پاشگرەکانی وەسڵ
+            cursor.execute("""
+                SELECT DISTINCT table_cabin 
+                FROM froshtn 
+                WHERE table_cabin NOT LIKE '%%[%%' 
+                  AND table_cabin IS NOT NULL 
+                  AND table_cabin != ''
+            """)
             rows = cursor.fetchall()
         conn.close()
         
-        active_list = []
-        for r in rows:
-            tbl = str(r['table_cabin']).replace('[زیادکراو]', '').replace('[سڕاوەتەوە]', '').strip()
-            if tbl and tbl not in active_list:
-                active_list.append(tbl)
+        active_list = [str(r['table_cabin']).strip() for r in rows if str(r['table_cabin']).strip()]
         return jsonify(active_list)
     except:
         return jsonify([])
@@ -1155,7 +1154,6 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            # 1. نوێکردنەوەی تەواوی مێزەکە لە خشتەی سەرەکی
             cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
 
             for item in cart_items:
@@ -1183,7 +1181,6 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (str(table_num), food_name, qty, price, cat))
 
-            # 2. بەراوردکردن: تەنها جیاوازییە نوێیەکان بە is_printed = 0 بۆ پرێنتەر دەنێردرێن
             all_keys = set(old_map.keys()).union(set(new_map.keys()))
             for key in all_keys:
                 old_qty = old_map.get(key, {}).get('qty', 0)
@@ -1221,7 +1218,12 @@ def clear_table_orders():
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM froshtn WHERE table_cabin = %s", (str(table_num),))
+            # سڕینەوەی مێزەکە و هەر پاشگرێکی [زیادکراو] و [سڕاوەتەوە] کە پەیوەستە پێیەوە
+            cursor.execute("""
+                DELETE FROM froshtn 
+                WHERE table_cabin = %s 
+                   OR table_cabin LIKE %s
+            """, (str(table_num), f"{table_num} [%"))
             conn.commit()
         conn.close()
         return jsonify({'status': 'success'})
@@ -1234,12 +1236,21 @@ def change_table_number():
     if not session.get('authenticated'):
         return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
     data = request.get_json()
-    old_tbl = data.get('old_table')
-    new_tbl = data.get('new_table')
+    old_tbl = str(data.get('old_table')).strip()
+    new_tbl = str(data.get('new_table')).strip()
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("UPDATE froshtn SET table_cabin = %s WHERE table_cabin = %s", (str(new_tbl), str(old_tbl)))
+            # 1. گواستنەوەی خواردنە سەرەکییەکانی مێز
+            cursor.execute("UPDATE froshtn SET table_cabin = %s WHERE table_cabin = %s", (new_tbl, old_tbl))
+            
+            # 2. نوێکردنەوەی ناونیشانی وەسڵە چاپکراوەکانیش تا لەسەر مێزە کۆنەکە نەمێننەوە
+            cursor.execute("""
+                UPDATE froshtn 
+                SET table_cabin = REPLACE(table_cabin, %s, %s) 
+                WHERE table_cabin LIKE %s
+            """, (f"{old_tbl} [", f"{new_tbl} [", f"{old_tbl} [%"))
+            
             conn.commit()
         conn.close()
         return jsonify({'status': 'success'})
