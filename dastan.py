@@ -28,7 +28,6 @@ def normalize_digits(text):
     trans_table = str.maketrans(eastern_digits, western_digits)
     return text.translate(trans_table)
 
-# دڵنیابوونەوە لە دروستبوونی خشتەی دەسەڵاتی مێزەکان بۆ موشتەری
 def ensure_qr_table_exists():
     try:
         conn = get_db()
@@ -45,6 +44,25 @@ def ensure_qr_table_exists():
         print("Table permissions setup error:", ex)
 
 ensure_qr_table_exists()
+
+# 🛡️ پاراستنی ئاسایش: هەر کاتێک ئینتەر لە ناونیشانی سێرچ بکرێت دەچێتەوە لۆگین
+@app.before_request
+def enforce_login_on_direct_url():
+    # بەشە گشتییەکان کە نابێت قفڵ بکرێن (پەڕەی لۆگین و سکانی QRی موشتەری)
+    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
+    if request.endpoint in exempt_endpoints:
+        return
+
+    # پشکنینی داواکارییە ناوخۆییەکانی سێرڤەر (AJAX / Fetch) بۆ ئەوەی پرۆسەی پرینت و داواکاری تێک نەچێت
+    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_'))
+    if is_api:
+        return
+
+    # ئەگەر داواکارییەکە لە ئینتەری ڕاستەوخۆوە هاتبێت (بێ ئەوەی لە ناو پڕۆگرامەکەوە کلیکی لێکرابێت)
+    referer = request.headers.get('Referer')
+    if not referer and request.endpoint != 'login':
+        session.clear()
+        return redirect(url_for('login'))
 
 LOGIN_TEMPLATE = """
 <!DOCTYPE html>
@@ -662,7 +680,6 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# مێنیوی تایبەت بە موشتەری لە ڕێگەی سکانکردنی QR (بەپێی دەسەڵاتی allow_ordering)
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -891,7 +908,6 @@ CUSTOMER_MENU_TEMPLATE = """
 </html>
 """
 
-# پەڕەی بەڕێوەبردنی دەسەڵاتەکان و چاپی QR کۆدی ٩٠ مێزەکە
 QR_MANAGER_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -921,7 +937,6 @@ QR_MANAGER_TEMPLATE = """
         .status-view { background: #334155; color: #94a3b8; }
         .status-order { background: #059669; color: #ffffff; }
         
-        /* ستایلی چاپی فەرمی A4 بۆ هەموو QR کۆدەکان */
         @media print {
             body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
             .top-nav { display: none !important; }
@@ -1558,22 +1573,15 @@ def menu():
     except Exception as e:
         return f"<h3 style='color:red; text-align:center;'>کێشەی داتابەیس: {str(e)}</h3>"
 
-# ==============================================================
-# ڕووتە نوێیەکان: مێنیوی موشتەری لە ڕێگەی سکانکردنی QR
-# ==============================================================
-
 @app.route('/table/<int:table_num>')
 def customer_table_view(table_num):
-    # سکانکردنی موشتەری پێویستی بە لۆگین نییە
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # 1. پشکنینی دەسەڵاتی مێزەکە (ئایا تەنها بینینە یان ئۆردەرکردنیشە)
             cursor.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (table_num,))
             row = cursor.fetchone()
             allow_ordering = bool(row and row['allow_ordering'])
 
-            # 2. هێنانی مێنیوی خواردنەکان
             cursor.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name IS NOT NULL AND food_name != ''")
             foods = cursor.fetchall()
         conn.close()
@@ -1598,7 +1606,6 @@ def save_customer_order():
     table_num = data.get('table_number')
     cart_items = data.get('cart_items', [])
 
-    # دڵنیابوون لەوەی ئایا مێزەکە ڕێگەی پێدراوە ئۆردەر بنێرێت
     conn = get_db()
     try:
         with conn.cursor() as cursor:
@@ -1608,20 +1615,17 @@ def save_customer_order():
                 conn.close()
                 return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە و بۆت نییە ئۆردەر بنێریت!'})
 
-            # ناردنی ئۆردەرەکە ڕاستەوخۆ بۆ خشتەی froshtn تاوەکو پرێنتەر چاپی بکات
             for item in cart_items:
                 food_name = item.get('food_name')
                 qty = int(item.get('qty', 1))
                 price = float(item.get('price', 0))
                 cat = item.get('cat', 'گشتی')
 
-                # دانانی بۆ مێزەکە
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (str(table_num), food_name, qty, price, cat))
 
-                # وەسڵی نوێ بۆ چاپکەر لە مەتبەخ
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
@@ -1634,7 +1638,6 @@ def save_customer_order():
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
 
-# پەڕەی بەڕێوەبردن و چاپی QR بۆ هەموو مێزەکان
 @app.route('/qr_manager')
 def qr_manager():
     if not session.get('authenticated'):
@@ -1705,10 +1708,6 @@ def set_all_table_permissions():
     except Exception as e:
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(e)})
-
-# ==============================================================
-# کۆتایی بەشی QR
-# ==============================================================
 
 @app.route('/get_table_orders/<table_num>')
 def get_table_orders(table_num):
