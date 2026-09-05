@@ -71,13 +71,13 @@ LOGIN_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-        .login-card { background: #064032; border: 1px solid #0b5e4a; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        body { background-color: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+        .login-card { background: #151d30; border: 1px solid #334155; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .logo { color: #f59e0b; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
-        .pin-input { width: 100%; padding: 14px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
-        .pin-input:focus { border-color: #10b981; }
-        .btn-submit { width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .pin-input { width: 100%; padding: 14px; background: #0f172a; border: 1.5px solid #334155; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
+        .pin-input:focus { border-color: #f59e0b; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
         .error-msg { color: #ef4444; font-size: 13px; margin-top: 14px; }
     </style>
 </head>
@@ -225,6 +225,7 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
+# لێرەدا دەستکاری شریتی سەرەوەی جۆرەکان کراوە بە کارتی وێنەدار بۆ بەشی ئایپاد و دیسکتۆپ
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -250,10 +251,57 @@ DESKTOP_TEMPLATE = """
         }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
-        .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .categories-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-        .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .tab-btn.active { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: var(--bg-main); border-color: var(--gold); box-shadow: 0 4px 12px rgba(245,158,11,0.25); }
+        .menu-section { display: flex; flex-direction: column; padding: 14px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        
+        /* شریتی نوێی جۆرەکان بە وێنەی بچووک و جوان */
+        .categories-visual-bar { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+            overflow-x: auto; 
+            padding-bottom: 6px;
+            scrollbar-width: thin;
+        }
+        .categories-visual-bar::-webkit-scrollbar { height: 5px; }
+        .categories-visual-bar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        .cat-visual-btn { 
+            background: #151d30; 
+            border: 2px solid #334155; 
+            border-radius: 12px; 
+            padding: 6px 8px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            min-width: 82px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            user-select: none;
+        }
+        .cat-visual-btn:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .cat-visual-btn.active { 
+            background: #1e293b; 
+            border-color: var(--gold); 
+            box-shadow: 0 4px 14px rgba(245,158,11,0.3); 
+        }
+        .cat-visual-btn.active .cat-visual-title { color: var(--gold); font-weight: 800; }
+
+        .cat-visual-img { 
+            width: 54px; 
+            height: 54px; 
+            border-radius: 8px; 
+            object-fit: cover; 
+            background: #0b0f19;
+            margin-bottom: 6px;
+        }
+        .cat-visual-title { 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #f8fafc; 
+            white-space: nowrap; 
+        }
+
         .category-desktop-group { margin-bottom: 24px; }
         .category-desktop-title { color: var(--gold); font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         
@@ -340,10 +388,18 @@ DESKTOP_TEMPLATE = """
 
     <div class="desktop-main-layout">
         <div class="menu-section">
-            <div class="categories-tabs" id="categoriesTabs">
-                <button type="button" class="tab-btn active" onclick="filterCat('all', this)">هەموو</button>
-                {% for cat in categories.keys() %}
-                    <button type="button" class="tab-btn" onclick="filterCat('cat-group-{{ loop.index }}', this)">{{ cat }}</button>
+            
+            <!-- شریتی وێنەداری جۆرەکان بۆ ئایپاد و دیسکتۆپ -->
+            <div class="categories-visual-bar" id="categoriesTabs">
+                <div class="cat-visual-btn active" onclick="filterCat('all', this)">
+                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120" class="cat-visual-img" alt="هەموو">
+                    <span class="cat-visual-title">هەموو</span>
+                </div>
+                {% for cat, items in categories.items() %}
+                    <div class="cat-visual-btn" onclick="filterCat('cat-group-{{ loop.index }}', this)">
+                        <img src="{{ items[0].image_path if items[0].image_path and items[0].image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=120' }}" class="cat-visual-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=120'">
+                        <span class="cat-visual-title">{{ cat }}</span>
+                    </div>
                 {% endfor %}
             </div>
             
@@ -567,8 +623,9 @@ DESKTOP_TEMPLATE = """
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
             document.getElementById('cartCountBadge').innerText = count;
         }
+
         function filterCat(catId, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.cat-visual-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const groups = document.querySelectorAll('.category-group-item');
             groups.forEach(group => {
@@ -576,6 +633,7 @@ DESKTOP_TEMPLATE = """
                 else { group.style.display = (group.id === catId) ? 'block' : 'none'; }
             });
         }
+
         function fetchTableOrders() {
             fetch('/get_table_orders/' + tableNum)
                 .then(res => res.json())
@@ -677,7 +735,6 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# دیزاینی نوێی هاوشێوەی وێنەکە بۆ مۆبایل و سکانی QR
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -722,7 +779,6 @@ CUSTOMER_MENU_TEMPLATE = """
             border-radius: 20px;
         }
 
-        /* بەشی سەروەی جۆرەکان بە هاوشێوەی وێنەکەت */
         .categories-carousel {
             display: flex;
             overflow-x: auto;
@@ -787,7 +843,6 @@ CUSTOMER_MENU_TEMPLATE = """
             font-weight: 900;
         }
 
-        /* تۆڕی خواردنەکان (٢ ستوونی ڕێک وەک وێنەکە) */
         .foods-container {
             padding: 0 12px;
         }
@@ -832,7 +887,6 @@ CUSTOMER_MENU_TEMPLATE = """
             margin-bottom: 6px;
         }
 
-        /* دوگمەی ژماردنی ئۆردەر لە ناو کارتەکە */
         .mini-stepper {
             display: flex;
             align-items: center;
@@ -864,7 +918,6 @@ CUSTOMER_MENU_TEMPLATE = """
             color: #0f172a;
         }
 
-        /* شریتی خوارەوەی سەبەتە */
         .bottom-checkout-bar {
             position: fixed;
             bottom: 0;
@@ -912,7 +965,6 @@ CUSTOMER_MENU_TEMPLATE = """
             cursor: pointer;
         }
 
-        /* مۆداڵی سەبەتە */
         .modal-shade {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -981,7 +1033,6 @@ CUSTOMER_MENU_TEMPLATE = """
     </div>
     {% endif %}
 
-    <!-- بەشی دەستنیشانکردنی جۆرەکان ڕێک وەک وێنەکە -->
     <div class="categories-carousel">
         <div class="cat-card-item active" onclick="filterMenu('all', this)">
             <div class="cat-img-box">
@@ -1002,7 +1053,6 @@ CUSTOMER_MENU_TEMPLATE = """
         {% endfor %}
     </div>
 
-    <!-- تۆڕی خواردنەکان (٢ ستوون) -->
     <div class="foods-container">
         {% for cat, items in categories.items() %}
         <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
@@ -1173,7 +1223,7 @@ CUSTOMER_MENU_TEMPLATE = """
 </html>
 """
 
-# فۆڕمی مۆبایلی کارمەندان (بە هەمان شێوازی سەوزی مۆدێرن و ٢ ستوونی لەگەڵ کۆنتڕۆڵی مێز)
+# فۆڕمی مۆبایلی فەرمانبەران
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1856,7 +1906,7 @@ def menu():
                 categories[cat] = []
             categories[cat].append(food)
 
-        return render_template_string(HTML_TEMPLATE, categories=categories)
+        return render_template_string(CUSTOMER_MENU_TEMPLATE, categories=categories, table_num=1, allow_ordering=True)
     except Exception as e:
         return f"<h3 style='color:red; text-align:center;'>کێشەی داتابەیس: {str(e)}</h3>"
 
