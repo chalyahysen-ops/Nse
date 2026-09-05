@@ -48,17 +48,14 @@ ensure_qr_table_exists()
 # 🛡️ پاراستنی ئاسایش: هەر کاتێک ئینتەر لە ناونیشانی سێرچ بکرێت دەچێتەوە لۆگین
 @app.before_request
 def enforce_login_on_direct_url():
-    # بەشە گشتییەکان کە نابێت قفڵ بکرێن (پەڕەی لۆگین و سکانی QRی موشتەری)
     exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
     if request.endpoint in exempt_endpoints:
         return
 
-    # پشکنینی داواکارییە ناوخۆییەکانی سێرڤەر (AJAX / Fetch) بۆ ئەوەی پرۆسەی پرینت و داواکاری تێک نەچێت
     is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_'))
     if is_api:
         return
 
-    # ئەگەر داواکارییەکە لە ئینتەری ڕاستەوخۆوە هاتبێت (بێ ئەوەی لە ناو پڕۆگرامەکەوە کلیکی لێکرابێت)
     referer = request.headers.get('Referer')
     if not referer and request.endpoint != 'login':
         session.clear()
@@ -74,13 +71,13 @@ LOGIN_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #0b0f19; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-        .login-card { background: #151d30; border: 1px solid #334155; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        body { background-color: #03261d; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+        .login-card { background: #064032; border: 1px solid #0b5e4a; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .logo { color: #f59e0b; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
-        .pin-input { width: 100%; padding: 14px; background: #0f172a; border: 1.5px solid #334155; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
-        .pin-input:focus { border-color: #f59e0b; }
-        .btn-submit { width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .pin-input { width: 100%; padding: 14px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
+        .pin-input:focus { border-color: #10b981; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
         .error-msg { color: #ef4444; font-size: 13px; margin-top: 14px; }
     </style>
 </head>
@@ -680,6 +677,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
+# دیزاینی نوێی هاوشێوەی وێنەکە بۆ مۆبایل و سکانی QR
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -690,124 +688,383 @@ CUSTOMER_MENU_TEMPLATE = """
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b0f19; color: #f8fafc; padding-bottom: {{ '120px' if allow_ordering else '40px' }}; }
-        .app-header { background: linear-gradient(180deg, #161f32 0%, #0b0f19 100%); padding: 14px 16px 10px; text-align: center; border-bottom: 1px solid rgba(245, 158, 11, 0.2); position: sticky; top: 0; z-index: 100; }
-        .restaurant-name { color: #f59e0b; font-size: 20px; font-weight: 800; }
-        .table-indicator { display: inline-block; background: #f59e0b; color: #0b0f19; font-size: 11px; font-weight: 800; padding: 3px 12px; border-radius: 20px; margin-top: 4px; }
-        .mode-banner { background: #1e293b; color: #94a3b8; font-size: 11px; text-align: center; padding: 6px; border-bottom: 1px solid #334155; }
+        body { 
+            background-color: #03261d; 
+            color: #ffffff; 
+            padding-bottom: {{ '115px' if allow_ordering else '30px' }}; 
+            min-height: 100vh;
+        }
         
-        .categories-scroll { display: flex; overflow-x: auto; gap: 8px; padding: 10px 16px; scrollbar-width: none; }
-        .categories-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip { background: #1e293b; color: #94a3b8; padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; text-decoration: none; border: 1px solid #334155; }
-        .cat-chip.active { background: #f59e0b; color: #0b0f19; font-weight: 800; border-color: #f59e0b; }
+        .top-header-bar {
+            background-color: #03261d;
+            padding: 10px 14px 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 17px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+        .table-pill {
+            background-color: #059669;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* بەشی سەروەی جۆرەکان بە هاوشێوەی وێنەکەت */
+        .categories-carousel {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 12px 14px;
+            scrollbar-width: none;
+        }
+        .categories-carousel::-webkit-scrollbar { display: none; }
         
-        .menu-container { padding: 0 16px; }
-        .category-block { margin-bottom: 18px; }
-        .category-title { color: #f59e0b; font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .category-title::after { content: ''; flex: 1; height: 1px; background: #334155; }
-        
-        .food-card { background: #151d30; border: 1px solid #243048; border-radius: 14px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
-        .food-img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; background: #0b0f19; border: 1px solid #334155; flex-shrink: 0; }
-        .food-details { flex: 1; min-width: 0; }
-        .food-name { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .food-price { font-size: 13.5px; font-weight: 700; color: #10b981; }
-        
-        .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 8px; border: 1px solid #334155; padding: 2px; gap: 3px; }
-        .btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #ffffff; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .btn-count.plus { background: #f59e0b; color: #0b0f19; }
-        .qty-val { width: 26px; text-align: center; font-size: 14px; font-weight: 700; color: #ffffff; background: transparent; border: none; outline: none; }
-        
-        .bottom-cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #334155; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 200; }
-        .cart-info-btn { display: flex; align-items: center; gap: 10px; background: #1e293b; padding: 8px 14px; border-radius: 10px; border: 1px solid #334155; cursor: pointer; }
-        .cart-badge { background: #f59e0b; color: #0b0f19; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 10px; }
-        .cart-total-txt { font-size: 14px; font-weight: 800; color: #10b981; }
-        .btn-send-main { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 300; display: none; align-items: flex-end; }
-        .modal-sheet { background: #151d30; width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; padding: 18px 16px; display: flex; flex-direction: column; border-top: 1px solid #334155; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        .modal-title { font-size: 16px; font-weight: 800; color: #f59e0b; }
-        .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
-        .cart-items-list { overflow-y: auto; flex: 1; max-height: 60vh; margin-bottom: 10px; }
-        .cart-item-row { display: flex; flex-direction: column; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; gap: 6px; }
-        .cart-item-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        
-        #toastMsg { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #10b981; color: #ffffff; padding: 10px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .cat-card-item {
+            background: #064032;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 76px;
+            flex-shrink: 0;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cat-card-item.active {
+            border-color: #ef4444;
+            background: #085341;
+        }
+        .cat-img-box {
+            width: 62px;
+            height: 62px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #021a14;
+            margin-bottom: 5px;
+        }
+        .cat-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .cat-title-text {
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+        }
+        .cat-plus-pill {
+            background: #10b981;
+            color: #03261d;
+            width: 100%;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        /* تۆڕی خواردنەکان (٢ ستوونی ڕێک وەک وێنەکە) */
+        .foods-container {
+            padding: 0 12px;
+        }
+        .food-grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .food-card-white {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        .food-img-hero {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 8px;
+            background: #f1f5f9;
+        }
+        .food-title-main {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .food-price-red {
+            font-size: 14px;
+            font-weight: 800;
+            color: #e11d48;
+            margin-bottom: 6px;
+        }
+
+        /* دوگمەی ژماردنی ئۆردەر لە ناو کارتەکە */
+        .mini-stepper {
+            display: flex;
+            align-items: center;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 2px;
+            gap: 4px;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .btn-step {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: #e2e8f0;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .btn-step.add {
+            background: #10b981;
+            color: #ffffff;
+        }
+        .qty-val-display {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        /* شریتی خوارەوەی سەبەتە */
+        .bottom-checkout-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(3, 38, 29, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #0b5e4a;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 200;
+        }
+        .cart-bubble-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #064032;
+            padding: 8px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .cart-counter-pill {
+            background: #10b981;
+            color: #03261d;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .cart-sum-txt {
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 13.5px;
+        }
+        .btn-submit-order {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* مۆداڵی سەبەتە */
+        .modal-shade {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 300;
+            display: none;
+            align-items: flex-end;
+        }
+        .modal-bottom-box {
+            background: #064032;
+            width: 100%;
+            max-height: 80vh;
+            border-radius: 20px 20px 0 0;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            border-top: 2px solid #10b981;
+        }
+        .modal-items-scroller {
+            overflow-y: auto;
+            flex: 1;
+            margin: 12px 0;
+        }
+        .cart-row-item {
+            background: #03261d;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #toastBox {
+            position: fixed;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: #ffffff;
+            padding: 9px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body>
-    <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
-    
-    <header class="app-header">
-        <div class="restaurant-name">✨ شاهور ڕێستۆرانت</div>
-        <div class="table-indicator">📍 مێزی {{ table_num }}</div>
+    <div id="toastBox">✅ بە سەرکەوتوویی نێردرا</div>
+
+    <header class="top-header-bar">
+        <div class="header-brand">
+            <span>✨ شاهور ڕێستۆرانت</span>
+        </div>
+        <div class="table-pill">مێزی {{ table_num }}</div>
     </header>
 
     {% if not allow_ordering %}
-    <div class="mode-banner">
-        ℹ️ ئێستا ئەم مێزە تەنها بۆ بینینی مێنیوە. بۆ داواکردن تکایە داوا لە کارمەند بکەن.
+    <div style="background:#064032; color:#a7f3d0; font-size:11px; text-align:center; padding:6px; border-bottom:1px solid #0b5e4a;">
+        ℹ️ تەنها بینینی مێنیوە. بۆ داواکردن پەیوەندی بە کارمەند بکەن.
     </div>
     {% endif %}
 
-    <div class="categories-scroll">
-        <a href="javascript:void(0)" class="cat-chip active" onclick="filterCat('all', this)">هەموو</a>
-        {% for cat in categories.keys() %}
-            <a href="javascript:void(0)" class="cat-chip" onclick="filterCat('cat-group-{{ loop.index }}', this)">{{ cat }}</a>
+    <!-- بەشی دەستنیشانکردنی جۆرەکان ڕێک وەک وێنەکە -->
+    <div class="categories-carousel">
+        <div class="cat-card-item active" onclick="filterMenu('all', this)">
+            <div class="cat-img-box">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150" alt="هەموو">
+            </div>
+            <div class="cat-title-text">هەموو</div>
+            <div class="cat-plus-pill">+</div>
+        </div>
+
+        {% for cat, items in categories.items() %}
+        <div class="cat-card-item" onclick="filterMenu('group-{{ loop.index }}', this)">
+            <div class="cat-img-box">
+                <img src="{{ items[0].image_path if items[0].image_path and items[0].image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150' }}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150'">
+            </div>
+            <div class="cat-title-text">{{ cat }}</div>
+            <div class="cat-plus-pill">+</div>
+        </div>
         {% endfor %}
     </div>
 
-    <div class="menu-container">
+    <!-- تۆڕی خواردنەکان (٢ ستوون) -->
+    <div class="foods-container">
         {% for cat, items in categories.items() %}
-        <div class="category-block category-group-item" id="cat-group-{{ loop.index }}">
-            <div class="category-title">{{ cat }}</div>
-            {% for item in items %}
-            <div class="food-card">
-                <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="food-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
-                <div class="food-details">
-                    <div class="food-name">{{ item.food_name }}</div>
-                    <div class="food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
-                </div>
-                {% if allow_ordering %}
-                <div class="counter-group">
-                    <button type="button" class="btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
-                    <input type="text" id="qty_{{ item.food_name }}" value="0" class="qty-val" readonly>
-                    <button type="button" class="btn-count plus" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
-                </div>
-                {% endif %}
+        <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
+            <div style="color: #10b981; font-size: 15px; font-weight: 800; margin: 10px 0 10px; display: flex; align-items: center; gap: 8px;">
+                <span>{{ cat }}</span>
+                <span style="flex:1; height:1px; background:#0b5e4a;"></span>
             </div>
-            {% endfor %}
+            
+            <div class="food-grid-2col">
+                {% for item in items %}
+                <div class="food-card-white">
+                    <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" 
+                         class="food-img-hero" 
+                         onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
+                    
+                    <div class="food-title-main">{{ item.food_name }}</div>
+                    <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
+
+                    {% if allow_ordering %}
+                    <div class="mini-stepper">
+                        <button type="button" class="btn-step" onclick="changeQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
+                        <span class="qty-val-display" id="count_{{ item.food_name }}">0</span>
+                        <button type="button" class="btn-step add" onclick="changeQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>
 
     {% if allow_ordering %}
-    <div class="bottom-cart-bar">
-        <div class="cart-info-btn" onclick="openCartModal()">
+    <div class="bottom-checkout-bar">
+        <div class="cart-bubble-btn" onclick="openCartView()">
             <span style="font-size: 18px;">🛒</span>
-            <span class="cart-badge" id="cartCount">0</span>
-            <span class="cart-total-txt" id="cartTotalTxt">0 دینار</span>
+            <span class="cart-counter-pill" id="cartBadgeCount">0</span>
+            <span class="cart-sum-txt" id="cartTotalDisplay">0 د.ع</span>
         </div>
-        <button type="button" class="btn-send-main" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+        <button type="button" class="btn-submit-order" onclick="sendFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
     </div>
 
-    <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
-        <div class="modal-sheet" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <span class="modal-title">🛒 سەبەتەی داواکاری</span>
-                <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
+    <div class="modal-shade" id="cartModalShade" onclick="closeCartView(event)">
+        <div class="modal-bottom-box" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #0b5e4a; padding-bottom: 8px;">
+                <span style="font-size: 16px; font-weight: 800; color: #ffffff;">🛒 داواکارییەکانی مێزی {{ table_num }}</span>
+                <button type="button" style="background:none; border:none; color:#ef4444; font-size:18px; font-weight:800;" onclick="toggleCartModal(false)">✕</button>
             </div>
-            <div class="cart-items-list" id="cartItemsList"></div>
-            <button type="button" class="btn-send-main" style="width: 100%; padding: 13px;" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ</button>
+            
+            <div class="modal-items-scroller" id="cartScrollerList"></div>
+
+            <button type="button" class="btn-submit-order" style="width: 100%; padding: 13px; font-size: 15px;" onclick="sendFinalOrder()">پشتڕاستکردنەوە و ناردن</button>
         </div>
     </div>
     {% endif %}
 
     <script>
-        let cartItems = [];
-        const tableNum = "{{ table_num }}";
+        let myCart = [];
+        const tableId = "{{ table_num }}";
 
-        function showToast(text, isError = false) {
-            const toast = document.getElementById('toastMsg');
+        function showNotification(text, isError = false) {
+            const toast = document.getElementById('toastBox');
             toast.innerText = text;
             toast.style.background = isError ? '#ef4444' : '#10b981';
             toast.style.display = 'block';
@@ -818,17 +1075,327 @@ CUSTOMER_MENU_TEMPLATE = """
             }, 2500);
         }
 
-        function filterCat(catId, btn) {
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            const blocks = document.querySelectorAll('.category-group-item');
-            if (catId === 'all') { blocks.forEach(b => b.style.display = 'block'); }
-            else { blocks.forEach(b => b.style.display = (b.id === catId) ? 'block' : 'none'); }
+        function filterMenu(groupId, el) {
+            document.querySelectorAll('.cat-card-item').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            
+            const groups = document.querySelectorAll('.category-block-wrapper');
+            groups.forEach(g => {
+                if (groupId === 'all') { g.style.display = 'block'; }
+                else { g.style.display = (g.id === groupId) ? 'block' : 'none'; }
+            });
+        }
+
+        function changeQty(name, delta, price, cat) {
+            let found = false;
+            for (let i = myCart.length - 1; i >= 0; i--) {
+                if (myCart[i].food_name === name) {
+                    myCart[i].qty += delta;
+                    if (myCart[i].qty <= 0) { myCart.splice(i, 1); }
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && delta > 0) {
+                myCart.push({ food_name: name, price: price, qty: 1, cat: cat || '' });
+            }
+            refreshCounterDisplays();
+            renderCartUI();
+        }
+
+        function refreshCounterDisplays() {
+            document.querySelectorAll('.qty-val-display').forEach(d => d.innerText = '0');
+            myCart.forEach(item => {
+                const el = document.getElementById('count_' + item.food_name);
+                if (el) el.innerText = item.qty;
+            });
+        }
+
+        function renderCartUI() {
+            let total = 0, count = 0;
+            const scroller = document.getElementById('cartScrollerList');
+            if (scroller) scroller.innerHTML = '';
+
+            myCart.forEach(item => {
+                total += (item.qty * item.price);
+                count += item.qty;
+
+                if (scroller) {
+                    const row = document.createElement('div');
+                    row.className = 'cart-row-item';
+                    row.innerHTML = `
+                        <div style="text-align: right;">
+                            <div style="font-weight:700; font-size:13.5px; color:#fff;">${item.food_name}</div>
+                            <div style="color:#10b981; font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
+                        </div>
+                        <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
+                    `;
+                    scroller.appendChild(row);
+                }
+            });
+
+            if (document.getElementById('cartBadgeCount')) {
+                document.getElementById('cartBadgeCount').innerText = count;
+                document.getElementById('cartTotalDisplay').innerText = total.toLocaleString() + ' د.ع';
+            }
+        }
+
+        function openCartView() { toggleCartModal(true); }
+        function toggleCartModal(show) { 
+            const m = document.getElementById('cartModalShade'); 
+            if (m) m.style.display = show ? 'flex' : 'none'; 
+        }
+        function closeCartView(e) { if (e.target.id === 'cartModalShade') toggleCartModal(false); }
+
+        function sendFinalOrder() {
+            if (myCart.length === 0) { showNotification("سەرەتا خواردن هەڵبژێرە!", true); return; }
+
+            fetch('/save_customer_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ table_number: tableId, cart_items: myCart })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    myCart = [];
+                    refreshCounterDisplays();
+                    renderCartUI();
+                    toggleCartModal(false);
+                    showNotification("✅ داواکارییەکەت بۆ مەتبەخ نێردرا");
+                } else {
+                    showNotification(data.message || 'هەڵە لە ناردن', true);
+                }
+            }).catch(() => showNotification("کێشە لە پەیوەندی سێرڤەر!", true));
+        }
+    </script>
+</body>
+</html>
+"""
+
+# فۆڕمی مۆبایلی کارمەندان (بە هەمان شێوازی سەوزی مۆدێرن و ٢ ستوونی لەگەڵ کۆنتڕۆڵی مێز)
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مێنیوی شاهور - مۆبایل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #03261d; color: #ffffff; padding-bottom: 120px; min-height: 100vh; }
+        .app-header { background: #03261d; padding: 12px 14px 6px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .restaurant-name { color: #ffffff; font-size: 18px; font-weight: 800; }
+        
+        .table-bar { background: #064032; margin: 8px 12px; padding: 8px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #0b5e4a; gap: 6px; }
+        .table-info { display: flex; align-items: center; gap: 6px; }
+        .table-info label { font-weight: 700; font-size: 13px; color: #ffffff; }
+        .table-select { background: #03261d; color: #10b981; border: 1.5px solid #10b981; padding: 5px 10px; border-radius: 8px; font-size: 14px; font-weight: 800; outline: none; }
+        .table-actions { display: flex; align-items: center; gap: 5px; }
+        .btn-action { border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .btn-change-tbl { background: #0284c7; color: #ffffff; }
+        .btn-clear-tbl { background: #ef4444; color: #ffffff; }
+        .btn-add-plate { background: #8b5cf6; color: #ffffff; border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+        .categories-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 8px 12px 14px; scrollbar-width: none; }
+        .categories-carousel::-webkit-scrollbar { display: none; }
+        .cat-card-item { background: #064032; border: 2px solid transparent; border-radius: 12px; padding: 5px; display: flex; flex-direction: column; align-items: center; width: 76px; flex-shrink: 0; text-decoration: none; cursor: pointer; }
+        .cat-card-item.active { border-color: #ef4444; background: #085341; }
+        .cat-img-box { width: 62px; height: 62px; border-radius: 10px; overflow: hidden; background: #021a14; margin-bottom: 5px; }
+        .cat-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .cat-title-text { font-size: 11px; font-weight: 700; color: #ffffff; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; }
+        .cat-plus-pill { background: #10b981; color: #03261d; width: 100%; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; }
+
+        .foods-container { padding: 0 12px; }
+        .food-grid-2col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .food-card-white { background: #ffffff; border-radius: 14px; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+        .food-img-hero { width: 100%; height: 120px; border-radius: 10px; object-fit: cover; margin-bottom: 8px; background: #f1f5f9; }
+        .food-title-main { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .food-price-red { font-size: 14px; font-weight: 800; color: #e11d48; margin-bottom: 6px; }
+
+        .mini-stepper { display: flex; align-items: center; background: #f1f5f9; border-radius: 8px; padding: 2px; gap: 4px; width: 100%; justify-content: space-between; }
+        .btn-step { width: 32px; height: 32px; border-radius: 6px; border: none; background: #e2e8f0; color: #0f172a; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .btn-step.add { background: #10b981; color: #ffffff; }
+        .qty-val-display { font-size: 14px; font-weight: 800; color: #0f172a; }
+
+        .bottom-checkout-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(3, 38, 29, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #0b5e4a; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 200; }
+        .cart-bubble-btn { display: flex; align-items: center; gap: 8px; background: #064032; padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+        .cart-counter-pill { background: #10b981; color: #03261d; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+        .cart-sum-txt { color: #ffffff; font-weight: 800; font-size: 13.5px; }
+        .btn-submit-order { background: #10b981; color: #ffffff; border: none; padding: 10px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+
+        .modal-shade { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 300; display: none; align-items: flex-end; }
+        .modal-bottom-box { background: #064032; width: 100%; max-height: 80vh; border-radius: 20px 20px 0 0; padding: 18px 16px; display: flex; flex-direction: column; border-top: 2px solid #10b981; }
+        .modal-items-scroller { overflow-y: auto; flex: 1; margin: 12px 0; }
+        .cart-row-item { background: #03261d; padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .plate-sep { background: #8b5cf6; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+
+        .modal-center-shade { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 400; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-center-card { background: #064032; border: 1px solid #0b5e4a; border-radius: 16px; padding: 20px; width: 100%; max-width: 360px; text-align: center; }
+
+        #toastBox { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #10b981; color: #ffffff; padding: 9px 20px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 1000; display: none; opacity: 0; transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div id="toastBox">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
+
+    <header class="app-header">
+        <div class="restaurant-name">✨ شاهور ڕێستۆرانت</div>
+    </header>
+
+    <div class="table-bar">
+        <div class="table-info">
+            <label>📍 مێزی:</label>
+            <select id="tableSelect" class="table-select" onchange="onTableChanged(this.value)">
+                {% for num in range(1, 91) %}
+                    <option value="{{ num }}">{{ num }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="table-actions">
+            <button type="button" class="btn-add-plate" onclick="addNewPlateDivider()" id="btnAddPlate" style="display:none;">➕ قاپ</button>
+            <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
+            <button type="button" class="btn-action btn-clear-tbl" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
+        </div>
+    </div>
+
+    <div class="categories-carousel">
+        <div class="cat-card-item active" onclick="filterMenu('all', this)">
+            <div class="cat-img-box"><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150"></div>
+            <div class="cat-title-text">هەموو</div>
+            <div class="cat-plus-pill">+</div>
+        </div>
+        {% for cat, items in categories.items() %}
+        <div class="cat-card-item" onclick="filterMenu('group-{{ loop.index }}', this)">
+            <div class="cat-img-box">
+                <img src="{{ items[0].image_path if items[0].image_path and items[0].image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150' }}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150'">
+            </div>
+            <div class="cat-title-text">{{ cat }}</div>
+            <div class="cat-plus-pill">+</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="foods-container">
+        {% for cat, items in categories.items() %}
+        <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
+            <div style="color: #10b981; font-size: 15px; font-weight: 800; margin: 10px 0 10px; display: flex; align-items: center; gap: 8px;">
+                <span>{{ cat }}</span>
+                <span style="flex:1; height:1px; background:#0b5e4a;"></span>
+            </div>
+            
+            <div class="food-grid-2col">
+                {% for item in items %}
+                <div class="food-card-white">
+                    <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" 
+                         class="food-img-hero" 
+                         onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
+                    
+                    <div class="food-title-main">{{ item.food_name }}</div>
+                    <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
+
+                    <div class="mini-stepper">
+                        <button type="button" class="btn-step" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
+                        <span class="qty-val-display" id="count_{{ item.food_name }}">0</span>
+                        <button type="button" class="btn-step add" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="bottom-checkout-bar">
+        <div class="cart-bubble-btn" onclick="openCartModal()">
+            <span style="font-size: 18px;">🛒</span>
+            <span class="cart-counter-pill" id="cartCount">0</span>
+            <span class="cart-sum-txt" id="cartTotalTxt">0 د.ع</span>
+        </div>
+        <button type="button" id="btnSubmitMain" class="btn-submit-order" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+    </div>
+
+    <div class="modal-shade" id="cartModal" onclick="closeCartModal(event)">
+        <div class="modal-bottom-box" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #0b5e4a; padding-bottom: 8px;">
+                <span style="font-size: 16px; font-weight: 800; color: #ffffff;">🛒 سەبەتەی داواکاری</span>
+                <button type="button" style="background:none; border:none; color:#ef4444; font-size:18px; font-weight:800;" onclick="toggleCartModal(false)">✕</button>
+            </div>
+            
+            <div class="modal-items-scroller" id="cartItemsList"></div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; display:none;" id="btnModalAddPlate" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
+                <button type="button" id="btnSubmitModal" class="btn-submit-order" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-center-shade" id="changeTableModal" onclick="toggleChangeTableModal(false)">
+        <div class="modal-center-card" onclick="event.stopPropagation()">
+            <div style="font-size:16px; font-weight:800; color:#10b981; margin-bottom:10px;">🔄 گواستنەوەی مێز</div>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 14px;">مێزی نوێ هەڵبژێرە:</p>
+            <select id="newTableSelect" class="table-select" style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 16px;">
+                {% for num in range(1, 91) %}
+                    <option value="{{ num }}">مێزی {{ num }}</option>
+                {% endfor %}
+            </select>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-submit-order" style="flex: 1;" onclick="confirmChangeTable()">گواستنەوە</button>
+                <button type="button" class="btn-action btn-clear-tbl" style="flex: 1;" onclick="toggleChangeTableModal(false)">پاشگەزبوونەوە</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cartItems = []; 
+        let originalTableOrders = [];
+
+        function showToast(text, isError = false) {
+            const toast = document.getElementById('toastBox');
+            toast.innerText = text;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.opacity = '1'; }, 10);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 2500);
+        }
+
+        function checkHasGrill() {
+            let hasGrill = cartItems.some(i => !i.is_divider && i.cat === 'برژاو');
+            document.getElementById('btnAddPlate').style.display = hasGrill ? 'flex' : 'none';
+            document.getElementById('btnModalAddPlate').style.display = hasGrill ? 'flex' : 'none';
+        }
+
+        function filterMenu(groupId, el) {
+            document.querySelectorAll('.cat-card-item').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            const groups = document.querySelectorAll('.category-block-wrapper');
+            groups.forEach(g => {
+                if (groupId === 'all') { g.style.display = 'block'; }
+                else { g.style.display = (g.id === groupId) ? 'block' : 'none'; }
+            });
+        }
+
+        function addNewPlateDivider() {
+            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
+                showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
+                return;
+            }
+            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ' });
+            checkHasGrill();
+            renderCartSummary();
+            if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
+            showToast("قاپی نوێ زیادکرا");
         }
 
         function updateQty(foodName, change, price, cat) {
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
+                if (cartItems[i].is_divider) break;
                 if (cartItems[i].food_name === foodName) {
                     cartItems[i].qty += change;
                     if (cartItems[i].qty <= 0) { cartItems.splice(i, 1); }
@@ -837,72 +1404,218 @@ CUSTOMER_MENU_TEMPLATE = """
                 }
             }
             if (!found && change > 0) {
-                cartItems.push({ food_name: foodName, price: price, qty: 1, cat: cat || '' });
+                cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '', rice_type: '', chicken_part: '' });
             }
-            updateInputs();
-            renderCart();
+            updateMenuCardInputs();
+            checkHasGrill();
+            renderCartSummary();
         }
 
-        function updateInputs() {
-            document.querySelectorAll('.qty-val').forEach(i => i.value = 0);
+        function updateMenuCardInputs() {
+            document.querySelectorAll('.qty-val-display').forEach(el => el.innerText = '0');
             cartItems.forEach(item => {
-                const el = document.getElementById('qty_' + item.food_name);
-                if (el) el.value = item.qty;
+                if (!item.is_divider) {
+                    const input = document.getElementById('count_' + item.food_name);
+                    if (input) { input.innerText = (parseInt(input.innerText) || 0) + item.qty; }
+                }
             });
         }
 
-        function renderCart() {
+        function removeCartIndex(index) {
+            cartItems.splice(index, 1);
+            updateMenuCardInputs();
+            checkHasGrill();
+            renderCartSummary();
+            renderCartModalList();
+        }
+
+        function modifyItemQty(index, change) {
+            if (cartItems[index] && !cartItems[index].is_divider) {
+                cartItems[index].qty += change;
+                if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
+                updateMenuCardInputs();
+                checkHasGrill();
+                renderCartSummary();
+                renderCartModalList();
+            }
+        }
+
+        function updateItemRice(index, val) { cartItems[index].rice_type = val; }
+        function updateItemChicken(index, val) { cartItems[index].chicken_part = val; }
+
+        function renderCartSummary() {
             let total = 0, count = 0;
-            const list = document.getElementById('cartItemsList');
-            if (list) list.innerHTML = '';
-            
             cartItems.forEach(item => {
-                total += item.qty * item.price;
-                count += item.qty;
-                if (list) {
+                if (!item.is_divider) { total += (item.qty * item.price); count += item.qty; }
+            });
+            document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' د.ع';
+            document.getElementById('cartCount').innerText = count;
+        }
+
+        function openCartModal() { renderCartModalList(); toggleCartModal(true); }
+        function toggleCartModal(show) { document.getElementById('cartModal').style.display = show ? 'flex' : 'none'; }
+        function closeCartModal(e) { if (e.target.id === 'cartModal') toggleCartModal(false); }
+
+        function renderCartModalList() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            if (cartItems.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#a7f3d0; padding:20px;">سەبەتە بەتاڵە!</div>';
+                return;
+            }
+            let plateNum = 1;
+            cartItems.forEach((item, index) => {
+                if (item.is_divider) {
+                    plateNum++;
+                    const sep = document.createElement('div');
+                    sep.className = 'plate-sep';
+                    sep.innerHTML = `<span>🍽 قاپی ${plateNum}</span> <button type="button" style="background:#ef4444; color:#fff; border:none; width:22px; height:22px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="removeCartIndex(${index})">✕</button>`;
+                    list.appendChild(sep);
+                } else {
+                    let showRice = ['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(item.cat);
+                    let showChicken = (item.cat === 'پەلەوەر');
+                    let optionsHtml = '';
+                    if (showRice || showChicken) {
+                        optionsHtml += `<div style="display:flex; gap:6px; margin-top:4px;">`;
+                        if (showRice) {
+                            let rVal = item.rice_type || '';
+                            optionsHtml += `
+                                <select style="flex:1; background:#03261d; color:#10b981; border:1px solid #0b5e4a; padding:4px; border-radius:6px; font-size:11px;" onchange="updateItemRice(${index}, this.value)">
+                                    <option value="">جۆری برنج</option>
+                                    <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
+                                    <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
+                                    <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
+                                    <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
+                                </select>`;
+                        }
+                        if (showChicken) {
+                            let cVal = item.chicken_part || '';
+                            optionsHtml += `
+                                <select style="flex:1; background:#03261d; color:#10b981; border:1px solid #0b5e4a; padding:4px; border-radius:6px; font-size:11px;" onchange="updateItemChicken(${index}, this.value)">
+                                    <option value="">بەشی مریشک</option>
+                                    <option value="سینگ" ${cVal === 'سینگ' ? 'selected' : ''}>سینگ</option>
+                                    <option value="ڕان" ${cVal === 'ڕان' ? 'selected' : ''}>ڕان</option>
+                                </select>`;
+                        }
+                        optionsHtml += `</div>`;
+                    }
                     const row = document.createElement('div');
-                    row.className = 'cart-item-row';
+                    row.className = 'cart-row-item';
                     row.innerHTML = `
-                        <div class="cart-item-top">
-                            <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name} x ${item.qty}</div>
-                            <div style="color:#10b981; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:6px; cursor:pointer;" onclick="removeCartIndex(${index})">🗑</button>
+                                <button type="button" style="background:#0b5e4a; color:#fff; border:none; width:26px; height:26px; border-radius:6px; cursor:pointer;" onclick="modifyItemQty(${index}, -1)">-</button>
+                                <span style="padding:0 6px; font-weight:800;">${item.qty}</span>
+                                <button type="button" style="background:#10b981; color:#03261d; border:none; width:26px; height:26px; border-radius:6px; font-weight:800; cursor:pointer;" onclick="modifyItemQty(${index}, 1)">+</button>
+                            </div>
+                            <div style="text-align: left;">
+                                <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
+                                <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} د.ع</div>
+                            </div>
                         </div>
-                    `;
+                        ${optionsHtml}`;
                     list.appendChild(row);
                 }
             });
-
-            if (document.getElementById('cartTotalTxt')) {
-                document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
-                document.getElementById('cartCount').innerText = count;
-            }
         }
 
-        function openCartModal() { toggleCartModal(true); }
-        function toggleCartModal(show) { const m = document.getElementById('cartModal'); if (m) m.style.display = show ? 'flex' : 'none'; }
-        function closeCartModal(e) { if (e.target.id === 'cartModal') toggleCartModal(false); }
+        function onTableChanged(newTableNum) { fetchTableOrders(newTableNum); }
+
+        function fetchTableOrders(tableNum) {
+            fetch('/get_table_orders/' + tableNum)
+                .then(res => res.json())
+                .then(data => {
+                    cartItems = [];
+                    originalTableOrders = [];
+                    document.querySelectorAll('.qty-val-display').forEach(el => el.innerText = '0');
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
+                            let fName = item.food_name, rType = '', cPart = '';
+                            ['برنجی درێژ', 'برنجی خڕ', 'برنجی کوردی', 'برنج بە سرکە'].forEach(r => {
+                                if (fName.includes(`(${r})`)) { rType = r; fName = fName.replace(` (${r})`, '').trim(); }
+                            });
+                            ['سینگ', 'ڕان'].forEach(c => {
+                                if (fName.includes(`(${c})`)) { cPart = c; fName = fName.replace(` (${c})`, '').trim(); }
+                            });
+                            
+                            let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
+                            cartItems.push(parsedItem);
+                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
+                        });
+                    }
+                    updateMenuCardInputs();
+                    checkHasGrill();
+                    renderCartSummary();
+                    if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
+                }).catch(() => {});
+        }
 
         function submitFinalOrder() {
+            const tableNum = document.getElementById('tableSelect').value;
             if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
             
-            fetch('/save_customer_order', {
+            fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems })
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    cartItems = [];
-                    updateInputs();
-                    renderCart();
-                    toggleCartModal(false);
-                    showToast("✅ داواکارییەکەت بە سەرکەوتوویی گەیشتە مەتبەخ!");
-                } else {
-                    showToast(data.message || 'هەڵە لە ناردن', true);
-                }
+                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
+                    showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
+                } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
             }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
         }
+
+        function clearCurrentTableOrders() {
+            const currentTbl = document.getElementById('tableSelect').value;
+            if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
+                fetch('/clear_table_orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table_number: currentTbl })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success || data.status === 'success') {
+                        showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
+                        fetchTableOrders(currentTbl);
+                    }
+                });
+            }
+        }
+
+        function openChangeTableModal() {
+            const currentTbl = document.getElementById('tableSelect').value;
+            document.getElementById('newTableSelect').value = currentTbl;
+            document.getElementById('changeTableModal').style.display = 'flex';
+        }
+        function toggleChangeTableModal(show) { document.getElementById('changeTableModal').style.display = show ? 'flex' : 'none'; }
+        
+        function confirmChangeTable() {
+            const oldTbl = document.getElementById('tableSelect').value;
+            const newTbl = document.getElementById('newTableSelect').value;
+            if (oldTbl === newTbl) { showToast("تکایە ژمارەیەکی جیاواز دیاری بکە!", true); return; }
+            fetch('/change_table_number', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_table: oldTbl, new_table: newTbl })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    toggleChangeTableModal(false);
+                    showToast("گوازرایەوە بۆ مێزی " + newTbl);
+                    document.getElementById('tableSelect').value = newTbl;
+                    fetchTableOrders(newTbl);
+                }
+            });
+        }
+
+        window.onload = function() { fetchTableOrders(document.getElementById('tableSelect').value); };
     </script>
 </body>
 </html>
@@ -1022,432 +1735,6 @@ QR_MANAGER_TEMPLATE = """
                 });
             }
         }
-    </script>
-</body>
-</html>
-"""
-
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مێنیوی شاهور - مۆبایل</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b0f19; color: #f8fafc; padding-bottom: 120px; }
-        .app-header { background: linear-gradient(180deg, #161f32 0%, #0b0f19 100%); padding: 14px 16px 8px; text-align: center; border-bottom: 1px solid rgba(245, 158, 11, 0.2); position: sticky; top: 0; z-index: 100; }
-        .restaurant-name { color: #f59e0b; font-size: 20px; font-weight: 800; }
-        .tagline { color: #94a3b8; font-size: 11px; margin-top: 2px; }
-        .table-bar { background: #1e293b; margin: 10px 16px; padding: 10px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; gap: 8px; }
-        .table-info { display: flex; align-items: center; gap: 6px; }
-        .table-info label { font-weight: 700; font-size: 13px; color: #f8fafc; }
-        .table-select { background: #0f172a; color: #f59e0b; border: 1.5px solid #f59e0b; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; }
-        .table-actions { display: flex; align-items: center; gap: 6px; }
-        .btn-action { border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .btn-change-tbl { background: #0284c7; color: #ffffff; }
-        .btn-clear-tbl { background: #ef4444; color: #ffffff; }
-        .btn-add-plate { background: #8b5cf6; color: #ffffff; border: none; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .categories-scroll { display: flex; overflow-x: auto; gap: 8px; padding: 4px 16px 12px; scrollbar-width: none; }
-        .categories-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip { background: #1e293b; color: #94a3b8; padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; text-decoration: none; border: 1px solid #334155; }
-        .cat-chip.active { background: #f59e0b; color: #0b0f19; font-weight: 800; border-color: #f59e0b; }
-        .menu-container { padding: 0 16px; }
-        .category-block { margin-bottom: 18px; }
-        .category-title { color: #f59e0b; font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .category-title::after { content: ''; flex: 1; height: 1px; background: #334155; }
-        .food-card { background: #151d30; border: 1px solid #243048; border-radius: 14px; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
-        .food-img { width: 68px; height: 68px; border-radius: 10px; object-fit: cover; background: #0b0f19; border: 1px solid #334155; flex-shrink: 0; }
-        .food-details { flex: 1; min-width: 0; }
-        .food-name { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .food-price { font-size: 13px; font-weight: 700; color: #10b981; }
-        .counter-group { display: flex; align-items: center; background: #0b0f19; border-radius: 8px; border: 1px solid #334155; padding: 2px; gap: 3px; }
-        .btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #ffffff; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .btn-count.plus { background: #f59e0b; color: #0b0f19; }
-        .qty-val { width: 26px; text-align: center; font-size: 14px; font-weight: 700; color: #ffffff; background: transparent; border: none; outline: none; }
-        .bottom-cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #334155; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 200; }
-        .cart-info-btn { display: flex; align-items: center; gap: 10px; background: #1e293b; padding: 8px 14px; border-radius: 10px; border: 1px solid #334155; cursor: pointer; }
-        .cart-badge { background: #f59e0b; color: #0b0f19; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 10px; }
-        .cart-total-txt { font-size: 14px; font-weight: 800; color: #10b981; }
-        .btn-send-main { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b0f19; border: none; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.25s ease; }
-        .btn-send-main.saved-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 300; display: none; align-items: flex-end; }
-        .modal-sheet { background: #151d30; width: 100%; max-height: 85vh; border-radius: 20px 20px 0 0; padding: 18px 16px; display: flex; flex-direction: column; border-top: 1px solid #334155; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        .modal-title { font-size: 16px; font-weight: 800; color: #f59e0b; }
-        .close-btn { background: none; border: none; color: #ef4444; font-size: 18px; font-weight: 800; cursor: pointer; }
-        .cart-items-list { overflow-y: auto; flex: 1; max-height: 60vh; margin-bottom: 10px; }
-        .cart-item-row { display: flex; flex-direction: column; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; gap: 6px; }
-        .cart-item-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .item-options-box { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
-        .item-rice-select, .item-chicken-select { flex: 1; background: #1e293b; color: #f59e0b; border: 1px solid #334155; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 700; outline: none; }
-        .del-item-btn { color: #ef4444; background: #1e293b; border: 1px solid #334155; font-size: 14px; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-        .plate-separator-row { display: flex; align-items: center; justify-content: space-between; background: #8b5cf6; color: #ffffff; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; margin: 12px 0 6px 0; }
-        .modal-center-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 400; display: none; align-items: center; justify-content: center; padding: 16px; }
-        .modal-center-card { background: #151d30; border: 1px solid #334155; border-radius: 16px; padding: 20px; width: 100%; max-width: 360px; text-align: center; }
-        #toastMsg { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #10b981; color: #ffffff; padding: 10px 22px; border-radius: 30px; font-size: 13px; font-weight: 700; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; opacity: 0; transition: opacity 0.3s ease; }
-    </style>
-</head>
-<body>
-    <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
-    <header class="app-header">
-        <div class="restaurant-name">✨ شاهور ڕێستۆرانت</div>
-        <div class="tagline">سیستەمی داواکاری مۆبایل</div>
-    </header>
-
-    <div class="table-bar">
-        <div class="table-info">
-            <label>📍 مێزی:</label>
-            <select id="tableSelect" class="table-select" onchange="onTableChanged(this.value)">
-                {% for num in range(1, 91) %}
-                    <option value="{{ num }}">{{ num }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="table-actions">
-            <button type="button" class="btn-add-plate" onclick="addNewPlateDivider()" id="btnAddPlate" style="display:none;">➕ قاپی نوێ</button>
-            <button type="button" class="btn-action btn-change-tbl" onclick="openChangeTableModal()">🔄 گۆڕین</button>
-            <button type="button" class="btn-clear-tbl btn-action" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
-        </div>
-    </div>
-
-    <div class="categories-scroll">
-        <a href="javascript:void(0)" class="cat-chip active" onclick="filterCat('all', this)">هەموو</a>
-        {% for cat in categories.keys() %}
-            <a href="javascript:void(0)" class="cat-chip" onclick="filterCat('cat-group-{{ loop.index }}', this)">{{ cat }}</a>
-        {% endfor %}
-    </div>
-
-    <div class="menu-container">
-        {% for cat, items in categories.items() %}
-        <div class="category-block category-group-item" id="cat-group-{{ loop.index }}" data-cat-name="{{ cat }}">
-            <div class="category-title">{{ cat }}</div>
-            {% for item in items %}
-            <div class="food-card">
-                <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200' }}" class="food-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
-                <div class="food-details">
-                    <div class="food-name">{{ item.food_name }}</div>
-                    <div class="food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
-                </div>
-                <div class="counter-group">
-                    <button type="button" class="btn-count" onclick="updateQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
-                    <input type="text" id="qty_{{ item.food_name }}" value="0" class="qty-val" readonly>
-                    <button type="button" class="btn-count plus" onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
-    </div>
-
-    <div class="bottom-cart-bar">
-        <div class="cart-info-btn" onclick="openCartModal()">
-            <span style="font-size: 18px;">🛒</span>
-            <span class="cart-badge" id="cartCount">0</span>
-            <span class="cart-total-txt" id="cartTotalTxt">0 دینار</span>
-        </div>
-        <button type="button" id="btnSubmitMain" class="btn-send-main" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
-    </div>
-
-    <div class="modal-overlay" id="cartModal" onclick="closeCartModal(event)">
-        <div class="modal-sheet" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <span class="modal-title">🛒 خواردنەکانی ناو سەبەتە</span>
-                <button type="button" class="close-btn" onclick="toggleCartModal(false)">✕</button>
-            </div>
-            <div class="cart-items-list" id="cartItemsList"></div>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-                <button type="button" class="btn-add-plate" style="flex: 1; padding: 12px; justify-content: center; display:none;" id="btnModalAddPlate" onclick="addNewPlateDivider()">➕ قاپی نوێ (هێڵ)</button>
-                <button type="button" id="btnSubmitModal" class="btn-send-main" style="flex: 2; padding: 12px;" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-center-overlay" id="changeTableModal" onclick="toggleChangeTableModal(false)">
-        <div class="modal-center-card" onclick="event.stopPropagation()">
-            <div class="modal-title" style="margin-bottom: 12px;">🔄 گواستنەوەی مێز</div>
-            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 16px;">ژمارەی ئەو مێزە دیاری بکە کە دەتەوێت ئۆردەرەکەی بۆ بگوازیتەوە:</p>
-            <select id="newTableSelect" class="table-select" style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 18px;">
-                {% for num in range(1, 91) %}
-                    <option value="{{ num }}">مێزی {{ num }}</option>
-                {% endfor %}
-            </select>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn-send-main" style="flex: 1; padding: 10px;" onclick="confirmChangeTable()">گواستنەوە</button>
-                <button type="button" class="btn-action btn-clear-tbl" style="flex: 1; justify-content: center;" onclick="toggleChangeTableModal(false)">پاشگەزبوونەوە</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let cartItems = []; 
-        let originalTableOrders = [];
-
-        function checkHasGrill() {
-            let hasGrill = cartItems.some(i => !i.is_divider && i.cat === 'برژاو');
-            document.getElementById('btnAddPlate').style.display = hasGrill ? 'flex' : 'none';
-            document.getElementById('btnModalAddPlate').style.display = hasGrill ? 'flex' : 'none';
-        }
-        function showToast(text, isError = false) {
-            const toast = document.getElementById('toastMsg');
-            toast.innerText = text;
-            toast.style.background = isError ? '#ef4444' : '#10b981';
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.opacity = '1'; }, 10);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => { toast.style.display = 'none'; }, 300);
-            }, 2500);
-        }
-        function setButtonStateNormal() {
-            const btnMain = document.getElementById('btnSubmitMain');
-            const btnModal = document.getElementById('btnSubmitModal');
-            if (btnMain) { btnMain.classList.remove('saved-success'); btnMain.innerHTML = 'ناردن بۆ مەتبەخ ➔'; }
-            if (btnModal) { btnModal.classList.remove('saved-success'); btnModal.innerHTML = 'ناردن بۆ مەتبەخ'; }
-        }
-        function setButtonStateSaved() {
-            const btnMain = document.getElementById('btnSubmitMain');
-            const btnModal = document.getElementById('btnSubmitModal');
-            if (btnMain) { btnMain.classList.add('saved-success'); btnMain.innerHTML = '✅ نێردرا بۆ مەتبەخ'; }
-            if (btnModal) { btnModal.classList.add('saved-success'); btnModal.innerHTML = '✅ نێردرا بۆ مەتبەخ'; }
-        }
-        function resetInputs() { document.querySelectorAll('.qty-val').forEach(el => el.value = 0); }
-        function addNewPlateDivider() {
-            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) {
-                showToast("تکایە سەرەتا خواردنێک دیاری بکە!", true);
-                return;
-            }
-            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ' });
-            setButtonStateNormal();
-            checkHasGrill();
-            renderCartSummary();
-            if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
-            showToast("قاپی نوێ زیادکرا");
-        }
-        function updateQty(foodName, change, price, cat) {
-            setButtonStateNormal();
-            let found = false;
-            for (let i = cartItems.length - 1; i >= 0; i--) {
-                if (cartItems[i].is_divider) break;
-                if (cartItems[i].food_name === foodName) {
-                    cartItems[i].qty += change;
-                    if (cartItems[i].qty <= 0) { cartItems.splice(i, 1); }
-                    found = true;
-                    break;
-                }
-            }
-            if (!found && change > 0) {
-                cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '', rice_type: '', chicken_part: '' });
-            }
-            updateMenuCardInputs();
-            checkHasGrill();
-            renderCartSummary();
-        }
-        function updateMenuCardInputs() {
-            resetInputs();
-            cartItems.forEach(item => {
-                if (!item.is_divider) {
-                    const input = document.getElementById('qty_' + item.food_name);
-                    if (input) { input.value = (parseInt(input.value) || 0) + item.qty; }
-                }
-            });
-        }
-        function removeCartIndex(index) {
-            setButtonStateNormal();
-            cartItems.splice(index, 1);
-            updateMenuCardInputs();
-            checkHasGrill();
-            renderCartSummary();
-            renderCartModalList();
-        }
-        function modifyItemQty(index, change) {
-            setButtonStateNormal();
-            if (cartItems[index] && !cartItems[index].is_divider) {
-                cartItems[index].qty += change;
-                if (cartItems[index].qty <= 0) { cartItems.splice(index, 1); }
-                updateMenuCardInputs();
-                checkHasGrill();
-                renderCartSummary();
-                renderCartModalList();
-            }
-        }
-        function updateItemRice(index, val) { setButtonStateNormal(); cartItems[index].rice_type = val; }
-        function updateItemChicken(index, val) { setButtonStateNormal(); cartItems[index].chicken_part = val; }
-        function renderCartSummary() {
-            let total = 0, count = 0;
-            cartItems.forEach(item => {
-                if (!item.is_divider) { total += (item.qty * item.price); count += item.qty; }
-            });
-            document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
-            document.getElementById('cartCount').innerText = count;
-        }
-        function openCartModal() { renderCartModalList(); toggleCartModal(true); }
-        function toggleCartModal(show) { document.getElementById('cartModal').style.display = show ? 'flex' : 'none'; }
-        function closeCartModal(e) { if (e.target.id === 'cartModal') toggleCartModal(false); }
-        function renderCartModalList() {
-            const list = document.getElementById('cartItemsList');
-            list.innerHTML = '';
-            if (cartItems.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">سەبەتە بەتاڵە!</div>';
-                return;
-            }
-            let plateNum = 1;
-            cartItems.forEach((item, index) => {
-                if (item.is_divider) {
-                    plateNum++;
-                    const sep = document.createElement('div');
-                    sep.className = 'plate-separator-row';
-                    sep.innerHTML = `<span>🍽 قاپی ${plateNum}</span> <button type="button" class="del-item-btn" style="background:#ef4444; color:#fff; width:24px; height:24px; font-size:11px;" onclick="removeCartIndex(${index})">✕</button>`;
-                    list.appendChild(sep);
-                } else {
-                    let showRice = ['کوڵاو', 'پەلەوەر', 'کوردیەکان'].includes(item.cat);
-                    let showChicken = (item.cat === 'پەلەوەر');
-                    let optionsHtml = '';
-                    if (showRice || showChicken) {
-                        optionsHtml += `<div class="item-options-box">`;
-                        if (showRice) {
-                            let rVal = item.rice_type || '';
-                            optionsHtml += `
-                                <select class="item-rice-select" onchange="updateItemRice(${index}, this.value)">
-                                    <option value="">جۆری برنج دیاریبکە</option>
-                                    <option value="برنجی درێژ" ${rVal === 'برنجی درێژ' ? 'selected' : ''}>برنجی درێژ</option>
-                                    <option value="برنجی خڕ" ${rVal === 'برنجی خڕ' ? 'selected' : ''}>برنجی خڕ</option>
-                                    <option value="برنجی کوردی" ${rVal === 'برنجی کوردی' ? 'selected' : ''}>برنجی کوردی</option>
-                                    <option value="برنج بە سرکە" ${rVal === 'برنج بە سرکە' ? 'selected' : ''}>برنج بە سرکە</option>
-                                </select>`;
-                        }
-                        if (showChicken) {
-                            let cVal = item.chicken_part || '';
-                            optionsHtml += `
-                                <select class="item-chicken-select" onchange="updateItemChicken(${index}, this.value)">
-                                    <option value="">بەشی مریشک</option>
-                                    <option value="سینگ" ${cVal === 'سینگ' ? 'selected' : ''}>سینگ</option>
-                                    <option value="ڕان" ${cVal === 'ڕان' ? 'selected' : ''}>ڕان</option>
-                                </select>`;
-                        }
-                        optionsHtml += `</div>`;
-                    }
-                    const row = document.createElement('div');
-                    row.className = 'cart-item-row';
-                    row.innerHTML = `
-                        <div class="cart-item-top">
-                            <div class="counter-group">
-                                <button type="button" class="del-item-btn" onclick="removeCartIndex(${index})" title="سڕینەوە">🗑</button>
-                                <button type="button" class="btn-count" onclick="modifyItemQty(${index}, -1)">-</button>
-                                <span style="padding:0 8px; font-weight:700;">${item.qty}</span>
-                                <button type="button" class="btn-count plus" onclick="modifyItemQty(${index}, 1)">+</button>
-                            </div>
-                            <div style="text-align: left;">
-                                <div style="font-weight:700; font-size:13px; color:#fff;">${item.food_name}</div>
-                                <div style="color:#10b981; font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div>
-                            </div>
-                        </div>
-                        ${optionsHtml}`;
-                    list.appendChild(row);
-                }
-            });
-        }
-        function filterCat(catId, btn) {
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            const blocks = document.querySelectorAll('.category-group-item');
-            if (catId === 'all') { blocks.forEach(b => b.style.display = 'block'); }
-            else { blocks.forEach(b => b.style.display = (b.id === catId) ? 'block' : 'none'); }
-        }
-        function onTableChanged(newTableNum) { fetchTableOrders(newTableNum); }
-        function fetchTableOrders(tableNum) {
-            fetch('/get_table_orders/' + tableNum)
-                .then(res => res.json())
-                .then(data => {
-                    cartItems = [];
-                    originalTableOrders = [];
-                    resetInputs();
-                    if (data && data.length > 0) {
-                        data.forEach(item => {
-                            const isDiv = (item.food_name.includes('قاپی نوێ') || item.category === 'مەتبەخ');
-                            let fName = item.food_name, rType = '', cPart = '';
-                            ['برنجی درێژ', 'برنجی خڕ', 'برنجی کوردی', 'برنج بە سرکە'].forEach(r => {
-                                if (fName.includes(`(${r})`)) { rType = r; fName = fName.replace(` (${r})`, '').trim(); }
-                            });
-                            ['سینگ', 'ڕان'].forEach(c => {
-                                if (fName.includes(`(${c})`)) { cPart = c; fName = fName.replace(` (${c})`, '').trim(); }
-                            });
-                            
-                            let parsedItem = { is_divider: isDiv, food_name: fName, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '', rice_type: rType, chicken_part: cPart };
-                            cartItems.push(parsedItem);
-                            originalTableOrders.push(JSON.parse(JSON.stringify(parsedItem)));
-                        });
-                        setButtonStateSaved();
-                    } else { setButtonStateNormal(); }
-                    updateMenuCardInputs();
-                    checkHasGrill();
-                    renderCartSummary();
-                    if (document.getElementById('cartModal').style.display === 'flex') { renderCartModalList(); }
-                }).catch(() => {});
-        }
-        function submitFinalOrder() {
-            const tableNum = document.getElementById('tableSelect').value;
-            if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
-            
-            fetch('/save_cart_order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    setButtonStateSaved();
-                    originalTableOrders = JSON.parse(JSON.stringify(cartItems));
-                    showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
-                } else { showToast('هەڵە لە ناردن: ' + data.message, true); }
-            }).catch(() => showToast("کێشە لە پەیوەندی سێرڤەر!", true));
-        }
-        function clearCurrentTableOrders() {
-            const currentTbl = document.getElementById('tableSelect').value;
-            if (confirm("ئایا دڵنیایت لە سڕینەوە و بەتاڵکردنی تەواوی مێزی " + currentTbl + "؟")) {
-                fetch('/clear_table_orders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ table_number: currentTbl })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success || data.status === 'success') {
-                        showToast("مێزی " + currentTbl + " بەتاڵکرایەوە");
-                        fetchTableOrders(currentTbl);
-                    }
-                });
-            }
-        }
-        function openChangeTableModal() {
-            const currentTbl = document.getElementById('tableSelect').value;
-            document.getElementById('newTableSelect').value = currentTbl;
-            document.getElementById('changeTableModal').style.display = 'flex';
-        }
-        function toggleChangeTableModal(show) { document.getElementById('changeTableModal').style.display = show ? 'flex' : 'none'; }
-        function confirmChangeTable() {
-            const oldTbl = document.getElementById('tableSelect').value;
-            const newTbl = document.getElementById('newTableSelect').value;
-            if (oldTbl === newTbl) { showToast("تکایە ژمارەیەکی جیاواز دیاری بکە!", true); return; }
-            fetch('/change_table_number', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ old_table: oldTbl, new_table: newTbl })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    toggleChangeTableModal(false);
-                    showToast("گوازرایەوە بۆ مێزی " + newTbl);
-                    document.getElementById('tableSelect').value = newTbl;
-                    fetchTableOrders(newTbl);
-                }
-            });
-        }
-        window.onload = function() { fetchTableOrders(document.getElementById('tableSelect').value); };
     </script>
 </body>
 </html>
