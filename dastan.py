@@ -157,22 +157,22 @@ DESKTOP_TABLES_TEMPLATE = """
             font-family: 'Segoe UI', Arial, sans-serif; 
             color: #03261d; 
             text-decoration: none; 
-            height: 90px; 
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2); 
-            transition: all 0.15s ease; 
+            height: 90px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            transition: all 0.15s ease;
             cursor: pointer; 
             user-select: none; 
         }
         .table-box:hover, .table-box:active { 
             transform: translateY(-2px); 
-            border-color: #10b981; 
+            border-color: #10b981;
             box-shadow: 0 6px 14px rgba(0,0,0,0.3); 
         }
         .table-box.active-occupied { 
             background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
             color: #ffffff !important; 
             border-color: #047857 !important; 
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45) !important; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45) !important;
         }
 
         @media (max-width: 900px) {
@@ -410,10 +410,10 @@ DESKTOP_TEMPLATE = """
                         {% for item in items %}
                         <div class="desktop-food-card">
                             <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" 
-                                 class="desktop-food-img" 
-                                 onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
-                                 onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'"
-                                 title="کلیک بکە بۆ زیادکردن">
+                                   class="desktop-food-img" 
+                                   onclick="updateQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')"
+                                   onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'"
+                                   title="کلیک بکە بۆ زیادکردن">
                             
                             <div class="desktop-food-info">
                                 <div class="desktop-food-name">{{ item.food_name }}</div>
@@ -734,7 +734,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# فۆڕمی نوێی موشتەری و مۆبایل بە هەڵبژاردنی تەواوی جۆری برنج و بەشی مریشک
+# فۆڕمی نوێی موشتەری و مۆبایل ڕێک بەپێی وێنەکەت
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -885,25 +885,6 @@ CUSTOMER_MENU_TEMPLATE = """
             font-weight: 800;
             color: #e11d48;
             margin-bottom: 6px;
-        }
-
-        .mobile-options-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            width: 100%;
-            margin-bottom: 6px;
-        }
-        .mobile-select-box {
-            width: 100%;
-            background: #f8fafc;
-            color: #03261d;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 4px 6px;
-            font-size: 11px;
-            font-weight: 700;
-            outline: none;
         }
 
         .mini-stepper {
@@ -1077,7 +1058,6 @@ CUSTOMER_MENU_TEMPLATE = """
         <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
             <div class="food-grid-2col">
                 {% for item in items %}
-                {% set item_id_safe = loop.index ~ '_' ~ cat ~ '_' ~ item.food_name|replace(' ', '_') %}
                 <div class="food-card-white">
                     <img src="{{ item.image_path if item.image_path and item.image_path.startswith('http') else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" 
                          class="food-img-hero" 
@@ -1087,34 +1067,10 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
 
                     {% if allow_ordering %}
-                    {% set show_rice = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
-                    {% set show_chicken = (item.category == 'پەلەوەر') %}
-
-                    {% if show_rice or show_chicken %}
-                    <div class="mobile-options-wrapper">
-                        {% if show_rice %}
-                        <select class="mobile-select-box" id="rice_opt_{{ item_id_safe }}">
-                            <option value="">جۆری برنج</option>
-                            <option value="برنجی درێژ">برنجی درێژ</option>
-                            <option value="برنجی خڕ">برنجی خڕ</option>
-                            <option value="برنجی کوردی">برنجی کوردی</option>
-                            <option value="برنج بە سرکە">برنج بە سرکە</option>
-                        </select>
-                        {% endif %}
-                        {% if show_chicken %}
-                        <select class="mobile-select-box" id="chicken_opt_{{ item_id_safe }}">
-                            <option value="">بەشی مریشک</option>
-                            <option value="سینگ">سینگ</option>
-                            <option value="ڕان">ڕان</option>
-                        </select>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
                     <div class="mini-stepper">
-                        <button type="button" class="btn-step" onclick="changeQtyMobile('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">-</button>
-                        <span class="qty-val-display" id="count_{{ item_id_safe }}">0</span>
-                        <button type="button" class="btn-step add" onclick="changeQtyMobile('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">+</button>
+                        <button type="button" class="btn-step" onclick="changeQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}')">-</button>
+                        <span class="qty-val-display" id="count_{{ item.food_name }}">0</span>
+                        <button type="button" class="btn-step add" onclick="changeQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}')">+</button>
                     </div>
                     {% endif %}
                 </div>
@@ -1175,21 +1131,10 @@ CUSTOMER_MENU_TEMPLATE = """
             });
         }
 
-        function changeQtyMobile(baseName, delta, price, cat, safeId) {
-            let riceType = '';
-            let chickenPart = '';
-            const rEl = document.getElementById('rice_opt_' + safeId);
-            const cEl = document.getElementById('chicken_opt_' + safeId);
-            if (rEl) riceType = rEl.value;
-            if (cEl) chickenPart = cEl.value;
-
-            let finalName = baseName;
-            if (riceType) finalName += ` (${riceType})`;
-            if (chickenPart) finalName += ` (${chickenPart})`;
-
+        function changeQty(name, delta, price, cat) {
             let found = false;
             for (let i = myCart.length - 1; i >= 0; i--) {
-                if (myCart[i].full_name === finalName) {
+                if (myCart[i].food_name === name) {
                     myCart[i].qty += delta;
                     if (myCart[i].qty <= 0) { myCart.splice(i, 1); }
                     found = true;
@@ -1197,16 +1142,7 @@ CUSTOMER_MENU_TEMPLATE = """
                 }
             }
             if (!found && delta > 0) {
-                myCart.push({
-                    base_name: baseName,
-                    full_name: finalName,
-                    price: price,
-                    qty: 1,
-                    cat: cat || '',
-                    rice_type: riceType,
-                    chicken_part: chickenPart,
-                    safe_id: safeId
-                });
+                myCart.push({ food_name: name, price: price, qty: 1, cat: cat || '' });
             }
             refreshCounterDisplays();
             renderCartUI();
@@ -1215,11 +1151,8 @@ CUSTOMER_MENU_TEMPLATE = """
         function refreshCounterDisplays() {
             document.querySelectorAll('.qty-val-display').forEach(d => d.innerText = '0');
             myCart.forEach(item => {
-                const el = document.getElementById('count_' + item.safe_id);
-                if (el) {
-                    let cur = parseInt(el.innerText) || 0;
-                    el.innerText = cur + item.qty;
-                }
+                const el = document.getElementById('count_' + item.food_name);
+                if (el) el.innerText = item.qty;
             });
         }
 
@@ -1228,7 +1161,7 @@ CUSTOMER_MENU_TEMPLATE = """
             const scroller = document.getElementById('cartScrollerList');
             if (scroller) scroller.innerHTML = '';
 
-            myCart.forEach((item, index) => {
+            myCart.forEach(item => {
                 total += (item.qty * item.price);
                 count += item.qty;
 
@@ -1237,14 +1170,10 @@ CUSTOMER_MENU_TEMPLATE = """
                     row.className = 'cart-row-item';
                     row.innerHTML = `
                         <div style="text-align: right;">
-                            <div style="font-weight:700; font-size:13.5px; color:#fff;">${item.full_name}</div>
+                            <div style="font-weight:700; font-size:13.5px; color:#fff;">${item.food_name}</div>
                             <div style="color:#10b981; font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, -1)">-</button>
-                            <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
-                            <button type="button" style="background:#10b981; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, 1)">+</button>
-                        </div>
+                        <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
                     `;
                     scroller.appendChild(row);
                 }
@@ -1253,17 +1182,6 @@ CUSTOMER_MENU_TEMPLATE = """
             if (document.getElementById('cartBadgeCount')) {
                 document.getElementById('cartBadgeCount').innerText = count;
                 document.getElementById('cartTotalDisplay').innerText = total.toLocaleString() + ' د.ع';
-            }
-        }
-
-        function modifyCustomerCart(index, delta) {
-            if (myCart[index]) {
-                myCart[index].qty += delta;
-                if (myCart[index].qty <= 0) {
-                    myCart.splice(index, 1);
-                }
-                refreshCounterDisplays();
-                renderCartUI();
             }
         }
 
@@ -1584,19 +1502,10 @@ def save_customer_order():
                 return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە و بۆت نییە ئۆردەر بنێریت!'})
 
             for item in cart_items:
-                food_name = item.get('full_name') or item.get('food_name') or item.get('base_name')
+                food_name = item.get('food_name')
                 qty = int(item.get('qty', 1))
                 price = float(item.get('price', 0))
                 cat = item.get('cat', 'گشتی')
-                rice_type = item.get('rice_type', '')
-                chicken_part = item.get('chicken_part', '')
-
-                # ئەگەر تایبەتمەندی هەڵبژێردرابێت و لە ناوەکەدا نەبووبێت، دەیلکێنێت
-                if '(' not in food_name:
-                    if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice_type:
-                        food_name += f" ({rice_type})"
-                    if cat == 'پەلەوەر' and chicken_part:
-                        food_name += f" ({chicken_part})"
 
                 cursor.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed)
