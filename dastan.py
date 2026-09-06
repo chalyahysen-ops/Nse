@@ -9,7 +9,7 @@ app.secret_key = 'shahoor_all_in_one_pos_2026'
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
 
-# فۆڵدەری هەڵگرتنی وێنە ئەپلۆدکراوەکان
+# ڕێکخستنی فۆڵدەری ئەپلۆدکردنی وێنە
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -40,6 +40,37 @@ def ensure_all_tables():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
+            # خشتەی بەکارهێنەران و دەسەڵاتەکان
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(100) NOT NULL UNIQUE,
+                    password VARCHAR(100) NOT NULL,
+                    full_name VARCHAR(150) DEFAULT '',
+                    role VARCHAR(50) DEFAULT 'Waiter',
+                    can_view_menu TINYINT DEFAULT 1,
+                    can_view_tables TINYINT DEFAULT 1,
+                    can_view_cashier TINYINT DEFAULT 0,
+                    can_view_qsa TINYINT DEFAULT 0,
+                    can_view_reports TINYINT DEFAULT 0,
+                    can_view_settings TINYINT DEFAULT 0,
+                    is_active TINYINT DEFAULT 1
+                );
+            """)
+
+            # دڵنیابوونەوە لە هەبوونی خانەی is_active لە خشتەی users
+            cursor.execute("SHOW COLUMNS FROM users LIKE 'is_active'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE users ADD COLUMN is_active TINYINT DEFAULT 1")
+
+            # زیادکردنی بەڕێوەبەری سەرەکی ئەگەر لە خشتەکەدا نەبێت
+            cursor.execute("SELECT id FROM users WHERE username = 'admin'")
+            if not cursor.fetchone():
+                cursor.execute("""
+                    INSERT INTO users (username, password, full_name, role, can_view_menu, can_view_tables, can_view_cashier, can_view_qsa, can_view_reports, can_view_settings, is_active)
+                    VALUES ('admin', '1234', 'بەڕێوەبەری سەرەکی', 'Manager', 1, 1, 1, 1, 1, 1, 1)
+                """)
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS table_permissions (
                     table_number INT PRIMARY KEY,
@@ -85,7 +116,6 @@ def ensure_all_tables():
                     discount DECIMAL(18, 0) DEFAULT 0
                 );
             """)
-            # دڵنیابوونەوە لە هەبوونی خانەی masrwf_name لەناو خشتەی masrwf
             cursor.execute("SHOW COLUMNS FROM masrwf LIKE 'masrwf_name'")
             if not cursor.fetchone():
                 cursor.execute("ALTER TABLE masrwf ADD COLUMN masrwf_name VARCHAR(150) DEFAULT '' AFTER masrwf_date")
@@ -115,7 +145,7 @@ def enforce_security():
         return redirect(url_for('login'))
 
 # ==========================================
-# پەڕەی چوونەژوورەوە
+# پەڕەی چوونەژوورەوە بە یوسەر و پاسوۆرد
 # ==========================================
 LOGIN_TEMPLATE = """
 <!DOCTYPE html>
@@ -128,29 +158,36 @@ LOGIN_TEMPLATE = """
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background: #03261d; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-        .login-card { background: #064032; border: 1.5px solid #0b5e4a; padding: 36px 28px; border-radius: 20px; width: 100%; max-width: 390px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .login-card { background: #064032; border: 1.5px solid #0b5e4a; padding: 36px 28px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
         .brand-title { color: #10b981; font-size: 26px; font-weight: 800; margin-bottom: 6px; }
         .brand-sub { color: #a7f3d0; font-size: 13px; margin-bottom: 24px; }
-        .pin-input { width: 100%; padding: 14px; background: #03261d; border: 2px solid #0b5e4a; border-radius: 12px; color: #10b981; font-size: 20px; text-align: center; font-weight: 800; outline: none; margin-bottom: 20px; }
-        .pin-input:focus { border-color: #10b981; }
-        .btn-submit { width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .input-group { text-align: right; margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 6px; }
+        .login-input { width: 100%; padding: 13px 14px; background: #03261d; border: 2px solid #0b5e4a; border-radius: 12px; color: #10b981; font-size: 16px; font-weight: 700; outline: none; transition: border-color 0.2s; }
+        .login-input:focus { border-color: #10b981; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 10px; }
         .error-msg { color: #ef4444; font-size: 13px; margin-top: 14px; font-weight: 700; }
-        .roles-hint { display: flex; justify-content: space-around; margin-top: 24px; border-top: 1px solid #0b5e4a; padding-top: 14px; color: #94a3b8; font-size: 11px; }
+        .quick-hint { margin-top: 20px; font-size: 11px; color: #94a3b8; border-top: 1px solid #0b5e4a; padding-top: 14px; }
     </style>
 </head>
 <body>
     <div class="login-card">
         <div class="brand-title">✨ شاهور ڕێستۆرانت</div>
-        <div class="brand-sub">تکایە وشەی نهێنی بنووسە (یان بە بەتاڵی داخڵی بکە)</div>
+        <div class="brand-sub">تکایە ناوی بەکارهێنەر و وشەی نهێنی بنووسە</div>
         <form method="POST" action="/login">
-            <input type="password" name="pin" class="pin-input" placeholder="وشەی نهێنی (ئارەزوومەندانە)" inputmode="numeric" autofocus>
+            <div class="input-group">
+                <label>ناوی بەکارهێنەر (Username):</label>
+                <input type="text" name="username" class="login-input" placeholder="یوسەر بنووسە..." autofocus>
+            </div>
+            <div class="input-group">
+                <label>وشەی نهێنی (Password):</label>
+                <input type="password" name="password" class="login-input" placeholder="پاسوۆرد بنووسە...">
+            </div>
             <button type="submit" class="btn-submit">چوونەژوورەوە ➔</button>
         </form>
         {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
-        <div class="roles-hint">
-            <span>👑 99: بەڕێوەبەر</span>
-            <span>📱 345678: مۆبایل</span>
-            <span>🍽️ بەتاڵ / 22: ئایپاد</span>
+        <div class="quick-hint">
+            👑 بەڕێوەبەر: admin / 1234 | بەتاڵ جێی بهێڵە بۆ چوونەژوورەوەی گارسۆن
         </div>
     </div>
 </body>
@@ -158,7 +195,7 @@ LOGIN_TEMPLATE = """
 """
 
 # ==========================================
-# داشبۆردی بەڕێوەبەر بە ئامار و قازانج
+# داشبۆردی سەرەکی بەڕێوەبەر
 # ==========================================
 ADMIN_DASHBOARD_TEMPLATE = """
 <!DOCTYPE html>
@@ -203,7 +240,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
     <header class="admin-nav">
         <div class="admin-brand">✨ شاهور ڕێستۆرانت - داشبۆردی بەڕێوەبەر</div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="color:#a7f3d0; font-size:13px; font-weight:700;">👑 بەڕێوەبەر</span>
+            <span style="color:#a7f3d0; font-size:13px; font-weight:700;">👑 {{ session.get('full_name', 'بەڕێوەبەر') }}</span>
             <a href="/logout" class="btn-exit">✕ دەرچوون</a>
         </div>
     </header>
@@ -258,6 +295,12 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
         <div class="section-header">📁 بەشە کارگێڕییەکانی سیستەم</div>
         <div class="dashboard-modules-grid">
+            <a href="/admin/users" class="module-card" style="border: 2px solid #10b981;">
+                <div class="module-top"><div class="module-icon">🔐</div><span class="module-badge">نوێ</span></div>
+                <div class="module-title">بەکارهێنەران و دەسەڵاتەکان</div>
+                <div class="module-desc">دانانی ناوی بەکارهێنەر و وشەی نهێنی، دەستکاری، بلۆککردن، سڕینەوە و دیاریکردنی ڕۆڵ.</div>
+            </a>
+
             <a href="/admin/cashier" class="module-card">
                 <div class="module-top"><div class="module-icon">🛎️</div><span class="module-badge">POS</span></div>
                 <div class="module-title">کاشێر و واصڵکردن</div>
@@ -289,7 +332,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </a>
 
             <a href="/desktop/tables" class="module-card">
-                <div class="module-top"><div class="module-icon">🍽️</div><span class="module-badge">ئۆردەر</span></div>
+                <div class="module-top"><div class="module-icon">🍽️</div><span class="module-badge">ئایپاد</span></div>
                 <div class="module-title">مێزەکان و گارسۆن (ئایپاد)</div>
                 <div class="module-desc">چوونە ناو شاشەی مێزەکان و ئۆردەرکردنی خواردن بۆ ئایپاد و دیسکتۆپ.</div>
             </a>
@@ -307,6 +350,176 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </a>
         </div>
     </main>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی بەڕێوەبردنی بەکارهێنەران (Users & Permissions)
+# ==========================================
+WEB_USERS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بەڕێوەبردنی بەکارهێنەران - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .user-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
+        .user-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
+        .user-form-card input, .user-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
+        .user-form-card input:focus, .user-form-card select:focus { border-color: #10b981; }
+        .btn-save-u { background: #10b981; color: #03261d; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
+
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
+        tr:hover { background: #085341; }
+        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-blocked { background: #fee2e2; color: #991b1b; }
+        .action-btn { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-toggle { background: #f59e0b; color: #000; }
+        .btn-edit { background: #3b82f6; color: #fff; }
+        .btn-del { background: #ef4444; color: #fff; }
+
+        .modal-edit { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-edit-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">🔐 بەڕێوەبردنی بەکارهێنەران و دەسەڵاتەکان</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="user-form-card">
+        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ زیادکردنی بەکارهێنەری نوێ</h3>
+        <form method="POST" action="/admin/add_user">
+            <div class="user-grid">
+                <div>
+                    <label>ناوی بەکارهێنەر (Username):</label>
+                    <input type="text" name="username" required placeholder="یوسەر بۆ نموونە: dastan">
+                </div>
+                <div>
+                    <label>وشەی نهێنی (Password):</label>
+                    <input type="text" name="password" required placeholder="پاسوۆرد">
+                </div>
+                <div>
+                    <label>ناوی تەواو (Full Name):</label>
+                    <input type="text" name="full_name" placeholder="ناوی کەسەکە">
+                </div>
+                <div>
+                    <label>ڕۆڵ لە سیستەم (Role):</label>
+                    <select name="role">
+                        <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
+                        <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
+                        <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
+                        <option value="Cashier">💵 کاشێر (Cashier)</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn-save-u">💾 دروستکردنی یوسەر</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ناوی بەکارهێنەر</th>
+                    <th>وشەی نهێنی</th>
+                    <th>ناوی تەواو</th>
+                    <th>ڕۆڵ</th>
+                    <th>دۆخ (Status)</th>
+                    <th>کردارەکان</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="font-weight:700; color:#10b981;">{{ u.username }}</td>
+                    <td style="color:#cbd5e1; font-family:monospace; font-weight:bold;">{{ u.password }}</td>
+                    <td>{{ u.full_name }}</td>
+                    <td>
+                        {% if u.role == 'Manager' %}👑 بەڕێوەبەر
+                        {% elif u.role == 'Waiter' %}🍽️ ئایپاد
+                        {% elif u.role == 'Mobile_Waiter' %}📱 مۆبایل
+                        {% elif u.role == 'Cashier' %}💵 کاشێر
+                        {% else %}{{ u.role }}{% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge {{ 'status-active' if u.is_active else 'status-blocked' }}">
+                            {{ 'چالاکە' if u.is_active else 'بلۆککراوە' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/admin/toggle_user/{{ u.id }}" class="action-btn btn-toggle">
+                            {{ '⛔ بلۆککردن' if u.is_active else '✅ کاراکردن' }}
+                        </a>
+                        <button type="button" class="action-btn btn-edit" onclick="openUserEdit({{ u.id }}, '{{ u.username }}', '{{ u.password }}', '{{ u.full_name }}', '{{ u.role }}')">✏️ دەستکاری</button>
+                        {% if u.username != 'admin' %}
+                        <a href="/admin/delete_user/{{ u.id }}" class="action-btn btn-del" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە؟')">🗑️ سڕینەوە</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-edit" id="userEditModal">
+        <div class="modal-edit-box">
+            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی بەکارهێنەر</h3>
+            <form id="userEditForm" method="POST" action="">
+                <label style="font-size:12px; color:#a7f3d0;">ناوی بەکارهێنەر (Username):</label>
+                <input type="text" id="edit_username" name="username" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">وشەی نهێنی (Password):</label>
+                <input type="text" id="edit_password" name="password" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">ناوی تەواو (Full Name):</label>
+                <input type="text" id="edit_fullname" name="full_name" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                
+                <label style="font-size:12px; color:#a7f3d0;">ڕۆڵ لە سیستەم:</label>
+                <select id="edit_role" name="role" style="width:100%; padding:9px; margin-bottom:14px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                    <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
+                    <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
+                    <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
+                    <option value="Cashier">💵 کاشێر (Cashier)</option>
+                </select>
+                
+                <button type="submit" class="btn-save-u">💾 پاشەکەوتکردنی گۆڕانکاری</button>
+                <button type="button" onclick="closeUserEdit()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openUserEdit(id, user, pass, full, role) {
+            document.getElementById('userEditForm').action = '/admin/edit_user/' + id;
+            document.getElementById('edit_username').value = user;
+            document.getElementById('edit_password').value = pass;
+            document.getElementById('edit_fullname').value = full;
+            document.getElementById('edit_role').value = role;
+            document.getElementById('userEditModal').style.display = 'flex';
+        }
+        function closeUserEdit() {
+            document.getElementById('userEditModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
 """
@@ -449,7 +662,7 @@ WEB_MENU_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مەسرووفات (تەواوی خانەکان بە کۆمبۆبۆکس جگە لە بڕی پارە)
+# پەڕەی مەسرووفات (کۆمبۆبۆکس)
 # ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
@@ -1571,178 +1784,7 @@ WEB_QASA_TEMPLATE = """
 </body>
 </html>
 """
-# ==========================================
-# پەڕەی بەڕێوەبردنی بەکارهێنەران (Users & Permissions)
-# ==========================================
-WEB_USERS_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی بەکارهێنەران - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
-        
-        .user-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
-        .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
-        .user-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
-        .user-form-card input, .user-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
-        .user-form-card input:focus, .user-form-card select:focus { border-color: #10b981; }
-        .btn-save-u { background: #10b981; color: #03261d; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
 
-        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
-        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
-        tr:hover { background: #085341; }
-        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
-        .status-active { background: #dcfce7; color: #166534; }
-        .status-blocked { background: #fee2e2; color: #991b1b; }
-        .action-btn { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
-        .btn-toggle { background: #f59e0b; color: #000; }
-        .btn-edit { background: #3b82f6; color: #fff; }
-        .btn-del { background: #ef4444; color: #fff; }
-
-        .modal-edit { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
-        .modal-edit-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; color: #fff; }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <h2 style="color:#10b981;">🔐 بەڕێوەبردنی بەکارهێنەران و دەسەڵاتەکان</h2>
-        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
-    </div>
-
-    <!-- فۆڕمی زیادکردنی بەکارهێنەر -->
-    <div class="user-form-card">
-        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ زیادکردنی بەکارهێنەری نوێ</h3>
-        <form method="POST" action="/admin/add_user">
-            <div class="user-grid">
-                <div>
-                    <label>ناوی بەکارهێنەر (Username):</label>
-                    <input type="text" name="username" required placeholder="یوسەر بۆ نموونە: dastan">
-                </div>
-                <div>
-                    <label>وشەی نهێنی (Password):</label>
-                    <input type="text" name="password" required placeholder="پاسوۆرد">
-                </div>
-                <div>
-                    <label>ناوی تەواو (Full Name):</label>
-                    <input type="text" name="full_name" placeholder="ناوی کەسەکە">
-                </div>
-                <div>
-                    <label>ڕۆڵ لە سیستەم (Role):</label>
-                    <select name="role">
-                        <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
-                        <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
-                        <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
-                        <option value="Cashier">💵 کاشێر (Cashier)</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn-save-u">💾 دروستکردنی یوسەر</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- خشتەی هەموو بەکارهێنەران -->
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>ناوی بەکارهێنەر</th>
-                    <th>وشەی نهێنی</th>
-                    <th>ناوی تەواو</th>
-                    <th>ڕۆڵ</th>
-                    <th>دۆخ (Status)</th>
-                    <th>کردارەکان</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td style="font-weight:700; color:#10b981;">{{ u.username }}</td>
-                    <td style="color:#cbd5e1; font-family:monospace; font-weight:bold;">{{ u.password }}</td>
-                    <td>{{ u.full_name }}</td>
-                    <td>
-                        {% if u.role == 'Manager' %}👑 بەڕێوەبەر
-                        {% elif u.role == 'Waiter' %}🍽️ ئایپاد
-                        {% elif u.role == 'Mobile_Waiter' %}📱 مۆبایل
-                        {% elif u.role == 'Cashier' %}💵 کاشێر
-                        {% else %}{{ u.role }}{% endif %}
-                    </td>
-                    <td>
-                        <span class="status-badge {{ 'status-active' if u.is_active else 'status-blocked' }}">
-                            {{ 'چالاکە' if u.is_active else 'بلۆککراوە' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="/admin/toggle_user/{{ u.id }}" class="action-btn btn-toggle">
-                            {{ '⛔ بلۆککردن' if u.is_active else '✅ کاراکردن' }}
-                        </a>
-                        <button type="button" class="action-btn btn-edit" onclick="openUserEdit({{ u.id }}, '{{ u.username }}', '{{ u.password }}', '{{ u.full_name }}', '{{ u.role }}')">✏️ دەستکاری</button>
-                        {% if u.username != 'admin' %}
-                        <a href="/admin/delete_user/{{ u.id }}" class="action-btn btn-del" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە؟')">🗑️ سڕینەوە</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- مۆداڵی دەستکاریکردنی بەکارهێنەر -->
-    <div class="modal-edit" id="userEditModal">
-        <div class="modal-edit-box">
-            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی بەکارهێنەر</h3>
-            <form id="userEditForm" method="POST" action="">
-                <label style="font-size:12px; color:#a7f3d0;">ناوی بەکارهێنەر (Username):</label>
-                <input type="text" id="edit_username" name="username" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
-                
-                <label style="font-size:12px; color:#a7f3d0;">وشەی نهێنی (Password):</label>
-                <input type="text" id="edit_password" name="password" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
-                
-                <label style="font-size:12px; color:#a7f3d0;">ناوی تەواو (Full Name):</label>
-                <input type="text" id="edit_fullname" name="full_name" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
-                
-                <label style="font-size:12px; color:#a7f3d0;">ڕۆڵ لە سیستەم:</label>
-                <select id="edit_role" name="role" style="width:100%; padding:9px; margin-bottom:14px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
-                    <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
-                    <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
-                    <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
-                    <option value="Cashier">💵 کاشێر (Cashier)</option>
-                </select>
-                
-                <button type="submit" class="btn-save-u">💾 پاشەکەوتکردنی گۆڕانکاری</button>
-                <button type="button" onclick="closeUserEdit()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function openUserEdit(id, user, pass, full, role) {
-            document.getElementById('userEditForm').action = '/admin/edit_user/' + id;
-            document.getElementById('edit_username').value = user;
-            document.getElementById('edit_password').value = pass;
-            document.getElementById('edit_fullname').value = full;
-            document.getElementById('edit_role').value = role;
-            document.getElementById('userEditModal').style.display = 'flex';
-        }
-        function closeUserEdit() {
-            document.getElementById('userEditModal').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
-"""
 # ==========================================
 # پەڕەی شاگردەکان
 # ==========================================
@@ -1848,29 +1890,165 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        pin = normalize_digits(request.form.get('pin', '')).strip()
+        uname = normalize_digits(request.form.get('username', '')).strip()
+        pwd = normalize_digits(request.form.get('password', '')).strip()
 
-        # چوونەژوورەوە ئەگەر پاسوۆرد بەتاڵ بێت یان 22 بێت بۆ گارسۆن
-        if pin == '' or pin in ['22', '٢٢']:
+        # ئەگەر هەردوو خانەکە بەتاڵ بن، ڕاستەوخۆ دەچێتە ناو شاشەی ئایپاد/مێزەکان
+        if uname == '' and pwd == '':
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
+            session['full_name'] = 'گارسۆن'
             return redirect(url_for('desktop_tables'))
 
-        if pin in ['99', '٩٩', '222', '٢٢٢']:
+        conn = get_db()
+        user_row = None
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (uname, pwd))
+                user_row = cur.fetchone()
+            conn.close()
+        except Exception as ex:
+            print("Login error:", ex)
+
+        if user_row:
+            if not user_row.get('is_active', 1):
+                return render_template_string(LOGIN_TEMPLATE, error='ئەم بەکارهێنەرە بلۆککراوە! پەیوەندی بە بەڕێوەبەرەوە بکە.')
+
+            session.permanent = True
+            session['authenticated'] = True
+            session['user_id'] = user_row['id']
+            session['username'] = user_row['username']
+            session['full_name'] = user_row.get('full_name', '')
+            role = user_row.get('role', 'Waiter')
+
+            if role in ['Manager', 'Admin', 'admin']:
+                session['role'] = 'admin'
+                return redirect(url_for('admin_dashboard'))
+            elif role == 'Mobile_Waiter':
+                session['role'] = 'mobile_waiter'
+                return redirect(url_for('mobile_waiter_tables'))
+            elif role == 'Cashier':
+                session['role'] = 'admin'
+                return redirect(url_for('admin_cashier'))
+            else:
+                session['role'] = 'waiter'
+                return redirect(url_for('desktop_tables'))
+
+        # پشکنینی پینەکانی کۆن بۆ دڵنیابوونەوە
+        if pwd in ['99', '٩٩', '222', '٢٢٢']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'admin'
+            session['full_name'] = 'بەڕێوەبەر'
             return redirect(url_for('admin_dashboard'))
-
-        if pin in ['345678', '٣٤٥٦٧٨']:
+        elif pwd in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'mobile_waiter'
+            session['full_name'] = 'گارسۆنی مۆبایل'
             return redirect(url_for('mobile_waiter_tables'))
+        elif pwd in ['22', '٢٢']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'waiter'
+            session['full_name'] = 'گارسۆنی ئایپاد'
+            return redirect(url_for('desktop_tables'))
 
-        return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
+        return render_template_string(LOGIN_TEMPLATE, error='ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە!')
+
     return render_template_string(LOGIN_TEMPLATE)
+
+@app.route('/admin/users')
+def admin_users():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    users = []
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users ORDER BY id DESC")
+            users = cur.fetchall()
+        conn.close()
+    except Exception as ex:
+        print("Fetch users error:", ex)
+    return render_template_string(WEB_USERS_TEMPLATE, users=users)
+
+@app.route('/admin/add_user', methods=['POST'])
+def admin_add_user():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    uname = request.form.get('username', '').strip()
+    pwd = request.form.get('password', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    role = request.form.get('role', 'Waiter')
+
+    if uname and pwd:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO users (username, password, full_name, role, can_view_menu, can_view_tables, can_view_cashier, can_view_qsa, can_view_reports, can_view_settings, is_active)
+                    VALUES (%s, %s, %s, %s, 1, 1, 1, 1, 1, 1, 1)
+                """, (uname, pwd, full_name, role))
+                conn.commit()
+            conn.close()
+        except Exception as ex:
+            print("Insert user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/edit_user/<int:uid>', methods=['POST'])
+def admin_edit_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    uname = request.form.get('username', '').strip()
+    pwd = request.form.get('password', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    role = request.form.get('role', 'Waiter')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE users SET username = %s, password = %s, full_name = %s, role = %s WHERE id = %s
+            """, (uname, pwd, full_name, role, uid))
+            conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Update user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/toggle_user/<int:uid>')
+def admin_toggle_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT is_active FROM users WHERE id = %s", (uid,))
+            row = cur.fetchone()
+            if row:
+                new_state = 0 if row.get('is_active', 1) else 1
+                cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_state, uid))
+                conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Toggle user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/delete_user/<int:uid>')
+def admin_delete_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id = %s AND username != 'admin'", (uid,))
+            conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Delete user error:", ex)
+    return redirect(url_for('admin_users'))
 
 @app.route('/admin')
 def admin_dashboard():
@@ -1885,7 +2063,6 @@ def admin_dashboard():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # حیسابکردنی کۆی فرۆش لە ماوەی نێوان دوو بەرواردا
             cur.execute("""
                 SELECT IFNULL(SUM(amount), 0) AS s 
                 FROM qasa 
@@ -1893,7 +2070,6 @@ def admin_dashboard():
             """, (start_date, end_date))
             period_sales = float(cur.fetchone()['s'])
 
-            # حیسابکردنی کۆی خەرجی لە ماوەی نێوان دوو بەرواردا
             cur.execute("""
                 SELECT IFNULL(SUM(amount), 0) AS e 
                 FROM masrwf 
@@ -1997,7 +2173,6 @@ def admin_masrwf():
             rows = cur.fetchall()
             tot = sum(float(r['amount']) for r in rows)
 
-            # هێنانی ناوازەکان بۆ ناو کۆمبۆبۆکسەکان
             for r in rows:
                 if r.get('masrwf_name') and r['masrwf_name'] not in existing_names:
                     existing_names.append(r['masrwf_name'])
