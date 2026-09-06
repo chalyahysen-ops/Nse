@@ -264,6 +264,102 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
+# پەڕەی بەڕێوەبردنی QR کۆدەکان (چارەسەری ئیرۆر)
+# ==========================================
+QR_MANAGER_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بەڕێوەبردنی QR - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-action { background: #10b981; color: #03261d; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; border: none; cursor: pointer; font-size: 13px; }
+        .controls-panel { background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .qr-card { background: #ffffff; color: #0f172a; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
+        .qr-card img { width: 140px; height: 140px; border-radius: 8px; margin: 10px 0; }
+        .qr-title { font-size: 18px; font-weight: 800; color: #03261d; }
+        .perm-toggle-btn { margin-top: 8px; width: 100%; border: none; padding: 8px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; }
+        .perm-enabled { background: #dcfce7; color: #166534; }
+        .perm-disabled { background: #fee2e2; color: #991b1b; }
+        @media print {
+            body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+            .top-bar, .controls-panel, .perm-toggle-btn { display: none !important; }
+            .qr-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
+            .qr-card { border: 1px solid #000 !important; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">📱 بەڕێوەبردنی QR کۆد و مۆڵەتی مێزەکان</h2>
+        <div style="display:flex; gap:8px;">
+            <button class="btn-action" onclick="window.print()">🖨️ چاپی هەموو QRەکان</button>
+            <a href="/admin" class="btn-action" style="background:#334155; color:#fff;">⬅️ داشبۆرد</a>
+        </div>
+    </div>
+
+    <div class="controls-panel">
+        <span style="font-weight:700; color:#a7f3d0;">کۆنتڕۆڵی گشتی ئۆردەرکردنی موشتەری:</span>
+        <button class="btn-action" onclick="setAllPermissions(1)">✅ کاراکردنی هەموو مێزەکان</button>
+        <button class="btn-action" style="background:#ef4444; color:#fff;" onclick="setAllPermissions(0)">⛔ ناچالاککردنی هەموو مێزەکان (تەنها بینین)</button>
+    </div>
+
+    <div class="qr-grid">
+        {% for num in range(1, 91) %}
+        {% set is_allowed = perm_dict.get(num, 1) %}
+        <div class="qr-card">
+            <div class="qr-title">مێزی {{ num }}</div>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ base_url }}/table/{{ num }}" alt="QR Table {{ num }}">
+            <button type="button" class="perm-toggle-btn {{ 'perm-enabled' if is_allowed else 'perm-disabled' }}" id="btn-perm-{{ num }}" onclick="togglePerm({{ num }})">
+                {{ 'ئۆردەر: کراوەیە' if is_allowed else 'ئۆردەر: داخراوە (تەنها بینین)' }}
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function togglePerm(tableNum) {
+            fetch('/toggle_table_permission', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ table_number: tableNum })
+            }).then(r => r.json()).then(data => {
+                if (data.status === 'success') {
+                    const btn = document.getElementById('btn-perm-' + tableNum);
+                    if (data.allow_ordering) {
+                        btn.innerText = 'ئۆردەر: کراوەیە';
+                        btn.className = 'perm-toggle-btn perm-enabled';
+                    } else {
+                        btn.innerText = 'ئۆردەر: داخراوە (تەنها بینین)';
+                        btn.className = 'perm-toggle-btn perm-disabled';
+                    }
+                }
+            });
+        }
+
+        function setAllPermissions(allow) {
+            if (confirm(allow ? "ئایا هەموو مێزەکان ڕێگەی ئۆردەریان پێبدرێت؟" : "ئایا هەموو مێزەکان ببنە تەنها بینین؟")) {
+                fetch('/set_all_table_permissions', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ allow_ordering: allow })
+                }).then(r => r.json()).then(data => {
+                    if (data.status === 'success') location.reload();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+"""
+
+# ==========================================
 # بەشی کاشێر
 # ==========================================
 WEB_CASHIER_TEMPLATE = """
@@ -730,7 +826,7 @@ DESKTOP_TEMPLATE = """
         .desktop-food-info { display: flex; flex-direction: column; gap: 3px; text-align: center; }
         .desktop-food-name { font-size: 13.5px; font-weight: 700; min-height: 36px; display: flex; align-items: center; justify-content: center; }
         .desktop-food-price { font-size: 13px; font-weight: 800; color: var(--success); }
-        .opt-select { width: 100%; background: var(--bg-main); color: var(--gold); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px; font-size: 11px; font-weight: 700; outline: none; margin-top: 2px; }
+        .opt-select { width: 100%; background: var(--bg-main); color: var(--gold); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px; font-size: 11px; font-weight: 700; outline: none; }
         .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
         .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; }
         .table-badge-header { background: var(--gold); color: var(--bg-main); padding: 5px 12px; border-radius: 6px; font-size: 15px; font-weight: 800; }
@@ -777,10 +873,10 @@ DESKTOP_TEMPLATE = """
                             {% set show_r = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
                             {% set show_c = (item.category == 'پەلەوەر') %}
                             {% if show_r or show_c %}
-                            <div style="display:flex; flex-direction:column; gap:2px;">
+                            <div style="display:flex; flex-direction:row; gap:4px; width:100%;">
                                 {% if show_r %}
-                                <select class="opt-select" id="d_rice_{{ d_safe }}">
-                                    <option value="">جۆری برنج</option>
+                                <select class="opt-select" id="d_rice_{{ d_safe }}" style="flex:1; min-width:0;">
+                                    <option value="">ج. برنج</option>
                                     <option value="برنجی درێژ">برنجی درێژ</option>
                                     <option value="برنجی خڕ">برنجی خڕ</option>
                                     <option value="برنجی کوردی">برنجی کوردی</option>
@@ -788,8 +884,8 @@ DESKTOP_TEMPLATE = """
                                 </select>
                                 {% endif %}
                                 {% if show_c %}
-                                <select class="opt-select" id="d_chick_{{ d_safe }}">
-                                    <option value="">بەشی مریشک</option>
+                                <select class="opt-select" id="d_chick_{{ d_safe }}" style="flex:1; min-width:0;">
+                                    <option value="">ب. مریشک</option>
                                     <option value="سینگ">سینگ</option>
                                     <option value="ڕان">ڕان</option>
                                 </select>
@@ -970,8 +1066,8 @@ CUSTOMER_MENU_TEMPLATE = """
         .food-title-main { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         .food-price-red { font-size: 14px; font-weight: 800; color: #e11d48; margin-bottom: 6px; }
 
-        .options-group { width: 100%; display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
-        .select-sub-opt { width: 100%; padding: 4px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 11px; font-weight: 700; color: #03261d; outline: none; }
+        .options-group { width: 100%; display: flex; flex-direction: row; gap: 4px; margin-bottom: 6px; }
+        .select-sub-opt { flex: 1; min-width: 0; padding: 4px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 11px; font-weight: 700; color: #03261d; outline: none; }
 
         .mini-stepper { display: flex; align-items: center; background: #f1f5f9; border-radius: 8px; padding: 2px; gap: 4px; width: 100%; justify-content: space-between; }
         .btn-step { width: 32px; height: 32px; border-radius: 6px; border: none; background: #e2e8f0; color: #0f172a; font-size: 16px; font-weight: 800; cursor: pointer; }
@@ -1036,7 +1132,7 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="options-group">
                         {% if show_rice %}
                         <select class="select-sub-opt" id="opt_rice_{{ item_id_safe }}">
-                            <option value="">جۆری برنج</option>
+                            <option value="">ج. برنج</option>
                             <option value="برنجی درێژ">برنجی درێژ</option>
                             <option value="برنجی خڕ">برنجی خڕ</option>
                             <option value="برنجی کوردی">برنجی کوردی</option>
@@ -1045,7 +1141,7 @@ CUSTOMER_MENU_TEMPLATE = """
                         {% endif %}
                         {% if show_chicken %}
                         <select class="select-sub-opt" id="opt_chicken_{{ item_id_safe }}">
-                            <option value="">بەشی مریشک</option>
+                            <option value="">ب. مریشک</option>
                             <option value="سینگ">سینگ</option>
                             <option value="ڕان">ڕان</option>
                         </select>
@@ -1469,7 +1565,7 @@ def customer_table_view(table_num):
 
         return render_template_string(CUSTOMER_MENU_TEMPLATE, table_num=table_num, categories=categories, allow_ordering=allow_ordering)
     except:
-        return f"<h3 style='color:red; text-align:center;'>کێشە لە پەڕەی مێز</h3>"
+        return "<h3 style='color:red; text-align:center;'>کێشە لە پەڕەی مێز</h3>"
 
 @app.route('/qr_manager')
 def qr_manager():
