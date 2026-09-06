@@ -264,7 +264,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# بەشی کاشێر (پاشبنەمای زەرد)
+# بەشی کاشێر
 # ==========================================
 WEB_CASHIER_TEMPLATE = """
 <!DOCTYPE html>
@@ -403,7 +403,7 @@ WEB_CASHIER_TEMPLATE = """
 """
 
 # ==========================================
-# بەشی قاسە (۲٤ کاتژمێر)
+# پەڕەی قاسە
 # ==========================================
 WEB_QASA_TEMPLATE = """
 <!DOCTYPE html>
@@ -462,7 +462,7 @@ WEB_QASA_TEMPLATE = """
 """
 
 # ==========================================
-# بەشی مەسرووفات
+# پەڕەی مەسرووفات
 # ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
@@ -520,7 +520,7 @@ WEB_MASRWF_TEMPLATE = """
 """
 
 # ==========================================
-# بەشی شاگردەکان
+# پەڕەی شاگردەکان
 # ==========================================
 WEB_WORKERS_TEMPLATE = """
 <!DOCTYPE html>
@@ -578,7 +578,7 @@ WEB_WORKERS_TEMPLATE = """
 """
 
 # ==========================================
-# بەڕێوەبردنی مێنۆی خواردنەکان
+# پەڕەی بەڕێوەبردنی مێنۆ
 # ==========================================
 WEB_MENU_MANAGER_TEMPLATE = """
 <!DOCTYPE html>
@@ -635,127 +635,311 @@ WEB_MENU_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# بەڕێوەبردنی کیوئاڕ کۆد (QR Manager)
+# پەڕەی مێزەکان
 # ==========================================
-QR_MANAGER_TEMPLATE = """
+DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی کیوئاڕ کۆدی مێزەکان</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>هەڵبژاردنی مێز - شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #f8fafc; padding: 20px; }
-        .top-nav { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .top-title { font-size: 18px; font-weight: 800; color: #10b981; }
-        .nav-btns { display: flex; gap: 10px; }
-        .btn { background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; font-size: 13px; }
-        .btn-green { background: #10b981; }
-        .btn-red { background: #ef4444; }
-        .btn-gold { background: #f59e0b; color: #0b0f19; font-weight: 800; }
-        
-        .tables-perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-        .table-perm-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .table-name { font-size: 16px; font-weight: 800; color: #ffffff; }
-        .qr-thumb { width: 100%; text-align: center; padding: 8px; background: #ffffff; border-radius: 6px; }
-        .qr-thumb img { width: 130px; height: 130px; }
-        .status-badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-align: center; }
-        .status-view { background: #334155; color: #94a3b8; }
-        .status-order { background: #059669; color: #ffffff; }
-        
-        @media print {
-            body { background: #ffffff !important; color: #000000 !important; padding: 0 !important; }
-            .top-nav { display: none !important; }
-            .tables-perm-grid { display: grid; grid-template-columns: repeat(3, 1fr) !important; gap: 15px !important; }
-            .table-perm-card { background: #ffffff !important; border: 1.5px solid #000 !important; break-inside: avoid; }
-            .table-name { color: #000 !important; font-size: 18px !important; text-align: center !important; }
-            .btn-toggle { display: none !important; }
-            .status-badge { display: none !important; }
-        }
+        html, body { background-color: #03261d; color: #ffffff; min-height: 100%; height: auto; overflow-x: hidden; overflow-y: scroll; }
+        .header-bar { background-color: #064032; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0b5e4a; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .header-title { font-size: 17px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-qr-mgr { background-color: #3b82f6; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .tables-grid-wrapper { padding: 18px 20px 80px 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
+        .tables-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 12px; width: 100%; }
+        .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; box-shadow: 0 3px 6px rgba(0,0,0,0.2); cursor: pointer; }
+        .table-box.active-occupied { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-color: #047857 !important; }
+        @media (max-width: 900px) { .tables-grid { grid-template-columns: repeat(8, 1fr); gap: 10px; } .table-box { height: 80px; font-size: 24px; } }
     </style>
 </head>
 <body>
-    <div class="top-nav">
-        <div class="top-title">📱 بەڕێوەبردنی دەسەڵات و کیوئاڕ کۆدەکان (QR)</div>
-        <div class="nav-btns">
-            <button type="button" class="btn btn-gold" onclick="window.print()">🖨️ چاپی هەموو QR کۆدەکان</button>
-            <button type="button" class="btn btn-green" onclick="setAllPermissions(1)">هەمووی بکرێت بە ئۆردەر</button>
-            <button type="button" class="btn btn-red" onclick="setAllPermissions(0)">هەمووی تەنها بینین</button>
-            <a href="/admin" class="btn">⬅️ داشبۆرد</a>
+    <div class="header-bar">
+        <a href="/logout" class="btn-exit">✕ دەرچوون</a>
+        <div class="header-title">تکایە بۆ ئۆردەرکردنی خواردن و خواردنەوە مێزێک دیاری بکە!</div>
+        <div class="header-actions">
+            {% if session.get('role') == 'admin' %}
+            <a href="/admin" class="btn-qr-mgr" style="background-color:#10b981;">👑 داشبۆرد</a>
+            {% endif %}
+            <a href="/qr_manager" class="btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
         </div>
     </div>
-
-    <div class="tables-perm-grid">
-        {% for num in range(1, 91) %}
-        {% set is_allowed = perm_dict.get(num, 1) == 1 %}
-        <div class="table-perm-card" id="perm-card-{{ num }}">
-            <div class="card-header">
-                <span class="table-name">مێزی {{ num }}</span>
-                <span class="status-badge {{ 'status-order' if is_allowed else 'status-view' }}" id="status-badge-{{ num }}">
-                    {{ 'دەتوانێت ئۆردەر بکات' if is_allowed else 'تەنها بینین' }}
-                </span>
-            </div>
-            <div class="qr-thumb">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ base_url }}/table/{{ num }}" alt="QR مێزی {{ num }}">
-                <div style="color:#000; font-size:11px; font-weight:800; margin-top:4px;">مێزی {{ num }}</div>
-            </div>
-            <button type="button" class="btn {{ 'btn-red' if is_allowed else 'btn-green' }} btn-toggle" id="btn-toggle-{{ num }}" onclick="togglePermission({{ num }})">
-                {{ 'گۆڕین بۆ تەنها بینین' if is_allowed else 'ڕێگەدان بە ئۆردەر' }}
-            </button>
+    <div class="tables-grid-wrapper">
+        <div class="tables-grid" id="tablesGrid">
+            {% for num in range(1, 91) %}
+                <a href="/desktop?table={{ num }}" class="table-box" id="tbl-box-{{ num }}">{{ num }}</a>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-
     <script>
-        function togglePermission(tableNum) {
-            fetch('/toggle_table_permission', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableNum })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const badge = document.getElementById('status-badge-' + tableNum);
-                    const btn = document.getElementById('btn-toggle-' + tableNum);
-                    if (data.allow_ordering) {
-                        badge.className = 'status-badge status-order';
-                        badge.innerText = 'دەتوانێت ئۆردەر بکات';
-                        btn.className = 'btn btn-red btn-toggle';
-                        btn.innerText = 'گۆڕین بۆ تەنها بینین';
-                    } else {
-                        badge.className = 'status-badge status-view';
-                        badge.innerText = 'تەنها بینین';
-                        btn.className = 'btn btn-green btn-toggle';
-                        btn.innerText = 'ڕێگەدان بە ئۆردەر';
-                    }
-                }
-            });
-        }
-
-        function setAllPermissions(allow) {
-            if (confirm("ئایا دڵنیایت لە گۆڕینی دەسەڵاتی هەموو مێزەکان؟")) {
-                fetch('/set_all_table_permissions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ allow_ordering: allow })
-                })
+        function refreshTableStatus() {
+            fetch('/get_active_tables?t=' + new Date().getTime())
                 .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') location.reload();
-                });
-            }
+                .then(activeTables => {
+                    for (let i = 1; i <= 90; i++) {
+                        const box = document.getElementById('tbl-box-' + i);
+                        if (box) {
+                            if (activeTables.includes(i.toString())) {
+                                box.classList.add('active-occupied');
+                            } else {
+                                box.classList.remove('active-occupied');
+                            }
+                        }
+                    }
+                }).catch(() => {});
         }
+        refreshTableStatus();
+        setInterval(refreshTableStatus, 2500);
     </script>
 </body>
 </html>
 """
 
 # ==========================================
-# پەڕەی موشتەری و مۆبایل بە برنج و مریشکەوە
+# پەڕەی دیسکتۆپ
+# ==========================================
+DESKTOP_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مێنیوی شاهور - مێزی {{ selected_table }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        :root { --bg-main: #0b0f19; --bg-card: #151d30; --bg-sidebar: #101726; --gold: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; --border-color: #334155; --success: #10b981; --danger: #ef4444; }
+        body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
+        .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; }
+        .categories-visual-bar { display: flex; gap: 12px; margin-bottom: 22px; overflow-x: auto; padding: 6px 4px 10px 4px; flex-shrink: 0; }
+        .cat-visual-btn { background: #151d30; border: 2px solid #334155; border-radius: 14px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; min-width: 90px; cursor: pointer; }
+        .cat-visual-btn.active { background: #1e293b; border-color: var(--gold); }
+        .cat-visual-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; margin-bottom: 6px; }
+        .cat-visual-title { font-size: 13px; font-weight: 700; color: #f8fafc; }
+        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; padding-bottom: 20px; }
+        .desktop-food-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 235px; justify-content: space-between; }
+        .desktop-food-img { width: 100%; height: 125px; border-radius: 8px; object-fit: cover; cursor: pointer; }
+        .desktop-food-info { display: flex; flex-direction: column; gap: 3px; text-align: center; }
+        .desktop-food-name { font-size: 13.5px; font-weight: 700; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+        .desktop-food-price { font-size: 13px; font-weight: 800; color: var(--success); }
+        .opt-select { width: 100%; background: var(--bg-main); color: var(--gold); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px; font-size: 11px; font-weight: 700; outline: none; margin-top: 2px; }
+        .cart-sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; height: 100%; overflow: hidden; }
+        .cart-top-bar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; }
+        .table-badge-header { background: var(--gold); color: var(--bg-main); padding: 5px 12px; border-radius: 6px; font-size: 15px; font-weight: 800; }
+        .btn-top-action { background: #1e293b; color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .cart-items-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .desktop-cart-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; }
+        .desktop-counter-group { display: flex; align-items: center; background: var(--bg-main); border-radius: 6px; padding: 2px; gap: 4px; }
+        .desktop-btn-count { width: 30px; height: 30px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%); color: var(--bg-main); border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #fff; border: none; padding: 11px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: none; }
+        #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #fff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; display: none; }
+    </style>
+</head>
+<body>
+    <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
+    <div class="desktop-main-layout">
+        <div class="menu-section">
+            <div class="categories-visual-bar">
+                <div class="cat-visual-btn active" onclick="filterCat('all', this)">
+                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=140" class="cat-visual-img">
+                    <span class="cat-visual-title">هەموو</span>
+                </div>
+                {% for cat, items in categories.items() %}
+                    <div class="cat-visual-btn" onclick="filterCat('cat-group-{{ loop.index }}', this)">
+                        <img src="{{ items[0].image_path if items[0].image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=140' }}" class="cat-visual-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=140'">
+                        <span class="cat-visual-title">{{ cat }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="menu-container-desktop">
+                {% for cat, items in categories.items() %}
+                <div class="category-desktop-group category-group-item" id="cat-group-{{ loop.index }}">
+                    <div class="food-grid">
+                        {% for item in items %}
+                        {% set d_safe = loop.index ~ '_' ~ cat ~ '_' ~ item.food_name|replace(' ', '_') %}
+                        <div class="desktop-food-card">
+                            <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="desktop-food-img" onclick="addFromDesktopCard('{{ item.food_name }}', {{ item.price }}, '{{ item.category }}', '{{ d_safe }}')" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
+                            <div class="desktop-food-info">
+                                <div class="desktop-food-name">{{ item.food_name }}</div>
+                                <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
+                            </div>
+                            
+                            {% set show_r = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
+                            {% set show_c = (item.category == 'پەلەوەر') %}
+                            {% if show_r or show_c %}
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                {% if show_r %}
+                                <select class="opt-select" id="d_rice_{{ d_safe }}">
+                                    <option value="">جۆری برنج</option>
+                                    <option value="برنجی درێژ">برنجی درێژ</option>
+                                    <option value="برنجی خڕ">برنجی خڕ</option>
+                                    <option value="برنجی کوردی">برنجی کوردی</option>
+                                    <option value="برنج بە سرکە">برنج بە سرکە</option>
+                                </select>
+                                {% endif %}
+                                {% if show_c %}
+                                <select class="opt-select" id="d_chick_{{ d_safe }}">
+                                    <option value="">بەشی مریشک</option>
+                                    <option value="سینگ">سینگ</option>
+                                    <option value="ڕان">ڕان</option>
+                                </select>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cart-sidebar">
+            <div class="cart-top-bar">
+                <div class="table-badge-header">📍 مێزی {{ selected_table }}</div>
+                <input type="hidden" id="currentTableNum" value="{{ selected_table }}">
+                <div style="display:flex; gap:4px;">
+                    <a href="/desktop/tables" class="btn-top-action">⬅️ مێزەکان</a>
+                    <button type="button" class="btn-top-action" style="color:var(--danger);" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
+                </div>
+            </div>
+            <div class="cart-items-container" id="cartItemsList"></div>
+            <div style="border-top:1px solid var(--border-color); padding-top:10px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:800;">
+                    <span>کۆی گشتی:</span>
+                    <span id="cartTotalTxt" style="color:var(--success); font-size:18px;">0 دینار</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
+                    <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cartItems = [], originalTableOrders = [];
+        const tableNum = document.getElementById('currentTableNum').value;
+
+        function showToast(text, isError = false) {
+            const toast = document.getElementById('toastMsg');
+            toast.innerText = text;
+            toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2200);
+        }
+        function checkHasGrill() {
+            let hasGrill = cartItems.some(i => !i.is_divider && (i.cat === 'برژاو' || i.food_name.includes('کەباب') || i.food_name.includes('تکە')));
+            document.getElementById('btnAddPlateDesktop').style.display = hasGrill ? 'block' : 'none';
+        }
+        function addNewPlateDivider() {
+            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) return;
+            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ' });
+            renderCart();
+            checkHasGrill();
+        }
+        function addFromDesktopCard(baseName, price, cat, safeId) {
+            let rEl = document.getElementById('d_rice_' + safeId);
+            let cEl = document.getElementById('d_chick_' + safeId);
+            let fullName = baseName;
+            let rVal = rEl ? rEl.value : '';
+            let cVal = cEl ? cEl.value : '';
+            if (rVal) fullName += ` (${rVal})`;
+            if (cVal) fullName += ` (${cVal})`;
+            updateQty(fullName, 1, price, cat);
+        }
+        function updateQty(foodName, change, price, cat) {
+            let found = false;
+            for (let i = cartItems.length - 1; i >= 0; i--) {
+                if (cartItems[i].is_divider) break;
+                if (cartItems[i].food_name === foodName) {
+                    cartItems[i].qty += change;
+                    if (cartItems[i].qty <= 0) cartItems.splice(i, 1);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && change > 0) cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '' });
+            checkHasGrill();
+            renderCart();
+        }
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            if (cartItems.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:40px 0;">سەبەتە بەتاڵە</div>';
+                document.getElementById('cartTotalTxt').innerText = '0 دینار';
+                return;
+            }
+            let total = 0, plateNum = 1;
+            cartItems.forEach((item, index) => {
+                if (item.is_divider) {
+                    plateNum++;
+                    list.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between;"><span>🍽 قاپی ${plateNum}</span><button onclick="cartItems.splice(${index},1); renderCart();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
+                } else {
+                    total += item.qty * item.price;
+                    list.innerHTML += `<div class="desktop-cart-row"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name}', -1, ${item.price}, '${item.cat}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name}', 1, ${item.price}, '${item.cat}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
+                }
+            });
+            document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
+        }
+        function filterCat(catId, btn) {
+            document.querySelectorAll('.cat-visual-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.category-group-item').forEach(g => {
+                g.style.display = (catId === 'all' || g.id === catId) ? 'block' : 'none';
+            });
+        }
+        function fetchTableOrders() {
+            fetch('/get_table_orders/' + tableNum).then(r => r.json()).then(data => {
+                cartItems = []; originalTableOrders = [];
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        let isDiv = item.food_name.includes('قاپی نوێ');
+                        let it = { is_divider: isDiv, food_name: item.food_name, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '' };
+                        cartItems.push(it); originalTableOrders.push(JSON.parse(JSON.stringify(it)));
+                    });
+                }
+                checkHasGrill(); renderCart();
+            });
+        }
+        function submitFinalOrder() {
+            if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
+            fetch('/save_cart_order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ table_number: tableNum, cart_items: cartItems, original_items: originalTableOrders })
+            }).then(r => r.json()).then(data => {
+                if (data.status === 'success') {
+                    showToast("✅ داواکارییەکە بۆ مەتبەخ نێردرا");
+                    setTimeout(() => { window.location.href = '/desktop/tables'; }, 800);
+                }
+            });
+        }
+        function clearCurrentTableOrders() {
+            if (confirm("ئایا دڵنیایت لە سڕینەوەی تەواوی مێزی " + tableNum + "؟")) {
+                fetch('/clear_table_orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ table_number: tableNum }) })
+                .then(() => fetchTableOrders());
+            }
+        }
+        window.onload = function() { fetchTableOrders(); };
+    </script>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی موشتەری و مۆبایل
 # ==========================================
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
@@ -1028,7 +1212,7 @@ CUSTOMER_MENU_TEMPLATE = """
 """
 
 # ==========================================
-# ڕێڕەوەکانی سیستەم (Routes)
+# ڕێڕەوەکانی سیستەم
 # ==========================================
 @app.route('/')
 def index():
