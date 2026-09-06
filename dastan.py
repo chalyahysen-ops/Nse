@@ -1849,6 +1849,51 @@ def save_customer_order():
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(ex)})
 
+@app.route('/save_customer_order', methods=['POST'])
+def save_customer_order():
+    data = request.get_json()
+    tbl = str(data.get('table_number'))
+    items = data.get('cart_items', [])
+    if not items:
+        return jsonify({'status': 'error', 'message': 'هیچ خواردنێک دیاری نەکراوە!'})
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            if tbl.isdigit():
+                cur.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (int(tbl),))
+                p_row = cur.fetchone()
+                if p_row and not p_row['allow_ordering'] and session.get('role') != 'mobile_waiter':
+                    conn.close()
+                    return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە و ڕێگە بە ناردنی ئۆردەر نادرێت!'})
+
+            for it in items:
+                fname = it.get('full_name') or it.get('food_name') or it.get('base_name')
+                qty = int(it.get('qty', 1))
+                price = float(it.get('price', 0))
+                cat = it.get('cat', 'گشتی')
+                rice_t = it.get('rice_type', '')
+                chick_p = it.get('chicken_part', '')
+
+                if '(' not in fname:
+                    if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice_t:
+                        fname += f" ({rice_t})"
+                    if cat == 'پەلەوەر' and chick_p:
+                        fname += f" ({chick_p})"
+
+                # تۆمارکردنی ئۆردەر بە دۆخی چاپنەکراو بۆ پرێنتەری مەتبەخ
+                cur.execute("""
+                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                """, (tbl, fname, qty, price, cat))
+
+            conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as ex:
+        if conn: conn.close()
+        return jsonify({'status': 'error', 'message': str(ex)})
+
 @app.route('/save_cart_order', methods=['POST'])
 def save_cart_order():
     data = request.get_json()
@@ -1864,7 +1909,10 @@ def save_cart_order():
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # بەتاڵکردنەوەی مێزەکە لە تۆمارە کۆنەکان
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
+            
+            # سەرلەنوێ تۆمارکردنی خواردنەکانی ئێستای مێز بە چاپکراو (is_printed = 1)
             for it in cart:
                 fname = "--- قاپی نوێ ---" if it.get('is_divider') else it['food_name']
                 cur.execute("""
@@ -1872,18 +1920,19 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (tbl, fname, it['qty'], it['price'], it.get('cat', 'گشتی')))
 
+            # جیاوازییە نوێیەکان دەخرێنە ڕیزەوە بۆ ئەوەی چاپ بکرێن (is_printed = 0)
             for k in set(old_map.keys()).union(set(new_map.keys())):
                 diff = new_map.get(k, {}).get('qty', 0) - old_map.get(k, {}).get('qty', 0)
                 if diff > 0:
                     cur.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [زیادکراو]", f"+ {k}", diff, new_map[k]['price'], new_map[k]['cat']))
+                    """, (tbl, f"+ {k}", diff, new_map[k]['price'], new_map[k]['cat']))
                 elif diff < 0:
                     cur.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [سڕاوەتەوە]", f"سڕاوەتەوە: {k}", abs(diff), old_map[k]['price'], old_map[k]['cat']))
+                    """, (tbl, f"سڕاوەتەوە: {k}", abs(diff), old_map[k]['price'], old_map[k]['cat']))
             conn.commit()
         conn.close()
         return jsonify({'status': 'success'})
