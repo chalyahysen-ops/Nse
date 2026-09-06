@@ -1571,7 +1571,178 @@ WEB_QASA_TEMPLATE = """
 </body>
 </html>
 """
+# ==========================================
+# پەڕەی بەڕێوەبردنی بەکارهێنەران (Users & Permissions)
+# ==========================================
+WEB_USERS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بەڕێوەبردنی بەکارهێنەران - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .user-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
+        .user-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
+        .user-form-card input, .user-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
+        .user-form-card input:focus, .user-form-card select:focus { border-color: #10b981; }
+        .btn-save-u { background: #10b981; color: #03261d; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
 
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
+        tr:hover { background: #085341; }
+        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-blocked { background: #fee2e2; color: #991b1b; }
+        .action-btn { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-block; cursor: pointer; border: none; }
+        .btn-toggle { background: #f59e0b; color: #000; }
+        .btn-edit { background: #3b82f6; color: #fff; }
+        .btn-del { background: #ef4444; color: #fff; }
+
+        .modal-edit { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-edit-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">🔐 بەڕێوەبردنی بەکارهێنەران و دەسەڵاتەکان</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <!-- فۆڕمی زیادکردنی بەکارهێنەر -->
+    <div class="user-form-card">
+        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ زیادکردنی بەکارهێنەری نوێ</h3>
+        <form method="POST" action="/admin/add_user">
+            <div class="user-grid">
+                <div>
+                    <label>ناوی بەکارهێنەر (Username):</label>
+                    <input type="text" name="username" required placeholder="یوسەر بۆ نموونە: dastan">
+                </div>
+                <div>
+                    <label>وشەی نهێنی (Password):</label>
+                    <input type="text" name="password" required placeholder="پاسوۆرد">
+                </div>
+                <div>
+                    <label>ناوی تەواو (Full Name):</label>
+                    <input type="text" name="full_name" placeholder="ناوی کەسەکە">
+                </div>
+                <div>
+                    <label>ڕۆڵ لە سیستەم (Role):</label>
+                    <select name="role">
+                        <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
+                        <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
+                        <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
+                        <option value="Cashier">💵 کاشێر (Cashier)</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn-save-u">💾 دروستکردنی یوسەر</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- خشتەی هەموو بەکارهێنەران -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ناوی بەکارهێنەر</th>
+                    <th>وشەی نهێنی</th>
+                    <th>ناوی تەواو</th>
+                    <th>ڕۆڵ</th>
+                    <th>دۆخ (Status)</th>
+                    <th>کردارەکان</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="font-weight:700; color:#10b981;">{{ u.username }}</td>
+                    <td style="color:#cbd5e1; font-family:monospace; font-weight:bold;">{{ u.password }}</td>
+                    <td>{{ u.full_name }}</td>
+                    <td>
+                        {% if u.role == 'Manager' %}👑 بەڕێوەبەر
+                        {% elif u.role == 'Waiter' %}🍽️ ئایپاد
+                        {% elif u.role == 'Mobile_Waiter' %}📱 مۆبایل
+                        {% elif u.role == 'Cashier' %}💵 کاشێر
+                        {% else %}{{ u.role }}{% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge {{ 'status-active' if u.is_active else 'status-blocked' }}">
+                            {{ 'چالاکە' if u.is_active else 'بلۆککراوە' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/admin/toggle_user/{{ u.id }}" class="action-btn btn-toggle">
+                            {{ '⛔ بلۆککردن' if u.is_active else '✅ کاراکردن' }}
+                        </a>
+                        <button type="button" class="action-btn btn-edit" onclick="openUserEdit({{ u.id }}, '{{ u.username }}', '{{ u.password }}', '{{ u.full_name }}', '{{ u.role }}')">✏️ دەستکاری</button>
+                        {% if u.username != 'admin' %}
+                        <a href="/admin/delete_user/{{ u.id }}" class="action-btn btn-del" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم بەکارهێنەرە؟')">🗑️ سڕینەوە</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- مۆداڵی دەستکاریکردنی بەکارهێنەر -->
+    <div class="modal-edit" id="userEditModal">
+        <div class="modal-edit-box">
+            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی بەکارهێنەر</h3>
+            <form id="userEditForm" method="POST" action="">
+                <label style="font-size:12px; color:#a7f3d0;">ناوی بەکارهێنەر (Username):</label>
+                <input type="text" id="edit_username" name="username" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">وشەی نهێنی (Password):</label>
+                <input type="text" id="edit_password" name="password" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">ناوی تەواو (Full Name):</label>
+                <input type="text" id="edit_fullname" name="full_name" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                
+                <label style="font-size:12px; color:#a7f3d0;">ڕۆڵ لە سیستەم:</label>
+                <select id="edit_role" name="role" style="width:100%; padding:9px; margin-bottom:14px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                    <option value="Manager">👑 بەڕێوەبەر (Manager)</option>
+                    <option value="Waiter">🍽️ گارسۆنی ئایپاد (Waiter)</option>
+                    <option value="Mobile_Waiter">📱 گارسۆنی مۆبایل (Mobile Waiter)</option>
+                    <option value="Cashier">💵 کاشێر (Cashier)</option>
+                </select>
+                
+                <button type="submit" class="btn-save-u">💾 پاشەکەوتکردنی گۆڕانکاری</button>
+                <button type="button" onclick="closeUserEdit()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openUserEdit(id, user, pass, full, role) {
+            document.getElementById('userEditForm').action = '/admin/edit_user/' + id;
+            document.getElementById('edit_username').value = user;
+            document.getElementById('edit_password').value = pass;
+            document.getElementById('edit_fullname').value = full;
+            document.getElementById('edit_role').value = role;
+            document.getElementById('userEditModal').style.display = 'flex';
+        }
+        function closeUserEdit() {
+            document.getElementById('userEditModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+"""
 # ==========================================
 # پەڕەی شاگردەکان
 # ==========================================
