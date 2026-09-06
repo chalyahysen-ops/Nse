@@ -5,7 +5,7 @@ import pymysql
 app = Flask(__name__)
 app.secret_key = 'shahoor_secret_key_super_secure'
 
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=20)
 
 DB_CONFIG = {
     'host': 'sakura.proxy.rlwy.net',
@@ -28,42 +28,31 @@ def normalize_digits(text):
     trans_table = str.maketrans(eastern_digits, western_digits)
     return text.translate(trans_table)
 
-def ensure_all_tables_exist():
+def ensure_qr_table_exists():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            # خشتەی دەسەڵاتی کیوئاڕ کۆدی مێزەکان
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS table_permissions (
                     table_number INT PRIMARY KEY,
                     allow_ordering TINYINT DEFAULT 0
                 );
             """)
-            # خشتەی مەسروفات و کرێی کرێکار و قاسە
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS masruf (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    details VARCHAR(255) NOT NULL,
-                    amount DECIMAL(12, 2) NOT NULL,
-                    category VARCHAR(100) DEFAULT 'مەسروفات',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
         conn.commit()
         conn.close()
     except Exception as ex:
-        print("Database setup error:", ex)
+        print("Table permissions setup error:", ex)
 
-ensure_all_tables_exist()
+ensure_qr_table_exists()
 
-# 🛡️ پاراستنی ئاسایش لە کاتی چوونەژوورەوە
+# 🛡️ پاراستنی ئاسایش: هەر کاتێک ئینتەر لە ناونیشانی سێرچ بکرێت دەچێتەوە لۆگین
 @app.before_request
 def enforce_login_on_direct_url():
     exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
     if request.endpoint in exempt_endpoints:
         return
 
-    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_', '/add_', '/delete_'))
+    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_'))
     if is_api:
         return
 
@@ -79,11 +68,11 @@ LOGIN_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>چوونەژوورەوە - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background-color: #03261d; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-        .login-card { background: #064032; border: 1px solid #0b5e4a; padding: 32px 24px; border-radius: 18px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-card { background: #064032; border: 1px solid #0b5e4a; padding: 30px 24px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .logo { color: #f59e0b; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
         .pin-input { width: 100%; padding: 14px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 10px; color: #f59e0b; font-size: 20px; text-align: center; font-weight: 700; letter-spacing: 4px; outline: none; margin-bottom: 18px; }
@@ -103,169 +92,6 @@ LOGIN_TEMPLATE = """
         {% if error %}
             <div class="error-msg">{{ error }}</div>
         {% endif %}
-    </div>
-</body>
-</html>
-"""
-
-# داشبۆردی شاهانەی بەڕێوەبەر (کۆدی 99)
-ADMIN_DASHBOARD_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبۆردی سەرەکی بەڕێوەبەر - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        :root {
-            --bg-main: #0b0f19;
-            --bg-card: #151d30;
-            --border-col: #334155;
-            --gold: #f59e0b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --blue: #3b82f6;
-        }
-        body { background-color: var(--bg-main); color: #f8fafc; padding: 18px; }
-        .header-dash { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 16px 22px; border-radius: 14px; border: 1px solid var(--border-col); margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .header-dash h2 { font-size: 20px; font-weight: 800; color: var(--gold); }
-        .btn-exit { background: var(--danger); color: #fff; text-decoration: none; padding: 8px 18px; border-radius: 8px; font-weight: 800; font-size: 13px; }
-        
-        /* کارتەکانی ئامار و قاسە و قازانج */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
-        .stat-card { background: var(--bg-card); border: 1.5px solid var(--border-col); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .stat-card.sales { border-color: var(--success); }
-        .stat-card.expenses { border-color: var(--danger); }
-        .stat-card.profit { border-color: var(--gold); }
-        .stat-card.workers { border-color: var(--blue); }
-        .stat-label { font-size: 13px; font-weight: 700; color: #94a3b8; }
-        .stat-number { font-size: 20px; font-weight: 800; }
-
-        /* بەشەکانی سیستەم (کاشێر، QR، مێنیو، ...) */
-        .section-title { font-size: 16px; font-weight: 800; color: var(--gold); margin-bottom: 12px; }
-        .menu-modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 26px; }
-        .module-btn { background: var(--bg-card); border: 1.5px solid var(--border-col); border-radius: 12px; padding: 16px; text-decoration: none; color: #ffffff; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
-        .module-btn:hover { border-color: var(--gold); transform: translateY(-3px); }
-        .mod-icon { font-size: 26px; }
-        .mod-title { font-size: 14.5px; font-weight: 800; }
-
-        /* بەشی تۆمارکردنی مەسروفات و کرێی کرێکار */
-        .box-wrapper { background: var(--bg-card); border: 1px solid var(--border-col); border-radius: 14px; padding: 20px; }
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; margin-bottom: 18px; background: #0b0f19; padding: 14px; border-radius: 10px; border: 1px solid var(--border-col); }
-        .form-inp { background: var(--bg-card); color: #fff; border: 1px solid var(--border-col); padding: 10px 12px; border-radius: 8px; font-size: 13px; outline: none; }
-        .form-inp:focus { border-color: var(--success); }
-        .btn-submit-exp { background: var(--success); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; }
-        
-        .tbl-data { width: 100%; border-collapse: collapse; text-align: right; margin-top: 10px; }
-        .tbl-data th, .tbl-data td { padding: 12px 14px; border-bottom: 1px solid var(--border-col); font-size: 13px; }
-        .tbl-data th { color: #94a3b8; font-weight: 700; }
-        .del-btn { background: var(--danger); color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 700; }
-        
-        @media (max-width: 800px) {
-            .form-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header-dash">
-        <h2>👑 داشبۆردی بەڕێوەبەرایەتی گشتی شاهور</h2>
-        <a href="/logout" class="btn-exit">✕ دەرچوون</a>
-    </div>
-
-    <!-- کارتەکانی ئامار، قازانج، قاسە و مەسروف -->
-    <div class="stats-grid">
-        <div class="stat-card sales">
-            <span class="stat-label">💰 کۆی فرۆش / داهات</span>
-            <span class="stat-number" style="color:var(--success);">{{ "{:,.0f}".format(total_sales) }} د.ع</span>
-        </div>
-        <div class="stat-card expenses">
-            <span class="stat-label">💸 کۆی مەسروفات</span>
-            <span class="stat-number" style="color:var(--danger);">{{ "{:,.0f}".format(total_expenses) }} د.ع</span>
-        </div>
-        <div class="stat-card workers">
-            <span class="stat-label">👷‍♂️ کرێی کرێکار و دەستی کار</span>
-            <span class="stat-number" style="color:var(--blue);">{{ "{:,.0f}".format(total_workers) }} د.ع</span>
-        </div>
-        <div class="stat-card profit">
-            <span class="stat-label">🪙 قاسە / قازانجی ماوە</span>
-            <span class="stat-number" style="color:var(--gold);">{{ "{:,.0f}".format(net_profit) }} د.ع</span>
-        </div>
-    </div>
-
-    <div class="section-title">⚡ بەشە سەرەکییەکانی سیستەم</div>
-    <div class="menu-modules-grid">
-        <a href="/desktop/tables" class="module-btn">
-            <div class="mod-icon">🍽️</div>
-            <div class="mod-title">کاشێر و مێزەکان (٩٠ مێز)</div>
-        </a>
-        <a href="/qr_manager" class="module-btn">
-            <div class="mod-icon">📱</div>
-            <div class="mod-title">بەڕێوەبردنی دەسەڵاتی QR</div>
-        </a>
-        <a href="/menu" class="module-btn">
-            <div class="mod-icon">📋</div>
-            <div class="mod-title">مێنیوی گشتی خواردنەکان</div>
-        </a>
-    </div>
-
-    <!-- بەشی قاسە و مەسروفات و کرێی کرێکار -->
-    <div class="box-wrapper">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-            <div class="section-title" style="margin-bottom:0;">💵 تۆمارکردنی مەسروفات و کرێی کرێکار</div>
-        </div>
-
-        <form class="form-grid" method="POST" action="/add_expense">
-            <input type="text" name="details" class="form-inp" placeholder="تێبینی / هۆکاری خەرجی (بۆ نموونە: گۆشت، مووچەی کارمەند، سەوزە)" required>
-            <input type="number" step="any" name="amount" class="form-inp" placeholder="بڕی پارە (دینار)" required>
-            <select name="category" class="form-inp">
-                <option value="مەسروفات">مەسروفاتی ڕۆژانە</option>
-                <option value="کرێی کرێکار">کرێی کرێکار / مووچە</option>
-                <option value="مەتبەخ">پێداویستی مەتبەخ</option>
-                <option value="خزمەتگوزاری">خزمەتگوزاری و کارەبا</option>
-            </select>
-            <button type="submit" class="btn-submit-exp">➕ تۆمارکردن</button>
-        </form>
-
-        <table class="tbl-data">
-            <thead>
-                <tr>
-                    <th>زنجیرە</th>
-                    <th>تێبینی / بابەت</th>
-                    <th>پۆل / بەش</th>
-                    <th>بڕی پارە</th>
-                    <th>بەروار و کات</th>
-                    <th>کردار</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if expenses %}
-                    {% for exp in expenses %}
-                    <tr>
-                        <td>#{{ loop.index }}</td>
-                        <td style="font-weight:700;">{{ exp.details }}</td>
-                        <td>
-                            <span style="background: #1e293b; padding: 3px 8px; border-radius: 6px; font-size: 11px;">
-                                {{ exp.category }}
-                            </span>
-                        </td>
-                        <td style="color:var(--danger); font-weight:800;">{{ "{:,.0f}".format(exp.amount) }} د.ع</td>
-                        <td style="color:#94a3b8; font-size:11px;">{{ exp.created_at }}</td>
-                        <td>
-                            <form method="POST" action="/delete_expense/{{ exp.id }}" style="display:inline;" onsubmit="return confirm('دڵنیایت لە سڕینەوە؟');">
-                                <button type="submit" class="del-btn">سڕینەوە</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="6" style="text-align:center; color:#94a3b8; padding:28px 0;">هیچ خەرجییەک تۆمار نەکراوە</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
     </div>
 </body>
 </html>
@@ -304,7 +130,6 @@ DESKTOP_TABLES_TEMPLATE = """
         }
         .header-title { font-size: 17px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        .btn-dash { background-color: #f59e0b; color: #0b0f19; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .btn-qr-mgr { background-color: #3b82f6; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
         
@@ -361,9 +186,6 @@ DESKTOP_TABLES_TEMPLATE = """
         <a href="/logout" class="btn-exit">✕ دەرچوون</a>
         <div class="header-title">تکایە بۆ ئۆردەرکردنی خواردن و خواردنەوە مێزێک دیاری بکە!</div>
         <div class="header-actions">
-            {% if session.get('role') == 'admin' %}
-            <a href="/admin/dashboard" class="btn-dash">⚙️ داشبۆرد</a>
-            {% endif %}
             <a href="/qr_manager" class="btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
         </div>
     </div>
@@ -402,6 +224,7 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
+# فۆڕمی دیسکتۆپ و ئایپاد بە چاککردنی دەرکەوتنی وێنەکانی سەرەوە و لابردنی جیاکەرەوەکانی ناوەڕۆک
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -429,6 +252,7 @@ DESKTOP_TEMPLATE = """
         .desktop-main-layout { display: grid; grid-template-columns: 1fr 480px; flex: 1; overflow: hidden; }
         .menu-section { display: flex; flex-direction: column; padding: 16px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
+        /* شریتی کارتی جۆرەکان لە سەرەوە بە بەرزی و ڕوونی تەواو تا وێنە و ناوەکان نەبڕدرێن */
         .categories-visual-bar { 
             display: flex; 
             gap: 12px; 
@@ -479,6 +303,7 @@ DESKTOP_TEMPLATE = """
             white-space: nowrap; 
         }
 
+        /* تۆڕی یەکدەستی خواردنەکان (بەبێ سەردێڕ و جیاکەرەوە) */
         .food-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); 
@@ -562,6 +387,8 @@ DESKTOP_TEMPLATE = """
 
     <div class="desktop-main-layout">
         <div class="menu-section">
+            
+            <!-- شریتی وێنەداری جۆرەکان بە قەبارەی تەواو و دیاریکراو -->
             <div class="categories-visual-bar" id="categoriesTabs">
                 <div class="cat-visual-btn active" onclick="filterCat('all', this)">
                     <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=140" class="cat-visual-img" alt="هەموو">
@@ -575,6 +402,7 @@ DESKTOP_TEMPLATE = """
                 {% endfor %}
             </div>
             
+            <!-- کانتەینەری خواردنەکان بەبێ سەردێڕ و دەقی جیاکەرەوە -->
             <div class="menu-container-desktop">
                 {% for cat, items in categories.items() %}
                 <div class="category-desktop-group category-group-item" id="cat-group-{{ loop.index }}" data-cat-name="{{ cat }}">
@@ -906,7 +734,7 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# فۆڕمی مۆبایل و موشتەری بە زیادکردنی هەڵبژاردنی برنج و مریشک
+# فۆڕمی نوێی موشتەری و مۆبایل بە هەڵبژاردنی تەواوی جۆری برنج و بەشی مریشک
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1059,18 +887,18 @@ CUSTOMER_MENU_TEMPLATE = """
             margin-bottom: 6px;
         }
 
-        .mobile-item-selects {
+        .mobile-options-wrapper {
             display: flex;
             flex-direction: column;
             gap: 4px;
             width: 100%;
             margin-bottom: 6px;
         }
-        .cust-select-opt {
+        .mobile-select-box {
             width: 100%;
             background: #f8fafc;
-            color: #064032;
-            border: 1px solid #cbd5e1;
+            color: #03261d;
+            border: 1.5px solid #cbd5e1;
             border-radius: 6px;
             padding: 4px 6px;
             font-size: 11px;
@@ -1261,11 +1089,11 @@ CUSTOMER_MENU_TEMPLATE = """
                     {% if allow_ordering %}
                     {% set show_rice = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
                     {% set show_chicken = (item.category == 'پەلەوەر') %}
-                    
+
                     {% if show_rice or show_chicken %}
-                    <div class="mobile-item-selects">
+                    <div class="mobile-options-wrapper">
                         {% if show_rice %}
-                        <select class="cust-select-opt" id="opt_rice_{{ item_id_safe }}">
+                        <select class="mobile-select-box" id="rice_opt_{{ item_id_safe }}">
                             <option value="">جۆری برنج</option>
                             <option value="برنجی درێژ">برنجی درێژ</option>
                             <option value="برنجی خڕ">برنجی خڕ</option>
@@ -1274,7 +1102,7 @@ CUSTOMER_MENU_TEMPLATE = """
                         </select>
                         {% endif %}
                         {% if show_chicken %}
-                        <select class="cust-select-opt" id="opt_chicken_{{ item_id_safe }}">
+                        <select class="mobile-select-box" id="chicken_opt_{{ item_id_safe }}">
                             <option value="">بەشی مریشک</option>
                             <option value="سینگ">سینگ</option>
                             <option value="ڕان">ڕان</option>
@@ -1284,9 +1112,9 @@ CUSTOMER_MENU_TEMPLATE = """
                     {% endif %}
 
                     <div class="mini-stepper">
-                        <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">-</button>
+                        <button type="button" class="btn-step" onclick="changeQtyMobile('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">-</button>
                         <span class="qty-val-display" id="count_{{ item_id_safe }}">0</span>
-                        <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">+</button>
+                        <button type="button" class="btn-step add" onclick="changeQtyMobile('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">+</button>
                     </div>
                     {% endif %}
                 </div>
@@ -1347,41 +1175,39 @@ CUSTOMER_MENU_TEMPLATE = """
             });
         }
 
-        function changeCustomerQty(baseName, delta, price, cat, safeId) {
-            let riceVal = '';
-            let chickenVal = '';
-            const riceEl = document.getElementById('opt_rice_' + safeId);
-            const chickEl = document.getElementById('opt_chicken_' + safeId);
-            if (riceEl) riceVal = riceEl.value;
-            if (chickEl) chickenVal = chickEl.value;
+        function changeQtyMobile(baseName, delta, price, cat, safeId) {
+            let riceType = '';
+            let chickenPart = '';
+            const rEl = document.getElementById('rice_opt_' + safeId);
+            const cEl = document.getElementById('chicken_opt_' + safeId);
+            if (rEl) riceType = rEl.value;
+            if (cEl) chickenPart = cEl.value;
 
-            let itemKey = baseName;
-            if (riceVal) itemKey += ` (${riceVal})`;
-            if (chickenVal) itemKey += ` (${chickenVal})`;
+            let finalName = baseName;
+            if (riceType) finalName += ` (${riceType})`;
+            if (chickenPart) finalName += ` (${chickenPart})`;
 
             let found = false;
             for (let i = myCart.length - 1; i >= 0; i--) {
-                if (myCart[i].full_name === itemKey) {
+                if (myCart[i].full_name === finalName) {
                     myCart[i].qty += delta;
                     if (myCart[i].qty <= 0) { myCart.splice(i, 1); }
                     found = true;
                     break;
                 }
             }
-
             if (!found && delta > 0) {
                 myCart.push({
                     base_name: baseName,
-                    full_name: itemKey,
+                    full_name: finalName,
                     price: price,
                     qty: 1,
                     cat: cat || '',
-                    rice_type: riceVal,
-                    chicken_part: chickenVal,
+                    rice_type: riceType,
+                    chicken_part: chickenPart,
                     safe_id: safeId
                 });
             }
-
             refreshCounterDisplays();
             renderCartUI();
         }
@@ -1415,9 +1241,9 @@ CUSTOMER_MENU_TEMPLATE = """
                             <div style="color:#10b981; font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
-                            <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCartItem(${index}, -1)">-</button>
+                            <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, -1)">-</button>
                             <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
-                            <button type="button" style="background:#10b981; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCartItem(${index}, 1)">+</button>
+                            <button type="button" style="background:#10b981; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, 1)">+</button>
                         </div>
                     `;
                     scroller.appendChild(row);
@@ -1430,7 +1256,7 @@ CUSTOMER_MENU_TEMPLATE = """
             }
         }
 
-        function modifyCustomerCartItem(index, delta) {
+        function modifyCustomerCart(index, delta) {
             if (myCart[index]) {
                 myCart[index].qty += delta;
                 if (myCart[index].qty <= 0) {
@@ -1607,135 +1433,33 @@ def login():
         
         db_mobile_pin = None
         db_desktop_pin = None
-        db_admin_pin = None
         try:
             conn = get_db()
             with conn.cursor() as cursor:
-                cursor.execute("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('mobile_pin', 'desktop_pin', 'admin_pin')")
+                cursor.execute("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('mobile_pin', 'desktop_pin')")
                 rows = cursor.fetchall()
                 for row in rows:
                     if row['setting_key'] == 'mobile_pin' and row.get('setting_value'):
                         db_mobile_pin = normalize_digits(row['setting_value'])
                     elif row['setting_key'] == 'desktop_pin' and row.get('setting_value'):
                         db_desktop_pin = normalize_digits(row['setting_value'])
-                    elif row['setting_key'] == 'admin_pin' and row.get('setting_value'):
-                        db_admin_pin = normalize_digits(row['setting_value'])
             conn.close()
         except Exception as ex:
             print("Database Error in Login:", ex)
 
-        # 👑 بەشی بەڕێوەبەر بۆ داشبۆردی سەرەکی (پینی 99)
-        if (db_admin_pin and input_pin == db_admin_pin) or input_pin in ['99', '٩٩']:
-            session.permanent = True
-            session['authenticated'] = True
-            session['role'] = 'admin'
-            return redirect(url_for('admin_dashboard'))
-
-        # پینی دیسکتۆپ / کاشێر
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
-            session['role'] = 'cashier'
             return redirect(url_for('desktop_tables'))
 
-        # پینی مۆبایل / کارمەند
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
-            session['role'] = 'waiter'
             return redirect(url_for('menu'))
 
         return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
 
     return render_template_string(LOGIN_TEMPLATE)
-
-@app.route('/admin/dashboard')
-def admin_dashboard():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    
-    expenses = []
-    total_sales = 0.0
-    total_expenses = 0.0
-    total_workers = 0.0
-
-    try:
-        conn = get_db()
-        with conn.cursor() as cursor:
-            # ۱. کۆکردنەوەی فرۆشی گشتی لە خشتەی froshtn
-            cursor.execute("SELECT SUM(price * quantity) AS total_rev FROM froshtn WHERE table_cabin NOT LIKE '%%[%%'")
-            rev_row = cursor.fetchone()
-            if rev_row and rev_row['total_rev']:
-                total_sales = float(rev_row['total_rev'])
-
-            # ۲. هێنانی هەموو خەرجییەکان لە خشتەی masruf
-            cursor.execute("SELECT * FROM masruf ORDER BY id DESC")
-            expenses = cursor.fetchall()
-
-            # ۳. جیاکردنەوەی کۆی مەسروفات و کرێی کرێکار
-            cursor.execute("SELECT SUM(amount) AS tot_exp FROM masruf WHERE category != 'کرێی کرێکار'")
-            exp_row = cursor.fetchone()
-            if exp_row and exp_row['tot_exp']:
-                total_expenses = float(exp_row['tot_exp'])
-
-            cursor.execute("SELECT SUM(amount) AS tot_work FROM masruf WHERE category = 'کرێی کرێکار'")
-            work_row = cursor.fetchone()
-            if work_row and work_row['tot_work']:
-                total_workers = float(work_row['tot_work'])
-
-        conn.close()
-    except Exception as e:
-        print("Admin Dashboard Query Error:", e)
-
-    # قاسە و قازانجی ماوە = فرۆش - (مەسروفات + کرێی کرێکار)
-    net_profit = total_sales - (total_expenses + total_workers)
-
-    return render_template_string(ADMIN_DASHBOARD_TEMPLATE, 
-                                  expenses=expenses, 
-                                  total_sales=total_sales, 
-                                  total_expenses=total_expenses, 
-                                  total_workers=total_workers, 
-                                  net_profit=net_profit)
-
-@app.route('/add_expense', methods=['POST'])
-def add_expense():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    
-    details = request.form.get('details', '').strip()
-    amount = float(request.form.get('amount', 0))
-    category = request.form.get('category', 'مەسروفات').strip()
-
-    if details and amount > 0:
-        try:
-            conn = get_db()
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO masruf (details, amount, category, created_at)
-                    VALUES (%s, %s, %s, NOW())
-                """, (details, amount, category))
-                conn.commit()
-            conn.close()
-        except Exception as ex:
-            print("Error adding expense:", ex)
-
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/delete_expense/<int:expense_id>', methods=['POST'])
-def delete_expense(expense_id):
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    
-    try:
-        conn = get_db()
-        with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM masruf WHERE id = %s", (expense_id,))
-            conn.commit()
-        conn.close()
-    except Exception as ex:
-        print("Error deleting expense:", ex)
-
-    return redirect(url_for('admin_dashboard'))
 
 @app.route('/desktop/tables')
 def desktop_tables():
@@ -1867,6 +1591,7 @@ def save_customer_order():
                 rice_type = item.get('rice_type', '')
                 chicken_part = item.get('chicken_part', '')
 
+                # ئەگەر تایبەتمەندی هەڵبژێردرابێت و لە ناوەکەدا نەبووبێت، دەیلکێنێت
                 if '(' not in food_name:
                     if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice_type:
                         food_name += f" ({rice_type})"
