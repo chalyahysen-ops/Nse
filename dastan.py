@@ -132,7 +132,8 @@ LOGIN_TEMPLATE = """
         {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
         <div class="roles-hint">
             <span>👑 99: بەڕێوەبەر</span>
-            <span>🍽️ 22: گارسۆن</span>
+            <span>📱 345678: مۆبایل</span>
+            <span>🍽️ 22: ئایپاد</span>
         </div>
     </div>
 </body>
@@ -248,12 +249,18 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
             <a href="/desktop/tables" class="module-card">
                 <div class="module-top"><div class="module-icon">🍽️</div><span class="module-badge">ئۆردەر</span></div>
-                <div class="module-title">مێزەکان و گارسۆن</div>
+                <div class="module-title">مێزەکان و گارسۆن (ئایپاد)</div>
                 <div class="module-desc">چوونە ناو شاشەی مێزەکان و ئۆردەرکردنی خواردن بۆ ئایپاد و دیسکتۆپ.</div>
             </a>
 
+            <a href="/mobile/tables" class="module-card">
+                <div class="module-top"><div class="module-icon">📱</div><span class="module-badge">مۆبایل</span></div>
+                <div class="module-title">مێزەکانی مۆبایل</div>
+                <div class="module-desc">شاشەی ئۆردەرکردنی خواردن تایبەت بە قەبارە و شاشەی مۆبایل.</div>
+            </a>
+
             <a href="/qr_manager" class="module-card">
-                <div class="module-top"><div class="module-icon">📱</div><span class="module-badge">QR</span></div>
+                <div class="module-top"><div class="module-icon">🖨️</div><span class="module-badge">QR</span></div>
                 <div class="module-title">بەڕێوەبردنی QR مێزەکان</div>
                 <div class="module-desc">چاپی ٩٠ کیوئاڕ کۆدەکە لەگەڵ دیاریکردنی مۆڵەت بۆ موشتەری.</div>
             </a>
@@ -354,6 +361,65 @@ QR_MANAGER_TEMPLATE = """
                 });
             }
         }
+    </script>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی مێزەکانی قیاسی مۆبایل
+# ==========================================
+MOBILE_TABLES_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>هەڵبژاردنی مێز - مۆبایل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 12px; }
+        .m-header { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; border: 1px solid #0b5e4a; }
+        .m-title { font-size: 15px; font-weight: 800; color: #10b981; }
+        .btn-logout { background: #ef4444; color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 12px; }
+        .tables-grid-mobile { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .m-table-btn { background: #ffffff; color: #03261d; border-radius: 12px; height: 75px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
+        .m-table-btn.active-occupied { background: #10b981 !important; color: #ffffff !important; border-color: #047857 !important; }
+        .t-sub { font-size: 10px; font-weight: 700; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div class="m-header">
+        <div class="m-title">📱 مێزەکان (گارسۆنی مۆبایل)</div>
+        <a href="/logout" class="btn-logout">✕ دەرچوون</a>
+    </div>
+
+    <div class="tables-grid-mobile">
+        {% for num in range(1, 91) %}
+            <a href="/mobile/menu?table={{ num }}" class="m-table-btn" id="m-tbl-{{ num }}">
+                <span>{{ num }}</span>
+                <span class="t-sub">مێز</span>
+            </a>
+        {% endfor %}
+    </div>
+
+    <script>
+        function checkTables() {
+            fetch('/get_active_tables?t=' + new Date().getTime())
+                .then(r => r.json())
+                .then(activeTables => {
+                    for(let i = 1; i <= 90; i++) {
+                        const el = document.getElementById('m-tbl-' + i);
+                        if(el) {
+                            if(activeTables.includes(i.toString())) el.classList.add('active-occupied');
+                            else el.classList.remove('active-occupied');
+                        }
+                    }
+                }).catch(()=>{});
+        }
+        checkTables();
+        setInterval(checkTables, 3000);
     </script>
 </body>
 </html>
@@ -731,7 +797,7 @@ WEB_MENU_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مێزەکان
+# پەڕەی مێزەکان (ئایپاد و دیسکتۆپ)
 # ==========================================
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -799,7 +865,7 @@ DESKTOP_TABLES_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی دیسکتۆپ
+# پەڕەی دیسکتۆپ و ئایپاد
 # ==========================================
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
@@ -1320,22 +1386,30 @@ def login():
     if request.method == 'POST':
         pin = normalize_digits(request.form.get('pin', ''))
         
-        # کۆدەکانی بەڕێوەبەر (Admin)
+        # بەڕێوەبەر (Admin)
         if pin in ['99', '٩٩', '222', '٢٢٢']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'admin'
             return redirect(url_for('admin_dashboard'))
             
-        # کۆدەکانی مۆبایل / گارسۆن (345678 لێرە دانراوە بۆ قیاسی مۆبایل)
-        if pin in ['22', '٢٢', '345678', '٣٤٥٦٧٨']:
+        # گارسۆنی ئایپاد و دیسکتۆپ
+        if pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
             return redirect(url_for('desktop_tables'))
+
+        # گارسۆنی مۆبایل (345678)
+        if pin in ['345678', '٣٤٥٦٧٨']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'mobile_waiter'
+            return redirect(url_for('mobile_waiter_tables'))
             
         return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
     return render_template_string(LOGIN_TEMPLATE)
+
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -1547,6 +1621,27 @@ def desktop_menu():
     except: pass
     return render_template_string(DESKTOP_TEMPLATE, categories=categories, selected_table=tbl)
 
+@app.route('/mobile/tables')
+def mobile_waiter_tables():
+    if not session.get('authenticated'): return redirect(url_for('login'))
+    return render_template_string(MOBILE_TABLES_TEMPLATE)
+
+@app.route('/mobile/menu')
+def mobile_waiter_menu():
+    if not session.get('authenticated'): return redirect(url_for('login'))
+    tbl = request.args.get('table', '1')
+    categories = {}
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name != ''")
+            for f in cur.fetchall():
+                c = f['category'].strip() if f['category'] else 'گشتی'
+                categories.setdefault(c, []).append(f)
+        conn.close()
+    except: pass
+    return render_template_string(CUSTOMER_MENU_TEMPLATE, table_num=tbl, categories=categories, allow_ordering=True)
+
 @app.route('/table/<int:table_num>')
 def customer_table_view(table_num):
     allow_ordering = True
@@ -1624,7 +1719,7 @@ def save_customer_order():
         with conn.cursor() as cur:
             cur.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (int(tbl),))
             p_row = cur.fetchone()
-            if p_row and not p_row['allow_ordering']:
+            if p_row and not p_row['allow_ordering'] and session.get('role') != 'mobile_waiter':
                 conn.close()
                 return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە و ڕێگە بە ناردنی ئۆردەر نادرێت!'})
 
@@ -1644,13 +1739,8 @@ def save_customer_order():
 
                 cur.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                    VALUES (%s, %s, %s, %s, %s, NOW(), 1)
-                """, (str(tbl), fname, qty, price, cat))
-
-                cur.execute("""
-                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                     VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                """, (str(tbl) + " [زیادکراو]", f"+ {fname}", qty, price, cat))
+                """, (str(tbl), fname, qty, price, cat))
 
             conn.commit()
         conn.close()
