@@ -9,7 +9,7 @@ app.secret_key = 'shahoor_all_in_one_pos_2026'
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
 
-# بەشی هەڵگرتنی وێنە ئەپلۆدکراوەکان
+# فۆڵدەری هەڵگرتنی وێنە ئەپلۆدکراوەکان
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -68,6 +68,7 @@ def ensure_all_tables():
                 CREATE TABLE IF NOT EXISTS masrwf (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     masrwf_date DATETIME NOT NULL,
+                    masrwf_name VARCHAR(150) DEFAULT '',
                     masrwf_type VARCHAR(100) NOT NULL,
                     spent_by VARCHAR(100) DEFAULT '',
                     amount DECIMAL(18, 0) NOT NULL,
@@ -84,6 +85,10 @@ def ensure_all_tables():
                     discount DECIMAL(18, 0) DEFAULT 0
                 );
             """)
+            # دڵنیابوونەوە لە هەبوونی خانەی masrwf_name لەناو خشتەی masrwf
+            cursor.execute("SHOW COLUMNS FROM masrwf LIKE 'masrwf_name'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE masrwf ADD COLUMN masrwf_name VARCHAR(150) DEFAULT '' AFTER masrwf_date")
         conn.commit()
         conn.close()
     except Exception as ex:
@@ -136,7 +141,7 @@ LOGIN_TEMPLATE = """
 <body>
     <div class="login-card">
         <div class="brand-title">✨ شاهور ڕێستۆرانت</div>
-        <div class="brand-sub">تکایە وشەی نهێنی بنووسە (دەتوانیت بە بەتاڵی جێی بێڵیت)</div>
+        <div class="brand-sub">تکایە وشەی نهێنی بنووسە (یان بە بەتاڵی داخڵی بکە)</div>
         <form method="POST" action="/login">
             <input type="password" name="pin" class="pin-input" placeholder="وشەی نهێنی (ئارەزوومەندانە)" inputmode="numeric" autofocus>
             <button type="submit" class="btn-submit">چوونەژوورەوە ➔</button>
@@ -145,7 +150,7 @@ LOGIN_TEMPLATE = """
         <div class="roles-hint">
             <span>👑 99: بەڕێوەبەر</span>
             <span>📱 345678: مۆبایل</span>
-            <span>🍽️ بەتاڵ یان 22: ئایپاد</span>
+            <span>🍽️ بەتاڵ / 22: ئایپاد</span>
         </div>
     </div>
 </body>
@@ -153,7 +158,7 @@ LOGIN_TEMPLATE = """
 """
 
 # ==========================================
-# داشبۆردی سەرەکی بەڕێوەبەر بە ئامار و قازانج
+# داشبۆردی بەڕێوەبەر بە ئامار و قازانج
 # ==========================================
 ADMIN_DASHBOARD_TEMPLATE = """
 <!DOCTYPE html>
@@ -204,7 +209,6 @@ ADMIN_DASHBOARD_TEMPLATE = """
     </header>
 
     <main class="admin-content">
-        <!-- بەشی دیاریکردنی بەروار و حیساباتی فرۆش و قازانج -->
         <div class="filter-panel">
             <form method="GET" action="/admin" class="filter-form">
                 <div class="filter-item">
@@ -269,7 +273,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/masrwf" class="module-card">
                 <div class="module-top"><div class="module-icon">💸</div><span class="module-badge">مەسرووف</span></div>
                 <div class="module-title">مەسرووفات و خەرجی</div>
-                <div class="module-desc">تۆمارکردن، دەستکاری، سڕینەوە، فلتەری بەروار و دیاریکردنی کەسی خەرجکار.</div>
+                <div class="module-desc">تۆمارکردن بە کۆمبۆبۆکس، دەستکاری، سڕینەوە، و فلتەری بەروارەکان.</div>
             </a>
 
             <a href="/admin/workers" class="module-card">
@@ -281,7 +285,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/menu_manager" class="module-card">
                 <div class="module-top"><div class="module-icon">📖</div><span class="module-badge">مێنۆ</span></div>
                 <div class="module-title">بەڕێوەبردنی خواردنەکان (ئیدیت و ئەپلۆد)</div>
-                <div class="module-desc">زیادکردنی خواردنی نوێ، دەستکاری ناو و نرخ، و ئەپلۆدکردنی وێنە ڕاستەوخۆ.</div>
+                <div class="module-desc">زیادکردنی خواردنی نوێ، کۆمبۆبۆکسی پۆلێن، و ئەپلۆدکردنی وێنە ڕاستەوخۆ.</div>
             </a>
 
             <a href="/desktop/tables" class="module-card">
@@ -308,7 +312,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی بەڕێوەبردنی مێنۆ (ئیدیت و ئەپلۆدی وێنە)
+# پەڕەی بەڕێوەبردنی مێنۆ (پۆلێن بە کۆمبۆبۆکس)
 # ==========================================
 WEB_MENU_MANAGER_TEMPLATE = """
 <!DOCTYPE html>
@@ -362,8 +366,13 @@ WEB_MENU_MANAGER_TEMPLATE = """
                     <input type="number" name="price" required placeholder="5000">
                 </div>
                 <div>
-                    <label>پۆلێن (Category):</label>
-                    <input type="text" name="category" placeholder="برژاو، کوڵاو، پەلەوەر..." required>
+                    <label>پۆلێن (کۆمبۆبۆکس):</label>
+                    <input list="categoryList" name="category" placeholder="پۆلێن هەڵبژێرە یان بنووسە..." required>
+                    <datalist id="categoryList">
+                        {% for c in existing_categories %}
+                            <option value="{{ c }}">
+                        {% endfor %}
+                    </datalist>
                 </div>
                 <div>
                     <label>ئەپلۆدی وێنە (فایل):</label>
@@ -407,8 +416,8 @@ WEB_MENU_MANAGER_TEMPLATE = """
                 <label style="font-size:12px; color:#a7f3d0;">نرخ (دینار):</label>
                 <input type="number" id="edit_price" name="price" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
                 
-                <label style="font-size:12px; color:#a7f3d0;">پۆلێن (Category):</label>
-                <input type="text" id="edit_category" name="category" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                <label style="font-size:12px; color:#a7f3d0;">پۆلێن (کۆمبۆبۆکس):</label>
+                <input list="categoryList" id="edit_category" name="category" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
                 
                 <label style="font-size:12px; color:#a7f3d0;">ئەپلۆدی وێنەی نوێ لە کۆمپیوتەر/مۆبایل:</label>
                 <input type="file" name="food_image" accept="image/*" style="width:100%; padding:7px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
@@ -435,6 +444,145 @@ WEB_MENU_MANAGER_TEMPLATE = """
             document.getElementById('editModal').style.display = 'none';
         }
     </script>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی مەسرووفات (تەواوی خانەکان بە کۆمبۆبۆکس جگە لە بڕی پارە)
+# ==========================================
+WEB_MASRWF_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مەسرووفات و خەرجی - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .masrwf-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+        .masrwf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
+        .masrwf-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
+        .masrwf-form-card input, .masrwf-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
+        .masrwf-form-card input:focus, .masrwf-form-card select:focus { border-color: #10b981; }
+        .btn-save-m { background: #ef4444; color: #fff; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
+
+        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
+        tr:hover { background: #085341; }
+        .btn-del-m { background: #ef4444; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#ef4444;">💸 بەڕێوەبردنی مەسرووفات و خەرجییەکان</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="masrwf-form-card">
+        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ تۆمارکردنی خەرجی نوێ</h3>
+        <form method="POST" action="/admin/save_masrwf">
+            <div class="masrwf-grid">
+                <div>
+                    <label>بەرواری مەسرووف:</label>
+                    <input type="date" name="m_date" value="{{ today_date }}" required>
+                </div>
+                <div>
+                    <label>ناوی مەسرووف (کۆمبۆبۆکس):</label>
+                    <input list="namesList" name="masrwf_name" placeholder="هەڵبژێرە یان بنووسە..." required>
+                    <datalist id="namesList">
+                        {% for n in existing_names %}
+                            <option value="{{ n }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label>جۆری مەسرووف (کۆمبۆبۆکس):</label>
+                    <input list="typesList" name="m_type" placeholder="هەڵبژێرە یان بنووسە..." required>
+                    <datalist id="typesList">
+                        {% for t in existing_types %}
+                            <option value="{{ t }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label>شوێن یان کێ خەرجی کردووە (کۆمبۆبۆکس):</label>
+                    <input list="spendersList" name="spent_by" placeholder="هەڵبژێرە یان بنووسە...">
+                    <datalist id="spendersList">
+                        {% for s in existing_spenders %}
+                            <option value="{{ s }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label>تێبینی (کۆمبۆبۆکس):</label>
+                    <input list="notesList" name="notes" placeholder="هەڵبژێرە یان بنووسە...">
+                    <datalist id="notesList">
+                        {% for nt in existing_notes %}
+                            <option value="{{ nt }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label style="color:#f87171;">بڕی مەسرووف (تەنها ژمارە):</label>
+                    <input type="number" name="amount" placeholder="بۆ نموونە: 25000" required>
+                </div>
+                <div>
+                    <button type="submit" class="btn-save-m">💾 تۆمارکردنی خەرجی</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="summary-card">
+        <span style="font-size:16px; font-weight:800;">کۆی گشتی خەرجییە تۆمارکراوەکان:</span>
+        <span style="font-size:22px; font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(total_m) }} د.ع</span>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>بەروار</th>
+                    <th>ناوی مەسرووف</th>
+                    <th>جۆری مەسرووف</th>
+                    <th>شوێن / کێ خەرجی کردووە</th>
+                    <th>بڕی پارە</th>
+                    <th>تێبینی</th>
+                    <th>کردار</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ r.m_date }}</td>
+                    <td style="font-weight:700; color:#10b981;">{{ r.masrwf_name }}</td>
+                    <td>{{ r.masrwf_type }}</td>
+                    <td>{{ r.spent_by }}</td>
+                    <td style="font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                    <td>{{ r.notes }}</td>
+                    <td>
+                        <a href="/admin/delete_masrwf/{{ r.id }}" class="btn-del-m" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم تۆمارە؟')">🗑️ سڕینەوە</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:24px; color:#94a3b8;">هیچ مەسرووفێک تۆمار نەکراوە</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
 """
@@ -673,7 +821,7 @@ DESKTOP_TABLES_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مێزەکانی قیاسی مۆبایل
+# پەڕەی مێزەکانی مۆبایل
 # ==========================================
 MOBILE_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -1290,6 +1438,235 @@ CUSTOMER_MENU_TEMPLATE = """
 """
 
 # ==========================================
+# پەڕەی کاشێر
+# ==========================================
+WEB_CASHIER_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کاشێر و واصڵکردن - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+        .tbl-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 18px; text-align: center; display: flex; flex-direction: column; gap: 10px; }
+        .tbl-name { font-size: 18px; font-weight: 800; color: #10b981; }
+        .btn-pay { background: #10b981; color: #03261d; border: none; padding: 10px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">🛎️ شاشەی کاشێر و واصڵکردن</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="tables-grid">
+        {% for t in tables %}
+        <div class="tbl-card">
+            <div class="tbl-name">{{ t }}</div>
+            <button class="btn-pay" onclick="payTable('{{ t }}')">💵 واصڵکردنی حیساب</button>
+        </div>
+        {% else %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">
+            هیچ مێزێک یان داواکارییەکی کراوە نییە لە ئێستادا.
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function payTable(tableNum) {
+            let paid = prompt("بڕی پارەی وەرگیراو بنووسە بۆ مێزی " + tableNum + ":");
+            if (paid !== null && paid.trim() !== '') {
+                fetch('/admin/complete_payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ table_number: tableNum, amount_paid: paid, total_amount: paid })
+                }).then(r => r.json()).then(data => {
+                    if(data.status === 'success') {
+                        alert('✅ حیسابەکە بە سەرکەوتوویی واصڵکرا');
+                        location.reload();
+                    } else {
+                        alert('هەڵە: ' + data.message);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی قاسە
+# ==========================================
+WEB_QASA_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قاسەی فرۆشتن - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        .summary-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .s-box { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 12px; padding: 16px; text-align: center; }
+        .table-wrap { overflow-x: auto; background: #064032; border-radius: 12px; border: 1px solid #0b5e4a; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px; color: #a7f3d0; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px; border-bottom: 1px solid #0b5e4a; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">💵 قاسەی فرۆشتن (٢٤ کاتژمێری ڕابردوو)</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="summary-boxes">
+        <div class="s-box">
+            <div style="font-size:13px; color:#a7f3d0;">کۆی وەرگیراو:</div>
+            <div style="font-size:22px; font-weight:800; color:#10b981;">{{ "{:,.0f}".format(total_received) }} د.ع</div>
+        </div>
+        <div class="s-box">
+            <div style="font-size:13px; color:#a7f3d0;">کۆی داشکاندن:</div>
+            <div style="font-size:22px; font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(total_discount) }} د.ع</div>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>کاتی وەسڵ</th>
+                    <th>شوێن / مێز</th>
+                    <th>بڕی پارە</th>
+                    <th>داشکاندن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in qasa_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ r.transaction_time }}</td>
+                    <td style="font-weight:700; color:#10b981;">{{ r.place_id }}</td>
+                    <td style="font-weight:800;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                    <td>{{ "{:,.0f}".format(r.discount) }} د.ع</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">هیچ وەسڵێک واصڵ نەکراوە</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی شاگردەکان
+# ==========================================
+WEB_WORKERS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حیساباتی شاگردەکان - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        .form-box { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: flex-end; }
+        .form-box input { width: 100%; padding: 10px; background: #03261d; border: 1px solid #0b5e4a; border-radius: 8px; color: #fff; outline: none; }
+        .btn-add-w { background: #10b981; color: #03261d; border: none; padding: 10px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+        .table-wrap { overflow-x: auto; background: #064032; border-radius: 12px; border: 1px solid #0b5e4a; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px; color: #a7f3d0; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px; border-bottom: 1px solid #0b5e4a; }
+        .btn-del { background: #ef4444; color: #fff; text-decoration: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">👥 حیساباتی شاگردەکان</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="form-box">
+        <h3 style="color:#a7f3d0; margin-bottom:12px; font-size:15px;">➕ زیادکردنی شاگردی نوێ</h3>
+        <form method="POST" action="/admin/add_worker" class="form-grid">
+            <div>
+                <label style="font-size:12px; color:#a7f3d0;">ناوی شاگرد:</label>
+                <input type="text" name="name" required placeholder="ناوی چوارینە">
+            </div>
+            <div>
+                <label style="font-size:12px; color:#a7f3d0;">ژمارەی مۆبایل:</label>
+                <input type="text" name="phone" placeholder="0770xxxxxxx">
+            </div>
+            <div>
+                <label style="font-size:12px; color:#a7f3d0;">موعاش یان ڕۆژانە (د.ع):</label>
+                <input type="number" name="salary" required placeholder="25000">
+            </div>
+            <div>
+                <button type="submit" class="btn-add-w" style="width:100%;">➕ تۆمارکردن</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ناو</th>
+                    <th>تەلەفۆن</th>
+                    <th>شایستەی ڕۆژانە</th>
+                    <th>ڕۆژی کارکردن</th>
+                    <th>کۆی موعاش</th>
+                    <th>بەخشش (Bonus)</th>
+                    <th>کۆی شایستە</th>
+                    <th>کردار</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in wage_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="font-weight:700;">{{ w.name }}</td>
+                    <td>{{ w.phone }}</td>
+                    <td>{{ "{:,.0f}".format(w.salary) }} د.ع</td>
+                    <td>{{ w.work_days }} ڕۆژ</td>
+                    <td>{{ "{:,.0f}".format(w.total_salary) }} د.ع</td>
+                    <td>{{ "{:,.0f}".format(w.total_bonus) }} د.ع</td>
+                    <td style="font-weight:800; color:#10b981;">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
+                    <td>
+                        <a href="/admin/delete_worker/{{ w.id }}" class="btn-del" onclick="return confirm('ئایا دڵنیایت لە سڕینەوە؟')">🗑️ سڕینەوە</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" style="text-align:center; padding:20px; color:#94a3b8;">هیچ شاگردێک تۆمار نەکراوە</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
 # ڕێڕەوەکانی سیستەم (Routes)
 # ==========================================
 @app.route('/')
@@ -1302,7 +1679,7 @@ def login():
     if request.method == 'POST':
         pin = normalize_digits(request.form.get('pin', '')).strip()
 
-        # چوونەژوورەوە کاتێک پاسوۆرد بەتاڵە یان 22 بێت
+        # چوونەژوورەوە ئەگەر پاسوۆرد بەتاڵ بێت یان 22 بێت بۆ گارسۆن
         if pin == '' or pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
@@ -1329,7 +1706,6 @@ def admin_dashboard():
     if not session.get('authenticated') or session.get('role') != 'admin':
         return redirect(url_for('login'))
 
-    # وەرگرتنی بەرواری دیاریکراو لە فلتەر
     today_str = datetime.now().strftime('%Y-%m-%d')
     start_date = request.args.get('start_date', today_str)
     end_date = request.args.get('end_date', today_str)
@@ -1338,7 +1714,7 @@ def admin_dashboard():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # حیساباتی فرۆش بەپێی بەروار
+            # حیسابکردنی کۆی فرۆش لە ماوەی نێوان دوو بەرواردا
             cur.execute("""
                 SELECT IFNULL(SUM(amount), 0) AS s 
                 FROM qasa 
@@ -1346,7 +1722,7 @@ def admin_dashboard():
             """, (start_date, end_date))
             period_sales = float(cur.fetchone()['s'])
 
-            # حیساباتی مەسرووف بەپێی بەروار
+            # حیسابکردنی کۆی خەرجی لە ماوەی نێوان دوو بەرواردا
             cur.execute("""
                 SELECT IFNULL(SUM(amount), 0) AS e 
                 FROM masrwf 
@@ -1395,13 +1771,7 @@ def admin_cashier():
             tables = [r['table_cabin'] for r in sorted_rows]
         conn.close()
     except: pass
-    return f"""
-    <div style='background:#03261d; color:#fff; padding:20px; font-family:sans-serif;' dir='rtl'>
-        <h2>کاشێر و واصڵکردن</h2>
-        <a href='/admin' style='color:#10b981;'>⬅️ گەڕانەوە بۆ داشبۆرد</a>
-        <ul style='margin-top:16px;'>{''.join([f"<li>مێز یان سەفەری: {t}</li>" for t in tables]) if tables else '<li>هیچ داواکارییەکی کراوە نییە</li>'}</ul>
-    </div>
-    """
+    return render_template_string(WEB_CASHIER_TEMPLATE, tables=tables)
 
 @app.route('/admin/complete_payment', methods=['POST'])
 def admin_complete_payment():
@@ -1437,45 +1807,65 @@ def admin_qasa():
             tot_disc = sum(float(r['discount']) for r in rows)
         conn.close()
     except: pass
-    return f"""
-    <div style='background:#03261d; color:#fff; padding:20px; font-family:sans-serif;' dir='rtl'>
-        <h2>قاسەی فرۆشتنی ٢٤ کاتژمێر</h2>
-        <a href='/admin' style='color:#10b981;'>⬅️ گەڕانەوە بۆ داشبۆرد</a>
-        <p style='margin-top:12px;'>کۆی وەرگیراو: <b>{tot_rec:,.0f} د.ع</b> | کۆی داشکاندن: <b>{tot_disc:,.0f} د.ع</b></p>
-    </div>
-    """
+    return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
 
 @app.route('/admin/masrwf')
 def admin_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
     rows = []
     tot = 0
+    existing_names = ['کڕینی گۆشت', 'کڕینی سەوزە', 'کرێی کارەبا', 'کڕینی برنج', 'پاککەرەوە', 'گاز و نەوت', 'کڕینی میوە', 'مەسرەفی ڕۆژانە']
+    existing_types = ['کڕین بۆ چێشتخانە', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'ترانسپۆرت', 'چاککردنەوە']
+    existing_spenders = ['بەڕێوەبەر', 'کاشێر', 'مەتبەخ', 'گارسۆن', 'شۆفێر', 'کڕیار']
+    existing_notes = ['بۆ مەتبەخ', 'بۆ کاشێر', 'پارەی تەواو دراوە', 'قەرز ماوەتەوە', 'پێداویستی سەرەکی']
+    
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date, masrwf_type, spent_by, amount, notes FROM masrwf ORDER BY id DESC")
+            cur.execute("SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date, masrwf_name, masrwf_type, spent_by, amount, notes FROM masrwf ORDER BY id DESC")
             rows = cur.fetchall()
             tot = sum(float(r['amount']) for r in rows)
+
+            # هێنانی ناوازەکان بۆ ناو کۆمبۆبۆکسەکان
+            for r in rows:
+                if r.get('masrwf_name') and r['masrwf_name'] not in existing_names:
+                    existing_names.append(r['masrwf_name'])
+                if r.get('masrwf_type') and r['masrwf_type'] not in existing_types:
+                    existing_types.append(r['masrwf_type'])
+                if r.get('spent_by') and r['spent_by'] not in existing_spenders:
+                    existing_spenders.append(r['spent_by'])
+                if r.get('notes') and r['notes'] not in existing_notes:
+                    existing_notes.append(r['notes'])
+
         conn.close()
     except: pass
-    return f"""
-    <div style='background:#03261d; color:#fff; padding:20px; font-family:sans-serif;' dir='rtl'>
-        <h2>مەسرووفات و خەرجی</h2>
-        <a href='/admin' style='color:#10b981;'>⬅️ گەڕانەوە بۆ داشبۆرد</a>
-        <p style='margin-top:12px;'>کۆی خەرجی: <b>{tot:,.0f} د.ع</b></p>
-    </div>
-    """
+
+    return render_template_string(
+        WEB_MASRWF_TEMPLATE, 
+        rows=rows, 
+        total_m=tot, 
+        today_date=datetime.now().strftime('%Y-%m-%d'),
+        existing_names=existing_names,
+        existing_types=existing_types,
+        existing_spenders=existing_spenders,
+        existing_notes=existing_notes
+    )
 
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
     m_date = request.form.get('m_date')
-    m_type = request.form.get('m_type')
-    spent_by = request.form.get('spent_by', '')
+    m_name = request.form.get('masrwf_name', '').strip()
+    m_type = request.form.get('m_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
-    notes = request.form.get('notes', '')
+    notes = request.form.get('notes', '').strip()
+    
     conn = get_db()
     with conn.cursor() as cur:
-        cur.execute("INSERT INTO masrwf (masrwf_date, masrwf_type, spent_by, amount, notes) VALUES (%s, %s, %s, %s, %s)", (m_date, m_type, spent_by, amt, notes))
+        cur.execute("""
+            INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (m_date, m_name, m_type, spent_by, amt, notes))
         conn.commit()
     conn.close()
     return redirect(url_for('admin_masrwf'))
@@ -1510,13 +1900,7 @@ def admin_workers():
         conn.close()
     except Exception as e:
         print("Worker list error:", e)
-    return f"""
-    <div style='background:#03261d; color:#fff; padding:20px; font-family:sans-serif;' dir='rtl'>
-        <h2>حیساباتی شاگردەکان</h2>
-        <a href='/admin' style='color:#10b981;'>⬅️ گەڕانەوە بۆ داشبۆرد</a>
-        <p style='margin-top:12px;'>کۆی ژمارەی شاگردەکان: {len(rows)}</p>
-    </div>
-    """
+    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows)
 
 @app.route('/admin/add_worker', methods=['POST'])
 def admin_add_worker():
@@ -1544,23 +1928,27 @@ def admin_delete_worker(wid):
 def admin_menu_manager():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
     foods = []
+    categories = ['برژاو', 'کوڵاو', 'پەلەوەر', 'شەربەت و خواردنەوە', 'سەوزە و زەڵاتە', 'کوردیەکان', 'خواردنی خێرا', 'شۆربا', 'شیرینی']
     try:
         conn = get_db()
         with conn.cursor() as cur:
             cur.execute("SELECT id, food_name, price, category, image_path FROM nse ORDER BY id DESC")
             foods = cur.fetchall()
+            for f in foods:
+                c = f.get('category')
+                if c and c.strip() and c.strip() not in categories:
+                    categories.append(c.strip())
         conn.close()
     except: pass
-    return render_template_string(WEB_MENU_MANAGER_TEMPLATE, foods=foods)
+    return render_template_string(WEB_MENU_MANAGER_TEMPLATE, foods=foods, existing_categories=categories)
 
 @app.route('/admin/add_food', methods=['POST'])
 def admin_add_food():
     name = request.form.get('food_name')
     price = float(request.form.get('price', 0))
-    cat = request.form.get('category', 'گشتی')
+    cat = request.form.get('category', 'گشتی').strip()
     img = request.form.get('image_path', '').strip()
 
-    # ئەپلۆدی وێنە لە ڕێگەی فۆرم
     if 'food_image' in request.files:
         file = request.files['food_image']
         if file and file.filename != '' and allowed_file(file.filename):
@@ -1581,10 +1969,9 @@ def admin_edit_food(fid):
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
     name = request.form.get('food_name')
     price = float(request.form.get('price', 0))
-    cat = request.form.get('category', 'گشتی')
+    cat = request.form.get('category', 'گشتی').strip()
     img = request.form.get('image_path', '').strip()
 
-    # ئەگەر فایلی نوێ ئەپلۆد کرا بوو
     if 'food_image' in request.files:
         file = request.files['food_image']
         if file and file.filename != '' and allowed_file(file.filename):
