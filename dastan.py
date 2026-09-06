@@ -1319,19 +1319,22 @@ def index():
 def login():
     if request.method == 'POST':
         pin = normalize_digits(request.form.get('pin', ''))
-        if pin in ['99', '٩٩', '222', '٢٢٢']:
+        
+        # لێرە 345678 زیاد کراوە بۆ بەڕێوەبەر
+        if pin in ['99', '٩٩', '222', '٢٢٢', '345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'admin'
             return redirect(url_for('admin_dashboard'))
+            
         if pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
             return redirect(url_for('desktop_tables'))
+            
         return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
     return render_template_string(LOGIN_TEMPLATE)
-
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('authenticated') or session.get('role') != 'admin':
