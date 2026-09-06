@@ -28,7 +28,7 @@ def normalize_digits(text):
     trans_table = str.maketrans(eastern_digits, western_digits)
     return text.translate(trans_table)
 
-def ensure_qr_table_exists():
+def ensure_tables_exist():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
@@ -38,12 +38,21 @@ def ensure_qr_table_exists():
                     allow_ordering TINYINT DEFAULT 0
                 );
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS masruf (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    details VARCHAR(255) NOT NULL,
+                    amount DECIMAL(12, 2) NOT NULL,
+                    category VARCHAR(100) DEFAULT 'گشتی',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
         conn.commit()
         conn.close()
     except Exception as ex:
-        print("Table permissions setup error:", ex)
+        print("Database setup error:", ex)
 
-ensure_qr_table_exists()
+ensure_tables_exist()
 
 # 🛡️ پاراستنی ئاسایش: هەر کاتێک ئینتەر لە ناونیشانی سێرچ بکرێت دەچێتەوە لۆگین
 @app.before_request
@@ -52,7 +61,7 @@ def enforce_login_on_direct_url():
     if request.endpoint in exempt_endpoints:
         return
 
-    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_'))
+    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_', '/add_', '/delete_'))
     if is_api:
         return
 
@@ -97,6 +106,128 @@ LOGIN_TEMPLATE = """
 </html>
 """
 
+ADMIN_DASHBOARD_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبۆردی سەرەکی بەڕێوەبەر - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #0b0f19; color: #f8fafc; padding: 20px; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; background: #151d30; padding: 16px 22px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 24px; }
+        .top-title { font-size: 19px; font-weight: 800; color: #f59e0b; }
+        .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        
+        .dash-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .dash-card { background: #151d30; border: 1.5px solid #334155; border-radius: 12px; padding: 20px; text-decoration: none; color: #ffffff; transition: all 0.2s; display: flex; flex-direction: column; gap: 8px; }
+        .dash-card:hover { border-color: #f59e0b; transform: translateY(-3px); }
+        .card-icon { font-size: 30px; }
+        .card-name { font-size: 17px; font-weight: 800; }
+        .card-desc { font-size: 12px; color: #94a3b8; }
+
+        .content-box { background: #151d30; border: 1px solid #334155; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+        .box-title { font-size: 16px; font-weight: 800; color: #10b981; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .expense-form { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; background: #0b0f19; padding: 14px; border-radius: 10px; border: 1px solid #334155; }
+        .inp-field { background: #151d30; color: #fff; border: 1px solid #334155; padding: 10px 14px; border-radius: 8px; font-size: 13px; outline: none; }
+        .inp-field:focus { border-color: #10b981; }
+        .btn-add { background: #10b981; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+        
+        .expense-table { width: 100%; border-collapse: collapse; text-align: right; }
+        .expense-table th, .expense-table td { padding: 12px 14px; border-bottom: 1px solid #334155; font-size: 13px; }
+        .expense-table th { color: #94a3b8; font-weight: 700; }
+        .btn-del-sm { background: #ef4444; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 700; }
+
+        @media (max-width: 768px) {
+            .expense-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="top-title">👑 داشبۆردی گشتی بەڕێوەبەر - شاهور</div>
+        <a href="/logout" class="btn-exit">✕ دەرچوون</a>
+    </div>
+
+    <div class="dash-cards-grid">
+        <a href="/desktop/tables" class="dash-card">
+            <div class="card-icon">🍽️</div>
+            <div class="card-name">بەڕێوەبردنی مێزەکان</div>
+            <div class="card-desc">سەیرکردنی ٩٠ مێز و ئۆردەری کاشێر</div>
+        </a>
+        <a href="/qr_manager" class="dash-card">
+            <div class="card-icon">📱</div>
+            <div class="card-name">بەڕێوەبردنی دەسەڵاتی QR</div>
+            <div class="card-desc">ڕێگەدان یان داخستنی داواکاری لە مۆبایلەوە</div>
+        </a>
+        <a href="/menu" class="dash-card">
+            <div class="card-icon">📋</div>
+            <div class="card-name">مێنیوی گشتی خواردنەکان</div>
+            <div class="card-desc">پێداچوونەوەی نرخ و وێنەی لیستەکان</div>
+        </a>
+    </div>
+
+    <div class="content-box">
+        <div class="box-title">
+            <span>💵 تۆمارکردنی مەسروفاتی ڕۆژانە</span>
+            <span style="color: #f59e0b; font-size: 15px;">کۆی گشتی مەسروف: {{ "{:,.0f}".format(total_expenses) }} دینار</span>
+        </div>
+
+        <form class="expense-form" method="POST" action="/add_expense">
+            <input type="text" name="details" class="inp-field" placeholder="تێبینی / هۆکاری خەرجی (بۆ نموونە: گۆشت، سەوزە، نەوت)" required>
+            <input type="number" step="any" name="amount" class="inp-field" placeholder="بڕی پارە (دینار)" required>
+            <select name="category" class="inp-field">
+                <option value="کڕین">کڕینی ڕۆژانە</option>
+                <option value="مووچە">مووچە و دەستی کار</option>
+                <option value="خزمەتگوزاری">خزمەتگوزاری و کارەبا</option>
+                <option value="مەتبەخ">پێداویستی مەتبەخ</option>
+                <option value="گشتی">جۆراوجۆر</option>
+            </select>
+            <button type="submit" class="btn-add">➕ زیادکردنی مەسروف</button>
+        </form>
+
+        <table class="expense-table">
+            <thead>
+                <tr>
+                    <th>زنجیرە</th>
+                    <th>تێبینی / هۆکار</th>
+                    <th>بەش</th>
+                    <th>بڕی پارە</th>
+                    <th>بەروار و کات</th>
+                    <th>کردار</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if expenses %}
+                    {% for exp in expenses %}
+                    <tr>
+                        <td>#{{ loop.index }}</td>
+                        <td style="font-weight: 700;">{{ exp.details }}</td>
+                        <td><span style="background: #1e293b; padding: 2px 8px; border-radius: 6px; font-size: 11px;">{{ exp.category }}</span></td>
+                        <td style="color: #ef4444; font-weight: 800;">{{ "{:,.0f}".format(exp.amount) }} د.ع</td>
+                        <td style="color: #94a3b8; font-size: 11px;">{{ exp.created_at }}</td>
+                        <td>
+                            <form method="POST" action="/delete_expense/{{ exp.id }}" style="display:inline;" onsubmit="return confirm('ئایا دڵنیایت لە سڕینەوە؟');">
+                                <button type="submit" class="btn-del-sm">سڕینەوە</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #94a3b8; padding: 30px 0;">هیچ مەسروفێک تۆمار نەکراوە</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -130,6 +261,7 @@ DESKTOP_TABLES_TEMPLATE = """
         }
         .header-title { font-size: 17px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-dash { background-color: #f59e0b; color: #0b0f19; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .btn-qr-mgr { background-color: #3b82f6; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
         .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
         
@@ -186,6 +318,7 @@ DESKTOP_TABLES_TEMPLATE = """
         <a href="/logout" class="btn-exit">✕ دەرچوون</a>
         <div class="header-title">تکایە بۆ ئۆردەرکردنی خواردن و خواردنەوە مێزێک دیاری بکە!</div>
         <div class="header-actions">
+            <a href="/admin/dashboard" class="btn-dash">⚙️ داشبۆرد</a>
             <a href="/qr_manager" class="btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
         </div>
     </div>
@@ -224,7 +357,6 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
-# فۆڕمی دیسکتۆپ و ئایپاد بە چاککردنی دەرکەوتنی وێنەکانی سەرەوە و لابردنی جیاکەرەوەکانی ناوەڕۆک
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -729,7 +861,6 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# فۆڕمی نوێی موشتەری و مۆبایل بە زیادکردنی هەڵبژاردنی جۆری برنج و بەشی مریشک
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1430,25 +1561,37 @@ def login():
         
         db_mobile_pin = None
         db_desktop_pin = None
+        db_admin_pin = None
         try:
             conn = get_db()
             with conn.cursor() as cursor:
-                cursor.execute("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('mobile_pin', 'desktop_pin')")
+                cursor.execute("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('mobile_pin', 'desktop_pin', 'admin_pin')")
                 rows = cursor.fetchall()
                 for row in rows:
                     if row['setting_key'] == 'mobile_pin' and row.get('setting_value'):
                         db_mobile_pin = normalize_digits(row['setting_value'])
                     elif row['setting_key'] == 'desktop_pin' and row.get('setting_value'):
                         db_desktop_pin = normalize_digits(row['setting_value'])
+                    elif row['setting_key'] == 'admin_pin' and row.get('setting_value'):
+                        db_admin_pin = normalize_digits(row['setting_value'])
             conn.close()
         except Exception as ex:
             print("Database Error in Login:", ex)
 
+        # بەشی چوونەژوورەوەی بەڕێوەبەر بۆ داشبۆرد و مەسروفات
+        if (db_admin_pin and input_pin == db_admin_pin) or input_pin in ['99', '٩٩']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'admin'
+            return redirect(url_for('admin_dashboard'))
+
+        # پینی دیسکتۆپ
         if (db_desktop_pin and input_pin == db_desktop_pin) or input_pin in ['22', '٢٢']:
             session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('desktop_tables'))
 
+        # پینی مۆبایل
         if (db_mobile_pin and input_pin == db_mobile_pin) or input_pin in ['345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
@@ -1457,6 +1600,68 @@ def login():
         return render_template_string(LOGIN_TEMPLATE, error='وشەی نهێنی هەڵەیە!')
 
     return render_template_string(LOGIN_TEMPLATE)
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    
+    expenses = []
+    total_expenses = 0
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM masruf ORDER BY id DESC")
+            expenses = cursor.fetchall()
+            cursor.execute("SELECT SUM(amount) AS total FROM masruf")
+            tot_row = cursor.fetchone()
+            if tot_row and tot_row['total']:
+                total_expenses = float(tot_row['total'])
+        conn.close()
+    except Exception as e:
+        print("Expense fetch error:", e)
+
+    return render_template_string(ADMIN_DASHBOARD_TEMPLATE, expenses=expenses, total_expenses=total_expenses)
+
+@app.route('/add_expense', methods=['POST'])
+def add_expense():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    
+    details = request.form.get('details', '').strip()
+    amount = float(request.form.get('amount', 0))
+    category = request.form.get('category', 'گشتی').strip()
+
+    if details and amount > 0:
+        try:
+            conn = get_db()
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO masruf (details, amount, category, created_at)
+                    VALUES (%s, %s, %s, NOW())
+                """, (details, amount, category))
+                conn.commit()
+            conn.close()
+        except Exception as ex:
+            print("Error adding expense:", ex)
+
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/delete_expense/<int:expense_id>', methods=['POST'])
+def delete_expense(expense_id):
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM masruf WHERE id = %s", (expense_id,))
+            conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Error deleting expense:", ex)
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/desktop/tables')
 def desktop_tables():
@@ -1588,7 +1793,6 @@ def save_customer_order():
                 rice_type = item.get('rice_type', '')
                 chicken_part = item.get('chicken_part', '')
 
-                # دڵنیابوونەوە لە لکاندنی وردەکارییەکان ئەگەر لە ناوەکەدا نەبووبێت
                 if '(' not in food_name:
                     if cat in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] and rice_type:
                         food_name += f" ({rice_type})"
