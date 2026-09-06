@@ -1320,14 +1320,15 @@ def login():
     if request.method == 'POST':
         pin = normalize_digits(request.form.get('pin', ''))
         
-        # لێرە 345678 زیاد کراوە بۆ بەڕێوەبەر
-        if pin in ['99', '٩٩', '222', '٢٢٢', '345678', '٣٤٥٦٧٨']:
+        # کۆدەکانی بەڕێوەبەر (Admin)
+        if pin in ['99', '٩٩', '222', '٢٢٢']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'admin'
             return redirect(url_for('admin_dashboard'))
             
-        if pin in ['22', '٢٢']:
+        # کۆدەکانی مۆبایل / گارسۆن (345678 لێرە دانراوە بۆ قیاسی مۆبایل)
+        if pin in ['22', '٢٢', '345678', '٣٤٥٦٧٨']:
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
