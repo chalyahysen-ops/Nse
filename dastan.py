@@ -2601,11 +2601,17 @@ def admin_amar():
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
     
-    # ئەگەر بەروار دیاری نەکراوە، با بە شێوازی ئۆتۆماتیکی هەموو کاتێک بهێنێت (لە ساڵی ٢٠٢٥ تا ئێستا)
-    default_start = '2025-01-01'
+    # دانانی بەرواری دەستپێک بۆ ساڵی پێشوو بە شێوازێک کە داتاکانی مانگی ٨ و پێشتریش بگرێتەوە
+    default_start = '2026-01-01'
 
     start_date = request.args.get('start_date', default_start)
     end_date = request.args.get('end_date', today_str)
+
+    # ئەگەر بەروار بەتاڵ هات، با بە هەڵبژاردن داتا لە ٢٠٢٦ بیهێنێت
+    if not start_date:
+        start_date = default_start
+    if not end_date:
+        end_date = today_str
 
     report_rows = []
     expense_rows = []
@@ -2620,7 +2626,7 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # ١. کۆکردنەوەی فرۆش لەو ماوەیەدا
+            # ١. هێنانی فرۆش
             query_sales = """
                 SELECT food_name, quantity, price
                 FROM froshtn
@@ -2651,7 +2657,7 @@ def admin_amar():
             total_sales = sum(r['total'] for r in report_rows)
             total_items_count = sum(r['qty'] for r in report_rows)
 
-            # ٢. هێنانی مەسرووفات بەپێی بەروار بە سەلامەتی
+            # ٢. هێنانی مەسرووفات (تێکشکاندنی کێشەی بەروار بە لێدانی فلتەری توند لەسەر masrwf_date)
             query_exp = """
                 SELECT DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
                        masrwf_name, masrwf_type, spent_by, amount, notes 
@@ -2663,7 +2669,7 @@ def admin_amar():
             expense_rows = cur.fetchall()
             total_expenses = sum(float(r['amount'] or 0) for r in expense_rows)
 
-            # ٣. هێنانی شایستەی شاگردەکان لەو ماوەیەدا
+            # ٣. هێنانی کرێ و شایستەی شاگردەکان
             query_workers = """
                 SELECT w.name, w.phone, w.salary,
                        COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
