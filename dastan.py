@@ -2705,7 +2705,171 @@ def admin_qasa():
             try: conn.close()
             except: pass
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
+# ==========================================
+# ڕێڕەوەکانی بەڕێوەبردنی مەسرووفات و خەرجییەکان
+# ==========================================
 
+@app.route('/admin/masrwf')
+def admin_masrwf():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
+
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    from_date = request.args.get('from_date', '')
+    to_date = request.args.get('to_date', '')
+
+    rows = []
+    total_m = 0
+    existing_types = ['کڕینی کەلوپەل', 'کارەبا و ئاو', 'چاککردنەوە', 'پاککەرەوە', 'سەوزە و میوە', 'گۆشت و مریشک', 'کرێ و خەرجی تر']
+    existing_spenders = ['بەڕێوەبەر', 'کاشێر', 'مەتبەخ']
+
+    conn = None
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            # وەرگرتنی جۆرە پێشووەکان بۆ داتالیست
+            cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type != ''")
+            for r in cur.fetchall():
+                t = r['masrwf_type'].strip()
+                if t and t not in existing_types:
+                    existing_types.append(t)
+
+            # وەرگرتنی مەسرووفکەرەکان بۆ داتالیست
+            cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by != ''")
+            for r in cur.fetchall():
+                s = r['spent_by'].strip()
+                if s and s not in existing_spenders:
+                    existing_spenders.append(s)
+
+            # فلتەرکردنی بەروار
+            if from_date and to_date:
+                query = """
+                    SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
+                           DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
+                           masrwf_name, masrwf_type, spent_by, amount, notes 
+                    FROM masrwf 
+                    WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s 
+                    ORDER BY masrwf_date DESC, id DESC
+                """
+                cur.execute(query, (from_date, to_date))
+            else:
+                query = """
+                    SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
+                           DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
+                           masrwf_name, masrwf_type, spent_by, amount, notes 
+                    FROM masrwf 
+                    ORDER BY masrwf_date DESC, id DESC
+                """
+                cur.execute(query)
+
+            rows = cur.fetchall()
+            total_m = sum(float(r['amount'] or 0) for r in rows)
+
+    except Exception as ex:
+        print("Masrwf view error:", ex)
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
+
+    return render_template_string(
+        WEB_MASRWF_TEMPLATE,
+        rows=rows,
+        total_m=total_m,
+        from_date=from_date,
+        to_date=to_date,
+        today_date=today_str,
+        existing_types=existing_types,
+        existing_spenders=existing_spenders
+    )
+
+
+@app.route('/admin/save_masrwf', methods=['POST'])
+def admin_save_masrwf():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    m_date = request.form.get('masrwf_date', datetime.now().strftime('%Y-%m-%d'))
+    m_name = request.form.get('masrwf_name', '').strip()
+    m_type = request.form.get('masrwf_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
+    amount = float(request.form.get('amount', 0))
+    notes = request.form.get('notes', '').strip()
+
+    if amount > 0 and m_type:
+        conn = None
+        try:
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (m_date, m_name, m_type, spent_by, amount, notes))
+                conn.commit()
+        except Exception as ex:
+            print("Save masrwf error:", ex)
+        finally:
+            if conn:
+                try: conn.close()
+                except: pass
+
+    return redirect(url_for('admin_masrwf'))
+
+
+@app.route('/admin/update_masrwf', methods=['POST'])
+def admin_update_masrwf():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    mid = int(request.form.get('id', 0))
+    m_date = request.form.get('masrwf_date', datetime.now().strftime('%Y-%m-%d'))
+    m_name = request.form.get('masrwf_name', '').strip()
+    m_type = request.form.get('masrwf_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
+    amount = float(request.form.get('amount', 0))
+    notes = request.form.get('notes', '').strip()
+
+    if mid > 0 and amount > 0 and m_type:
+        conn = None
+        try:
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE masrwf 
+                    SET masrwf_date = %s, masrwf_name = %s, masrwf_type = %s, spent_by = %s, amount = %s, notes = %s
+                    WHERE id = %s
+                """, (m_date, m_name, m_type, spent_by, amount, notes, mid))
+                conn.commit()
+        except Exception as ex:
+            print("Update masrwf error:", ex)
+        finally:
+            if conn:
+                try: conn.close()
+                except: pass
+
+    return redirect(url_for('admin_masrwf'))
+
+
+@app.route('/admin/delete_masrwf/<int:mid>')
+def admin_delete_masrwf(mid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    conn = None
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM masrwf WHERE id = %s", (mid,))
+            conn.commit()
+    except Exception as ex:
+        print("Delete masrwf error:", ex)
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
+
+    return redirect(url_for('admin_masrwf'))
 # ==========================================
 # بەشی حیساباتی شاگردەکان
 # ==========================================
