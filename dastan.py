@@ -444,8 +444,6 @@ WEB_AMAR_TEMPLATE = """
         <div class="print-divider"></div>
     </div>
 
-   <!-- کارتی فلتەرکردنی بەروار و دوگمە خێراکان -->
-  <!-- کارتی فلتەرکردنی بەروار و دوگمە خێراکان -->
     <div class="filter-card">
         <form method="GET" action="/admin/amar" id="amarFilterForm" class="filter-form">
             <div class="filter-item">
@@ -457,33 +455,18 @@ WEB_AMAR_TEMPLATE = """
                 <input type="date" name="end_date" id="txt_end_date" value="{{ end_date }}" required>
             </div>
             <button type="submit" class="btn-search">🔍 گەڕان و حیسابکردن</button>
-
-            <!-- دوگمە خێراکانی دەستنیشانکردنی ئۆتۆماتیکی -->
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-right: auto; align-items: center;">
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('today')">ئەمڕۆ</button>
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('this_month')">ئەم مانگە</button>
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('last_month')">مانگی پێشوو</button>
-                <button type="button" class="btn-quick-date" onclick="setFilterPreset('all_time')" style="background: #3b82f6;">هەموو کات (ئۆتۆماتیک)</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('all_time')" style="background: #3b82f6;">هەموو کات</button>
             </div>
         </form>
     </div>
 
     <style>
-        .btn-quick-date {
-            background: #334155;
-            color: #f8fafc;
-            border: 1px solid #475569;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.15s ease;
-        }
-        .btn-quick-date:hover {
-            background: #f59e0b;
-            color: #000;
-        }
+        .btn-quick-date { background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.15s ease; }
+        .btn-quick-date:hover { background: #f59e0b; color: #000; }
     </style>
 
     <script>
@@ -502,58 +485,14 @@ WEB_AMAR_TEMPLATE = """
             };
 
             if (preset === 'today') {
-                start = now;
-                end = now;
+                start = now; end = now;
             } else if (preset === 'this_month') {
-                start = new Date(now.getFullYear(), now.getMonth(), 1);
-                end = now;
+                start = new Date(now.getFullYear(), now.getMonth(), 1); end = now;
             } else if (preset === 'last_month') {
                 start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 end = new Date(now.getFullYear(), now.getMonth(), 0);
             } else if (preset === 'all_time') {
-                start = new Date(2025, 0, 1);
-                end = now;
-            }
-
-            document.getElementById('txt_start_date').value = formatDate(start);
-            document.getElementById('txt_end_date').value = formatDate(end);
-            document.getElementById('amarFilterForm').submit();
-        }
-    </script>
-        function setFilterPreset(preset) {
-            const now = new Date();
-            let start = new Date();
-            let end = new Date();
-
-            const formatDate = (d) => {
-                let month = '' + (d.getMonth() + 1);
-                let day = '' + d.getDate();
-                let year = d.getFullYear();
-                if (month.length < 2) month = '0' + month;
-                if (day.length < 2) day = '0' + day;
-                return [year, month, day].join('-');
-            };
-
-            if (preset === 'today') {
-                start = now;
-                end = now;
-            } else if (preset === 'yesterday') {
-                start.setDate(now.getDate() - 1);
-                end.setDate(now.getDate() - 1);
-            } else if (preset === 'this_week') {
-                const day = now.getDay();
-                const diff = now.getDate() - day + (day === 6 ? 0 : -1); 
-                start.setDate(diff);
-                end = now;
-            } else if (preset === 'this_month') {
-                start = new Date(now.getFullYear(), now.getMonth(), 1);
-                end = now;
-            } else if (preset === 'last_month') {
-                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                end = new Date(now.getFullYear(), now.getMonth(), 0);
-            } else if (preset === 'all_time') {
-                start = new Date(2025, 0, 1);
-                end = now;
+                start = new Date(2025, 0, 1); end = now;
             }
 
             document.getElementById('txt_start_date').value = formatDate(start);
@@ -562,7 +501,6 @@ WEB_AMAR_TEMPLATE = """
         }
     </script>
 
-    <!-- کارتەکانی ئەنجامی گشتی -->
     <div class="summary-grid">
         <div class="sum-card">
             <div class="sum-label">💰 کۆی فرۆشی ماوەکە</div>
@@ -592,17 +530,16 @@ WEB_AMAR_TEMPLATE = """
         </div>
     </div>
 
-    <!-- خشتەی یەکەم: فرۆش -->
-    <div class="section-title" style="color:#f59e0b;">🍽️ لیستی خواردنە فرۆشراوەکانی ماوەکە</div>
-    <div class="table-responsive">
+    <div class="section-title" style="color:#f59e0b; margin-bottom:10px; font-weight:bold;">🍽️ لیستی خواردنە فرۆشراوەکانی ماوەکە</div>
+    <div class="table-responsive" style="margin-bottom:30px;">
         <table>
             <thead>
                 <tr>
-                    <th class="th-sales" style="width: 70px;">ڕیزبەندی</th>
-                    <th class="th-sales" style="text-align:right;">ناوی خواردن / خواردنەوە</th>
-                    <th class="th-sales">کۆی ژمارەی فرۆشراو</th>
-                    <th class="th-sales">نرخی تاک</th>
-                    <th class="th-sales">کۆی داهات (دینار)</th>
+                    <th style="width: 70px;">ڕیزبەندی</th>
+                    <th style="text-align:right;">ناوی خواردن / خواردنەوە</th>
+                    <th>کۆی ژمارەی فرۆشراو</th>
+                    <th>نرخی تاک</th>
+                    <th>کۆی داهات (دینار)</th>
                 </tr>
             </thead>
             <tbody>
@@ -615,27 +552,24 @@ WEB_AMAR_TEMPLATE = """
                     <td style="color:#10b981; font-weight:800;">{{ "{:,.0f}".format(r.total) }} د.ع</td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="5" style="padding:30px; color:#94a3b8;">هیچ فرۆشێک لەم ماوەیەدا تۆمار نەکراوە</td>
-                </tr>
+                <tr><td colspan="5" style="padding:30px; color:#94a3b8;">هیچ فرۆشێک لەم ماوەیەدا تۆمار نەکراوە</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- خشتەی دووەم: مەسرووفات -->
-    <div class="section-title" style="color:#ef4444;">🧾 لیستی مەسرووفات و خەرجییەکانی ماوەکە</div>
-    <div class="table-responsive">
+    <div class="section-title" style="color:#ef4444; margin-bottom:10px; font-weight:bold;">🧾 لیستی مەسرووفات و خەرجییەکانی ماوەکە</div>
+    <div class="table-responsive" style="margin-bottom:30px;">
         <table>
             <thead>
                 <tr>
-                    <th class="th-expense" style="width: 70px;">ڕیزبەندی</th>
-                    <th class="th-expense">بەروار</th>
-                    <th class="th-expense" style="text-align:right;">ناوی مەسرووف</th>
-                    <th class="th-expense">جۆری مەسرووف</th>
-                    <th class="th-expense">خەرجکەر</th>
-                    <th class="th-expense">بڕی پارە</th>
-                    <th class="th-expense">تێبینی</th>
+                    <th style="width: 70px;">ڕیزبەندی</th>
+                    <th>بەروار</th>
+                    <th style="text-align:right;">ناوی مەسرووف</th>
+                    <th>جۆری مەسرووف</th>
+                    <th>خەرجکەر</th>
+                    <th>بڕی پارە</th>
+                    <th>تێبینی</th>
                 </tr>
             </thead>
             <tbody>
@@ -650,27 +584,24 @@ WEB_AMAR_TEMPLATE = """
                     <td style="color:#94a3b8; font-size:12px;">{{ e.notes }}</td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" style="padding:20px; color:#94a3b8;">هیچ مەسرووفێک لەم ماوەیەدا تۆمار نەکراوە</td>
-                </tr>
+                <tr><td colspan="7" style="padding:20px; color:#94a3b8;">هیچ مەسرووفێک لەم ماوەیەدا تۆمار نەکراوە</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- خشتەی سێیەم: حیساب و کرێی شاگردەکان -->
-    <div class="section-title" style="color:#0284c7;">👥 لیستی حیساب و کرێی شاگردەکانی ماوەکە</div>
+    <div class="section-title" style="color:#0284c7; margin-bottom:10px; font-weight:bold;">👥 لیستی حیساب و کرێی شاگردەکانی ماوەکە</div>
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th class="th-workers" style="width: 70px;">ڕیزبەندی</th>
-                    <th class="th-workers" style="text-align:right;">ناوی شاگرد</th>
-                    <th class="th-workers">ڕۆژانی دەوام</th>
-                    <th class="th-workers">مووچەی ڕۆژانە</th>
-                    <th class="th-workers">کۆی مووچە</th>
-                    <th class="th-workers">بەخشش (پاداشت)</th>
-                    <th class="th-workers">کۆی شایستە</th>
+                    <th style="width: 70px;">ڕیزبەندی</th>
+                    <th style="text-align:right;">ناوی شاگرد</th>
+                    <th>ڕۆژانی دەوام</th>
+                    <th>مووچەی ڕۆژانە</th>
+                    <th>کۆی مووچە</th>
+                    <th>بەخشش (پاداشت)</th>
+                    <th>کۆی شایستە</th>
                 </tr>
             </thead>
             <tbody>
@@ -685,28 +616,15 @@ WEB_AMAR_TEMPLATE = """
                     <td style="color:#f59e0b; font-weight:800;">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" style="padding:20px; color:#94a3b8;">هیچ دەوام و کرێیەکی شاگرد لەم ماوەیەدا تۆمار نەکراوە</td>
-                </tr>
+                <tr><td colspan="7" style="padding:20px; color:#94a3b8;">هیچ دەوام و کرێیەکی شاگرد لەم ماوەیەدا تۆمار نەکراوە</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <div class="print-only-footer">
-        <div class="print-footer-grid">
-            <div>کۆی گشتی ژمارەی خواردن: {{ "{:,.0f}".format(total_items_count) }} دانە</div>
-            <div style="color: darkgreen;">کۆی گشتی فرۆش: {{ "{:,.0f}".format(total_sales) }} دینار</div>
-            <div style="color: darkred;">کۆی خەرجی مەسرووف: {{ "{:,.0f}".format(total_expenses) }} دینار</div>
-            <div style="color: darkred;">کۆی کرێی شاگردەکان: {{ "{:,.0f}".format(total_workers_wage) }} دینار</div>
-            <div>کۆی هەموو خەرجییەکان: {{ "{:,.0f}".format(total_all_expenses) }} دینار</div>
-            <div style="font-size: 13px; color: {{ 'darkgreen' if net_profit >= 0 else 'red' }};">
-                قازانجی سافی (بڕی ماوە): {{ "{:,.0f}".format(net_profit) }} دینار
-            </div>
-        </div>
-    </div>
 </body>
 </html>
+"""
+
 # ==========================================
 # پەڕەی مەسرووفات
 # ==========================================
@@ -961,6 +879,7 @@ WEB_MASRWF_TEMPLATE = """
 </body>
 </html>
 """
+
 # ==========================================
 # پەڕەی بەڕێوەبردنی بەکارهێنەران
 # ==========================================
@@ -1124,6 +1043,293 @@ WEB_USERS_TEMPLATE = """
         }
         function closeUserEdit() {
             document.getElementById('userEditModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی قاسە (پێشتر دیزاینەکەی دانەنرابوو)
+# ==========================================
+WEB_QASA_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قاسە - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .summary-item { font-size: 16px; font-weight: bold; background: #03261d; padding: 12px 20px; border-radius: 10px; border: 1px solid #0b5e4a; }
+        
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
+        tr:hover { background: #085341; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">💵 قاسەی فرۆشتن (٢٤ کاتژمێری ڕابردوو)</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-item" style="color: #10b981;">💰 کۆی گشتی وەرگیراو: {{ "{:,.0f}".format(total_received) }} د.ع</div>
+        <div class="summary-item" style="color: #ef4444;">🔻 کۆی گشتی داشکاندن: {{ "{:,.0f}".format(total_discount) }} د.ع</div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>کات و بەروار</th>
+                    <th>مێز / کڕیار</th>
+                    <th>بڕی واصڵکراو</th>
+                    <th>داشکاندن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in qasa_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td dir="ltr" style="text-align: right; color: #cbd5e1;">{{ r.transaction_time }}</td>
+                    <td style="color:#a7f3d0; font-weight:bold; font-size: 14px;">{{ r.place_id }}</td>
+                    <td style="color:#10b981; font-weight:bold; font-size: 15px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                    <td style="color:#ef4444;">{{ "{:,.0f}".format(r.discount) }} د.ع</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">هیچ واصڵکردنێک تۆمار نەکراوە لە ٢٤ کاتژمێری ڕابردوودا</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
+# پەڕەی کرێکارەکان (دیزاینی نوێ و پڕۆفیشناڵ)
+# ==========================================
+WEB_WORKERS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حیساباتی شاگردەکان - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .top-title { font-size: 18px; font-weight: 800; color: #10b981; display: flex; align-items: center; gap: 8px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; transition: 0.2s; }
+        .btn-dash:hover { background: #475569; }
+
+        .control-panel { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+        .filter-box { background: #064032; border: 1px solid #0b5e4a; padding: 12px 18px; border-radius: 12px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .filter-col { display: flex; flex-direction: column; gap: 5px; }
+        .filter-col label { font-size: 12px; font-weight: 700; color: #a7f3d0; }
+        .filter-col input { background: #03261d; color: #fff; border: 1px solid #0b5e4a; padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; }
+        .btn-search { background: #10b981; color: #03261d; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-search:hover { background: #059669; color: #fff; }
+        
+        .btn-add-worker { background: #3b82f6; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(59,130,246,0.3); transition: 0.2s; }
+        .btn-add-worker:hover { background: #2563eb; transform: translateY(-2px); }
+
+        .table-card { background: #064032; border: 1px solid #0b5e4a; border-radius: 14px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 2px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; vertical-align: middle; }
+        tr:hover { background: #053b2e; }
+        
+        .val-highlight { font-weight: 800; color: #f59e0b; font-size: 14px; }
+        
+        .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-act { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; transition: 0.2s; }
+        .btn-att { background: #10b981; color: #03261d; }
+        .btn-att:hover { background: #059669; color: #fff; }
+        .btn-edit { background: #3b82f6; color: #fff; }
+        .btn-edit:hover { background: #2563eb; }
+        .btn-del { background: #ef4444; color: #fff; }
+        .btn-del:hover { background: #dc2626; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; backdrop-filter: blur(4px); }
+        .modal-content { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 420px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-header { font-size: 16px; font-weight: 800; color: #10b981; margin-bottom: 16px; text-align: center; border-bottom: 1px solid #0b5e4a; padding-bottom: 10px; }
+        
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 6px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px 12px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 14px; outline: none; transition: 0.2s; }
+        .input-group input:focus, .input-group select:focus { border-color: #10b981; }
+        
+        .btn-save { width: 100%; background: #10b981; color: #03261d; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-save:hover { background: #059669; color: #fff; }
+        .btn-cancel { width: 100%; background: transparent; color: #94a3b8; border: none; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 5px; }
+        .btn-cancel:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-title">👥 حیساباتی شاگردەکان و ئامادەبوون</div>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="control-panel">
+        <form method="GET" action="/admin/workers" class="filter-box">
+            <div class="filter-col">
+                <label>لە بەرواری:</label>
+                <input type="date" name="start_date" value="{{ start_date }}" required>
+            </div>
+            <div class="filter-col">
+                <label>تا بەرواری:</label>
+                <input type="date" name="end_date" value="{{ end_date }}" required>
+            </div>
+            <button type="submit" class="btn-search">🔍 فلتەرکردن</button>
+        </form>
+
+        <button type="button" class="btn-add-worker" onclick="openWorkerModal('add')">
+            ➕ زیادکردنی شاگردی نوێ
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ناوی شاگرد</th>
+                        <th>ژ. مۆبایل</th>
+                        <th>کرێی ڕۆژانە</th>
+                        <th>دەوامی ماوەکە</th>
+                        <th>بەخشش (پاداشت)</th>
+                        <th>کۆی شایستەی ماوە</th>
+                        <th style="text-align: center;">کردارەکان</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for w in wage_rows %}
+                    <tr>
+                        <td style="font-weight: 800; color: #fff;">{{ w.name }}</td>
+                        <td dir="ltr" style="text-align: right; color: #cbd5e1;">{{ w.phone if w.phone else '—' }}</td>
+                        <td style="color: #38bdf8; font-weight: 700;">{{ "{:,.0f}".format(w.salary) }}</td>
+                        <td><span style="background: #1e293b; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 12px;">{{ w.work_days }} ڕۆژ</span></td>
+                        <td style="color: #10b981; font-weight: 700;">{{ "{:,.0f}".format(w.total_bonus) }}</td>
+                        <td class="val-highlight">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
+                        <td>
+                            <div class="action-btns" style="justify-content: center;">
+                                <button type="button" class="btn-act btn-att" onclick="openAttModal({{ w.id }}, '{{ w.name }}')">✅ دەوام و بەخشش</button>
+                                <button type="button" class="btn-act btn-edit" onclick="openWorkerModal('edit', {{ w.id }}, '{{ w.name }}', '{{ w.phone }}', {{ w.salary }})">✏️</button>
+                                <a href="/admin/delete_worker/{{ w.id }}" class="btn-act btn-del" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم شاگردە؟')">🗑️</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #94a3b8; padding: 40px; font-size: 14px;">هیچ شاگردێک بوونی نییە یان دەوامی نەکردووە لەم ماوەیەدا.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Worker -->
+    <div class="modal-overlay" id="workerModal">
+        <div class="modal-content">
+            <div class="modal-header" id="workerModalTitle">➕ زیادکردنی شاگرد</div>
+            <form id="workerForm" method="POST" action="/admin/add_worker">
+                <div class="input-group">
+                    <label>ناوی سیانی یان نازناو:</label>
+                    <input type="text" id="w_name" name="name" required placeholder="بۆ نموونە: کاروان عەلی">
+                </div>
+                <div class="input-group">
+                    <label>ژمارەی مۆبایل:</label>
+                    <input type="text" id="w_phone" name="phone" placeholder="0770xxxxxxx">
+                </div>
+                <div class="input-group">
+                    <label>کرێی ڕۆژانە (دینار):</label>
+                    <input type="number" id="w_salary" name="salary" required placeholder="25000">
+                </div>
+                <button type="submit" class="btn-save">💾 پاشەکەوتکردن</button>
+                <button type="button" class="btn-cancel" onclick="document.getElementById('workerModal').style.display='none'">پاشگەزبوونەوە</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Attendance & Bonus -->
+    <div class="modal-overlay" id="attModal">
+        <div class="modal-content">
+            <div class="modal-header">✅ تۆمارکردنی دەوام و بەخشش</div>
+            <div style="text-align: center; color: #38bdf8; font-weight: 800; margin-bottom: 15px;" id="attWorkerName"></div>
+            <form method="POST" action="/admin/save_attendance">
+                <input type="hidden" id="att_worker_id" name="worker_id">
+                
+                <div class="input-group">
+                    <label>بەرواری دەوام:</label>
+                    <input type="date" name="att_date" value="{{ today_date }}" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>دۆخی دەوامکردن:</label>
+                    <select name="status">
+                        <option value="هاتوو">✅ هاتوو (دەوامی کردووە)</option>
+                        <option value="نەهاتوو">❌ نەهاتوو (غائیبە)</option>
+                        <option value="مۆڵەت">ℹ️ مۆڵەت (بێ مووچە)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>پاداشت / بەخشش بۆ ئەمڕۆ (دینار):</label>
+                    <input type="number" name="bonus" value="0" placeholder="ئەگەر هەیە بینوسە...">
+                </div>
+                
+                <button type="submit" class="btn-save">💾 تۆمارکردنی دەوام</button>
+                <button type="button" class="btn-cancel" onclick="document.getElementById('attModal').style.display='none'">پاشگەزبوونەوە</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openWorkerModal(mode, id=0, name='', phone='', salary='') {
+            const form = document.getElementById('workerForm');
+            const title = document.getElementById('workerModalTitle');
+            
+            if(mode === 'edit') {
+                title.innerText = '✏️ دەستکاریکردنی زانیاری شاگرد';
+                form.action = '/admin/edit_worker/' + id;
+                document.getElementById('w_name').value = name;
+                document.getElementById('w_phone').value = phone;
+                document.getElementById('w_salary').value = salary;
+            } else {
+                title.innerText = '➕ زیادکردنی شاگردی نوێ';
+                form.action = '/admin/add_worker';
+                document.getElementById('w_name').value = '';
+                document.getElementById('w_phone').value = '';
+                document.getElementById('w_salary').value = '';
+            }
+            document.getElementById('workerModal').style.display = 'flex';
+        }
+
+        function openAttModal(id, name) {
+            document.getElementById('att_worker_id').value = id;
+            document.getElementById('attWorkerName').innerText = "شاگرد: " + name;
+            document.getElementById('attModal').style.display = 'flex';
         }
     </script>
 </body>
@@ -1678,7 +1884,7 @@ QR_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# تێمپلێتەکانی ئایپاد و دیسکتۆپ
+# تێمپلێتەکانی ئایپاد و دیسکتۆپ (مێزەکان و سەفەری نوێکراوە)
 # ==========================================
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -1694,23 +1900,31 @@ DESKTOP_TABLES_TEMPLATE = """
         .header-bar { background-color: #064032; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0b5e4a; position: sticky; top: 0; z-index: 1000; }
         .header-title { font-size: 16px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        .btn-header { color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn-header { color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
         .btn-takeaway-hdr { background-color: #0284c7; border: 1.5px solid #38bdf8; }
+        .btn-takeaway-hdr:hover { background-color: #0369a1; }
         .btn-qr-mgr { background-color: #3b82f6; }
         .btn-exit { background-color: #ef4444; }
         
-        .active-takeaways-bar { padding: 10px 20px 0 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
-        .active-takeaways-container { display: flex; flex-wrap: wrap; gap: 8px; background: #064032; padding: 10px; border-radius: 12px; border: 1.5px solid #0284c7; }
-        .active-takeaway-btn { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; }
-
         .tables-grid-wrapper { padding: 16px 20px 80px 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
         .tables-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 12px; width: 100%; }
-        .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; cursor: pointer; }
+        .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; cursor: pointer; transition: 0.2s; }
+        .table-box:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(255,255,255,0.1); }
         .table-box.active-occupied { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-color: #047857 !important; }
         
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
-        .modal-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 24px; color: #fff; }
-        .modal-box input { width: 100%; padding: 12px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 12px; outline: none; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; backdrop-filter: blur(4px); }
+        .modal-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box input { width: 100%; padding: 12px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        .modal-box input:focus { border-color: #38bdf8; }
+        
+        .active-takeaway-item { background: #03261d; border: 1px solid #0b5e4a; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .active-takeaway-item span { font-size: 13px; font-weight: 800; color: #fff; }
+        .takeaway-actions { display: flex; gap: 8px; }
+        .btn-edit-takeaway { background: #10b981; color: #03261d; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 800; transition: 0.2s; }
+        .btn-edit-takeaway:hover { background: #059669; color: #fff; }
+        .btn-del-takeaway { background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-del-takeaway:hover { background: #dc2626; }
+        
         @media (max-width: 900px) { .tables-grid { grid-template-columns: repeat(8, 1fr); gap: 10px; } .table-box { height: 80px; font-size: 24px; } }
     </style>
 </head>
@@ -1720,26 +1934,12 @@ DESKTOP_TABLES_TEMPLATE = """
         <div class="header-title">تکایە بۆ ئۆردەرکردنی خواردن و خواردنەوە مێزێک دیاری بکە!</div>
         <div class="header-actions">
             {% if session.get('role') == 'admin' %}
-            <a href="/admin" class="btn-header" style="background-color:#10b981;">👑 داشبۆرد</a>
+            <a href="/admin" class="btn-header" style="background-color:#10b981; color:#03261d;">👑 داشبۆرد</a>
             {% endif %}
-            <button type="button" class="btn-header btn-takeaway-hdr" onclick="document.getElementById('takeawayModal').style.display='flex'">🥡 سەفەری</button>
+            <button type="button" class="btn-header btn-takeaway-hdr" onclick="document.getElementById('takeawayModal').style.display='flex'">🥡 بەڕێوەبردنی سەفەری</button>
             <a href="/qr_manager" class="btn-header btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
         </div>
     </div>
-
-    {% if active_takeaways %}
-    <div class="active-takeaways-bar">
-        <div class="active-takeaways-container">
-            <span style="font-size:12px; font-weight:bold; color:#38bdf8; display:flex; align-items:center;">سەفەرییە چالاکەکان:</span>
-            {% for t in active_takeaways %}
-                <a href="/desktop?table={{ t|urlencode }}" class="active-takeaway-btn">
-                    <span>🛵</span>
-                    <span>{{ t }}</span>
-                </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <div class="tables-grid-wrapper">
         <div class="tables-grid" id="tablesGrid">
@@ -1751,18 +1951,32 @@ DESKTOP_TABLES_TEMPLATE = """
 
     <div class="modal" id="takeawayModal">
         <div class="modal-box">
-            <h3 style="color:#38bdf8; margin-bottom:14px; text-align:center;">🥡 تۆمارکردنی داواکاری سەفەری</h3>
-            <label style="font-size:12px; color:#a7f3d0;">ناوی موشتەری:</label>
-            <input type="text" id="custName" placeholder="بۆ نموونە: ئەحمەد">
+            <h3 style="color:#38bdf8; margin-bottom:18px; text-align:center;">🥡 بەڕێوەبردنی ئۆردەری سەفەری</h3>
             
-            <label style="font-size:12px; color:#a7f3d0;">ژمارەی مۆبایل:</label>
-            <input type="text" id="custPhone" placeholder="0770xxxxxxx">
-            
-            <label style="font-size:12px; color:#a7f3d0;">ناونیشان (ئەگەر دلیڤەری بێت):</label>
-            <input type="text" id="custAddress" placeholder="گەڕەک، شەقام، خانوو">
-            
-            <button type="button" class="btn-header btn-takeaway-hdr" onclick="startTakeawayOrder()" style="margin-top:10px; font-size:15px; padding:12px; width:100%; justify-content:center;">دەستپێکردنی ئۆردەر ➔</button>
-            <button type="button" onclick="document.getElementById('takeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">پاشگەزبوونەوە</button>
+            <div style="background: #064032; padding: 14px; border-radius: 12px; margin-bottom: 20px; border: 1.5px solid #0b5e4a;">
+                <h4 style="color:#a7f3d0; margin-bottom: 12px;">➕ دروستکردنی ئۆردەری نوێ</h4>
+                <input type="text" id="custName" placeholder="ناوی کڕیار (بۆ نموونە: ئەحمەد)">
+                <input type="text" id="custPhone" placeholder="ژمارەی مۆبایل (بۆ نموونە: 0770xxxxxxx)">
+                <input type="text" id="custAddress" placeholder="ناونیشان (ئەگەر دلیڤەری بێت)">
+                <button type="button" class="btn-header btn-takeaway-hdr" onclick="startTakeawayOrder()" style="margin-top:4px; font-size:14px; padding:12px; width:100%; justify-content:center;">دەستپێکردنی ئۆردەر ➔</button>
+            </div>
+
+            <h4 style="color:#a7f3d0; margin-bottom: 12px;">📋 سەفەرییە چالاکەکان</h4>
+            <div style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+                {% for t in active_takeaways %}
+                <div class="active-takeaway-item">
+                    <span>🛵 {{ t }}</span>
+                    <div class="takeaway-actions">
+                        <a href="/desktop?table={{ t|urlencode }}" class="btn-edit-takeaway">✏️ گۆڕانکاری</a>
+                        <button type="button" class="btn-del-takeaway" onclick="deleteTakeawayOrder('{{ t }}')">🗑️ سڕینەوە</button>
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align: center; color: #94a3b8; font-size: 13px; padding: 15px; background: #03261d; border-radius: 10px;">هیچ ئۆردەرێکی سەفەری چالاک نییە لەم کاتەدا.</div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="document.getElementById('takeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:16px; cursor:pointer; font-weight:bold; font-size:14px;">گەڕانەوە بۆ مێزەکان</button>
         </div>
     </div>
 
@@ -1776,6 +1990,24 @@ DESKTOP_TABLES_TEMPLATE = """
             if(addr) idStr += " - " + addr;
             idStr += ")";
             window.location.href = "/desktop?table=" + encodeURIComponent(idStr);
+        }
+
+        function deleteTakeawayOrder(tblName) {
+            if (confirm("ئایا دڵنیایت لە سڕینەوەی ئەم ئۆردەرە سەفەرییە بەتەواوی؟")) {
+                fetch('/clear_table_orders', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ table_number: tblName })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert("هەڵە ڕوویدا لە سڕینەوەدا.");
+                    }
+                });
+            }
         }
 
         function refreshTableStatus() {
@@ -2041,9 +2273,13 @@ DESKTOP_TEMPLATE = """
             });
         }
         function clearCurrentTableOrders() {
-            if (confirm("ئایا دڵنیایت لە سڕینەوە؟")) {
+            if (confirm("ئایا دڵنیایت لە سڕینەوەی ئەم مێزە؟")) {
                 fetch('/clear_table_orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ table_number: tableNum }) })
-                .then(() => fetchTableOrders());
+                .then(r => r.json()).then(data => {
+                    if(data.status === 'success') {
+                        window.location.href = '/desktop/tables';
+                    }
+                });
             }
         }
 
@@ -2080,7 +2316,7 @@ DESKTOP_TEMPLATE = """
 """
 
 # ==========================================
-# تێمپلێتەکانی مۆبایل و موشتەری
+# تێمپلێتەکانی مۆبایل و موشتەری (زیادکردنی دەستکاری و سڕینەوەی سەفەری)
 # ==========================================
 MOBILE_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -2100,16 +2336,17 @@ MOBILE_TABLES_TEMPLATE = """
         .btn-takeaway-mobile { width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: 2px solid #38bdf8; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         .active-takeaways-box { background: #064032; border: 1.5px solid #0284c7; border-radius: 10px; padding: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .active-takeaway-link { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .active-takeaway-link { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: space-between; }
         
         .tables-grid-mobile { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .m-table-btn { background: #ffffff; color: #03261d; border-radius: 12px; height: 75px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
         .m-table-btn.active-occupied { background: #10b981 !important; color: #ffffff !important; border-color: #047857 !important; }
         .t-sub { font-size: 10px; font-weight: 700; margin-top: 2px; }
         
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
-        .modal-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; color: #fff; }
-        .modal-box input { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 10px; outline: none; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; backdrop-filter: blur(4px); }
+        .modal-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box input { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 10px; outline: none; transition: 0.2s; }
+        .modal-box input:focus { border-color: #38bdf8; }
     </style>
 </head>
 <body>
@@ -2120,20 +2357,39 @@ MOBILE_TABLES_TEMPLATE = """
 
     <button type="button" class="btn-takeaway-mobile" onclick="document.getElementById('mTakeawayModal').style.display = 'flex'">
         <span>🥡</span>
-        <span>ئۆردەری نوێی سەفەری / دلیڤەری</span>
+        <span>بەڕێوەبردنی ئۆردەری سەفەری</span>
     </button>
 
-    {% if active_takeaways %}
-    <div class="active-takeaways-box">
-        <div style="font-size:11px; font-weight:800; color:#38bdf8;">داواکارییە چالاکەکان:</div>
-        {% for t in active_takeaways %}
-            <a href="/mobile/menu?table={{ t|urlencode }}" class="active-takeaway-link">
-                <span>🛵</span>
-                <span>{{ t }}</span>
-            </a>
-        {% endfor %}
+    <div class="modal" id="mTakeawayModal">
+        <div class="modal-box">
+            <h3 style="color:#38bdf8; margin-bottom:12px; text-align:center;">🥡 بەڕێوەبردنی سەفەری</h3>
+            
+            <div style="background: #03261d; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #0b5e4a;">
+                <h4 style="color:#a7f3d0; margin-bottom:10px; font-size:13px;">➕ ئۆردەری نوێ</h4>
+                <input type="text" id="mCustName" placeholder="ناوی کڕیار">
+                <input type="text" id="mCustPhone" placeholder="ژمارەی مۆبایل">
+                <input type="text" id="mCustAddress" placeholder="ناونیشان">
+                <button type="button" class="btn-takeaway-mobile" onclick="startMobileTakeaway()" style="margin-top:6px;">دەستپێکردن ➔</button>
+            </div>
+
+            <h4 style="color:#a7f3d0; margin-bottom:10px; font-size:13px;">📋 سەفەرییە چالاکەکان</h4>
+            <div style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
+                {% for t in active_takeaways %}
+                    <div style="background: #03261d; border: 1px solid #0b5e4a; padding: 8px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; font-weight: bold; color: #fff;">🛵 {{ t }}</span>
+                        <div style="display: flex; gap: 4px;">
+                            <a href="/mobile/menu?table={{ t|urlencode }}" style="background: #10b981; color: #03261d; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 10px; font-weight: bold;">✏️</a>
+                            <button type="button" onclick="deleteMobileTakeaway('{{ t }}')" style="background: #ef4444; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold;">🗑️</button>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; color: #94a3b8; font-size: 11px;">هیچ ئۆردەرێکی سەفەری چالاک نییە.</div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="document.getElementById('mTakeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:12px; cursor:pointer; font-weight:bold; font-size:14px;">گەڕانەوە بۆ مێزەکان</button>
+        </div>
     </div>
-    {% endif %}
 
     <div class="tables-grid-mobile">
         {% for num in range(1, 91) %}
@@ -2142,17 +2398,6 @@ MOBILE_TABLES_TEMPLATE = """
                 <span class="t-sub">مێز</span>
             </a>
         {% endfor %}
-    </div>
-
-    <div class="modal" id="mTakeawayModal">
-        <div class="modal-box">
-            <h3 style="color:#38bdf8; margin-bottom:12px; text-align:center;">🥡 ئۆردەری نوێی سەفەری</h3>
-            <input type="text" id="mCustName" placeholder="ناوی کڕیار">
-            <input type="text" id="mCustPhone" placeholder="ژمارەی مۆبایل">
-            <input type="text" id="mCustAddress" placeholder="ناونیشان">
-            <button type="button" class="btn-takeaway-mobile" onclick="startMobileTakeaway()" style="margin-top:6px;">دەستپێکردن ➔</button>
-            <button type="button" onclick="document.getElementById('mTakeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:8px; cursor:pointer;">پاشگەزبوونەوە</button>
-        </div>
     </div>
 
     <script>
@@ -2165,6 +2410,22 @@ MOBILE_TABLES_TEMPLATE = """
             if(addr) idStr += " - " + addr;
             idStr += ")";
             window.location.href = "/mobile/menu?table=" + encodeURIComponent(idStr);
+        }
+
+        function deleteMobileTakeaway(tblName) {
+            if (confirm("ئایا دڵنیایت لە سڕینەوەی ئەم ئۆردەرە سەفەرییە بەتەواوی؟")) {
+                fetch('/clear_table_orders', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ table_number: tblName })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    }
+                });
+            }
         }
 
         function checkTables() {
@@ -2592,6 +2853,7 @@ def admin_dashboard():
         active_tables_count=active_tables,
         total_workers=total_workers
     )
+
 @app.route('/admin/amar')
 def admin_amar():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -2600,14 +2862,11 @@ def admin_amar():
 
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
-    
-    # دانانی بەرواری دەستپێک بۆ ساڵی پێشوو بە شێوازێک کە داتاکانی مانگی ٨ و پێشتریش بگرێتەوە
     default_start = '2026-01-01'
 
     start_date = request.args.get('start_date', default_start)
     end_date = request.args.get('end_date', today_str)
 
-    # ئەگەر بەروار بەتاڵ هات، با بە هەڵبژاردن داتا لە ٢٠٢٦ بیهێنێت
     if not start_date:
         start_date = default_start
     if not end_date:
@@ -2626,7 +2885,6 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # ١. هێنانی فرۆش
             query_sales = """
                 SELECT food_name, quantity, price
                 FROM froshtn
@@ -2657,7 +2915,6 @@ def admin_amar():
             total_sales = sum(r['total'] for r in report_rows)
             total_items_count = sum(r['qty'] for r in report_rows)
 
-            # ٢. هێنانی مەسرووفات (تێکشکاندنی کێشەی بەروار بە لێدانی فلتەری توند لەسەر masrwf_date)
             query_exp = """
                 SELECT DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
                        masrwf_name, masrwf_type, spent_by, amount, notes 
@@ -2669,7 +2926,6 @@ def admin_amar():
             expense_rows = cur.fetchall()
             total_expenses = sum(float(r['amount'] or 0) for r in expense_rows)
 
-            # ٣. هێنانی کرێ و شایستەی شاگردەکان
             query_workers = """
                 SELECT w.name, w.phone, w.salary,
                        COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
@@ -2711,6 +2967,7 @@ def admin_amar():
         net_profit=net_profit,
         total_items_count=total_items_count
     )
+
 @app.route('/admin/users')
 def admin_users():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -2902,79 +3159,10 @@ def admin_qasa():
             try: conn.close()
             except: pass
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
-    # ==========================================
-# پەڕەی قاسە (Qasa)
-# ==========================================
-WEB_QASA_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قاسە - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
-        
-        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; display: flex; gap: 20px; flex-wrap: wrap; }
-        .summary-item { font-size: 16px; font-weight: bold; background: #03261d; padding: 12px 20px; border-radius: 10px; border: 1px solid #0b5e4a; }
-        
-        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
-        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
-        tr:hover { background: #085341; }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <h2 style="color:#10b981;">💵 قاسەی فرۆشتن (٢٤ کاتژمێری ڕابردوو)</h2>
-        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
-    </div>
 
-    <div class="summary-card">
-        <div class="summary-item" style="color: #10b981;">💰 کۆی گشتی وەرگیراو: {{ "{:,.0f}".format(total_received) }} د.ع</div>
-        <div class="summary-item" style="color: #ef4444;">🔻 کۆی گشتی داشکاندن: {{ "{:,.0f}".format(total_discount) }} د.ع</div>
-    </div>
-
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>کات و بەروار</th>
-                    <th>مێز / کڕیار</th>
-                    <th>بڕی واصڵکراو</th>
-                    <th>داشکاندن</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in qasa_rows %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td dir="ltr" style="text-align: right; color: #cbd5e1;">{{ r.transaction_time }}</td>
-                    <td style="color:#a7f3d0; font-weight:bold; font-size: 14px;">{{ r.place_id }}</td>
-                    <td style="color:#10b981; font-weight:bold; font-size: 15px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
-                    <td style="color:#ef4444;">{{ "{:,.0f}".format(r.discount) }} د.ع</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">هیچ واصڵکردنێک تۆمار نەکراوە لە ٢٤ کاتژمێری ڕابردوودا</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>
-"""
 # ==========================================
 # ڕێڕەوەکانی بەڕێوەبردنی مەسرووفات و خەرجییەکان
 # ==========================================
-
 @app.route('/admin/masrwf')
 def admin_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -2994,21 +3182,18 @@ def admin_masrwf():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # وەرگرتنی جۆرە پێشووەکان بۆ داتالیست
             cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type != ''")
             for r in cur.fetchall():
                 t = r['masrwf_type'].strip()
                 if t and t not in existing_types:
                     existing_types.append(t)
 
-            # وەرگرتنی مەسرووفکەرەکان بۆ داتالیست
             cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by != ''")
             for r in cur.fetchall():
                 s = r['spent_by'].strip()
                 if s and s not in existing_spenders:
                     existing_spenders.append(s)
 
-            # فلتەرکردنی بەروار
             if from_date and to_date:
                 query = """
                     SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
@@ -3050,7 +3235,6 @@ def admin_masrwf():
         existing_spenders=existing_spenders
     )
 
-
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -3081,7 +3265,6 @@ def admin_save_masrwf():
                 except: pass
 
     return redirect(url_for('admin_masrwf'))
-
 
 @app.route('/admin/update_masrwf', methods=['POST'])
 def admin_update_masrwf():
@@ -3116,7 +3299,6 @@ def admin_update_masrwf():
 
     return redirect(url_for('admin_masrwf'))
 
-
 @app.route('/admin/delete_masrwf/<int:mid>')
 def admin_delete_masrwf(mid):
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -3136,6 +3318,7 @@ def admin_delete_masrwf(mid):
             except: pass
 
     return redirect(url_for('admin_masrwf'))
+
 # ==========================================
 # بەشی حیساباتی شاگردەکان
 # ==========================================
