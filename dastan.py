@@ -2956,7 +2956,6 @@ def admin_masrwf():
         existing_types=existing_types,
         existing_spenders=existing_spenders
     )
-
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
