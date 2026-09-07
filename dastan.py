@@ -3149,10 +3149,12 @@ def admin_workers():
     end_date = request.args.get('end_date', today_str)
 
     rows = []
+    all_workers = []
     conn = None
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # ١. هێنانی ڕاپۆرتی مووچە
             cur.execute("""
                 SELECT w.id, w.name, w.phone, w.salary,
                        COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
@@ -3165,53 +3167,67 @@ def admin_workers():
                 ORDER BY w.id DESC
             """, (start_date, end_date))
             rows = cur.fetchall()
+
+            # ٢. هێنانی هەموو شاگردەکان بە سەلامەتی بۆ فۆڕمی دەوام
+            cur.execute("SELECT id, name, salary FROM workers ORDER BY id ASC")
+            base_workers = cur.fetchall()
+            
+            for w in base_workers:
+                cur.execute("SELECT status FROM worker_attendance WHERE worker_id = %s ORDER BY date DESC LIMIT 1", (w['id'],))
+                st_row = cur.fetchone()
+                w['last_status'] = st_row['status'] if st_row else 'هاتوو'
+                all_workers.append(w)
+
     except Exception as e:
         print("Worker list error:", e)
     finally:
         if conn:
             try: conn.close()
             except: pass
-    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows, start_date=start_date, end_date=end_date, today_date=today_str)
+            
+    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows, all_workers=all_workers, start_date=start_date, end_date=end_date, today_date=today_str)
 
-@app.route('/admin/add_worker', methods=['POST'])
-def admin_add_worker():
-    name = request.form.get('name')
-    phone = request.form.get('phone', '')
-    salary = float(request.form.get('salary', 25000))
+
+@app.route('/admin/save_attendance', methods=['POST'])
+def admin_save_attendance():
+    if not session.get('authenticated') or session.get('role') != 'admin': 
+        return redirect(url_for('login'))
+    
+    a_date = request.form.get('att_date')
+    worker_ids = request.form.getlist('worker_ids') 
+    
+    if not worker_ids:
+        return redirect(url_for('admin_workers'))
+        
     conn = None
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO workers (name, phone, salary) VALUES (%s, %s, %s)", (name, phone, salary))
+            for wid in worker_ids:
+                status = request.form.get(f'status_{wid}', 'هاتوو')
+                
+                # چارەسەری ئیرۆری 500: ئەگەر بۆکسی بەخشش بەتاڵ جێهێڵدرا، با بیکات بە سفر
+                bonus_str = request.form.get(f'bonus_{wid}', '0').strip()
+                try:
+                    bonus = float(bonus_str) if bonus_str else 0.0
+                except ValueError:
+                    bonus = 0.0
+                    
+                cur.execute("""
+                    INSERT INTO worker_attendance (worker_id, date, status, bonus)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE status = %s, bonus = %s
+                """, (wid, a_date, status, bonus, status, bonus))
             conn.commit()
     except Exception as ex:
-        print("Add worker error:", ex)
+        print("Save bulk attendance error:", ex)
     finally:
         if conn:
             try: conn.close()
             except: pass
+            
+    # دڵنیابە لەوەی ئەم هێڵە لێرەدایە بۆ ئەوەی ڕیفرێش ببێتەوە
     return redirect(url_for('admin_workers'))
-
-@app.route('/admin/edit_worker/<int:wid>', methods=['POST'])
-def admin_edit_worker(wid):
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
-    name = request.form.get('name')
-    phone = request.form.get('phone', '')
-    salary = float(request.form.get('salary', 0))
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("UPDATE workers SET name = %s, phone = %s, salary = %s WHERE id = %s", (name, phone, salary, wid))
-            conn.commit()
-    except Exception as ex:
-        print("Edit worker error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return redirect(url_for('admin_workers'))
-
 @app.route('/admin/save_attendance', methods=['POST'])
 def admin_save_attendance():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
