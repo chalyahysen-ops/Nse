@@ -213,11 +213,11 @@ LOGIN_TEMPLATE = """
         <form method="POST" action="/login">
             <div class="input-group">
                 <label>ناوی بەکارهێنەر (Username):</label>
-                <input type="text" name="username" class="login-input" placeholder="یوسەر..." autofocus>
+                <input type="text" name="username" class="login-input" autofocus>
             </div>
             <div class="input-group">
                 <label>وشەی نهێنی (Password):</label>
-                <input type="password" name="password" class="login-input" placeholder="پاسوۆرد...">
+                <input type="password" name="password" class="login-input">
             </div>
             <button type="submit" class="btn-submit">چوونەژوورەوە ➔</button>
         </form>
@@ -336,7 +336,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/masrwf" class="module-card" style="border: 2px solid #ef4444;">
                 <div class="module-top"><div class="module-icon">🧾</div><span class="module-badge" style="background:#ef4444; color:#fff;">مەسرووف</span></div>
                 <div class="module-title">مەسرووفات و خەرجییەکان</div>
-                <div class="module-desc">تۆمارکردنی ناوی مەسرووف، جۆر، خەرجکەر بە شێوازی فۆڕمی سی شارپ.</div>
+                <div class="module-desc">تۆمارکردنی جۆری مەسرووف، خەرجکەر بە شێوازی فۆڕمی سی شارپ.</div>
             </a>
 
             <a href="/admin/workers" class="module-card">
@@ -375,7 +375,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی ئامار و قازانج (مۆدێرن و داینامیکی بەپێی بەروار)
+# پەڕەی ئامار و قازانج (مۆدێرن و داینامیکی)
 # ==========================================
 WEB_AMAR_TEMPLATE = """
 <!DOCTYPE html>
@@ -540,7 +540,7 @@ WEB_AMAR_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مەسرووفات (دیزاینی مۆدێرن لەگەڵ ئایکۆنی بەروار و کۆی فلتەرکراو)
+# پەڕەی مەسرووفات (دیزاینی مۆدێرن لەگەڵ ئایکۆنی بەروار و بێ ناوی مەسرووف)
 # ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
@@ -640,26 +640,24 @@ WEB_MASRWF_TEMPLATE = """
                         <tr>
                             <th style="width: 60px;">#</th>
                             <th>بەروار</th>
-                            <th>ناوی مەسرووف</th>
                             <th>جۆری مەسرووف</th>
-                            <th>مەسرووفکەر</th>
+                            <th>کۆمپانیا / خەرجکەر</th>
                             <th>بڕی پارە</th>
                             <th>تێبینی</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in rows %}
-                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_name }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
+                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
                             <td>{{ loop.index }}</td>
                             <td style="color: #38bdf8;">{{ r.m_date }}</td>
-                            <td style="font-weight:700; color:#fff;">{{ r.masrwf_name if r.masrwf_name else '—' }}</td>
                             <td style="font-weight:700; color:#f59e0b;">{{ r.masrwf_type }}</td>
                             <td style="color:#10b981; font-weight:700;">{{ r.spent_by }}</td>
                             <td style="color:#ef4444; font-weight:900; font-size:14.5px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
                             <td style="color:#94a3b8; text-align:right;">{{ r.notes }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="7" style="padding:50px; color:#94a3b8; font-size:15px;">هیچ مەسرووفێک لەم ماوەیەدا نەدۆزرایەوە</td></tr>
+                        <tr><td colspan="6" style="padding:50px; color:#94a3b8; font-size:15px;">هیچ مەسرووفێک لەم ماوەیەدا نەدۆزرایەوە</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -678,21 +676,16 @@ WEB_MASRWF_TEMPLATE = """
                 </div>
 
                 <div class="field-group">
-                    <label>📝 ناوی مەسرووف (شتەکە):</label>
-                    <input type="text" id="txt_name" name="masrwf_name" class="c-input" placeholder="بۆ نموونە: کڕینی سەوزە...">
-                </div>
-
-                <div class="field-group">
                     <label>🏷️ جۆری مەسرووف:</label>
-                    <input list="typeOptions" id="txt_type" name="masrwf_type" class="c-input" placeholder="هەڵبژێرە یان بنووسە..." required autocomplete="off">
+                    <input list="typeOptions" id="txt_type" name="masrwf_type" class="c-input" required autocomplete="off">
                     <datalist id="typeOptions">
                         {% for t in existing_types %}<option value="{{ t }}">{% endfor %}
                     </datalist>
                 </div>
 
                 <div class="field-group">
-                    <label>👤 کێ مەسرووفی کردووە؟:</label>
-                    <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" placeholder="هەڵبژێرە یان بنووسە..." autocomplete="off">
+                    <label>🏢 کۆمپانیا / خەرجکەر:</label>
+                    <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" autocomplete="off">
                     <datalist id="spentOptions">
                         {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
                     </datalist>
@@ -700,13 +693,13 @@ WEB_MASRWF_TEMPLATE = """
 
                 <div class="field-group">
                     <label style="color:#f59e0b;">💵 بڕی پارە (دینار):</label>
-                    <input type="text" id="txt_amount" name="amount_display" class="c-input c-amount" placeholder="0" required oninput="formatCurrency(this)">
+                    <input type="text" id="txt_amount" name="amount_display" class="c-input c-amount" required oninput="formatCurrency(this)">
                     <input type="hidden" id="real_amount" name="amount" value="0">
                 </div>
 
                 <div class="field-group">
                     <label>📄 تێبینی و وردەکاری:</label>
-                    <textarea id="txt_notes" name="notes" class="c-input" style="height: 65px; resize:none;" placeholder="تێبینی بنووسە..."></textarea>
+                    <textarea id="txt_notes" name="notes" class="c-input" style="height: 65px; resize:none;"></textarea>
                 </div>
 
                 <div class="btn-grid-actions">
@@ -739,14 +732,13 @@ WEB_MASRWF_TEMPLATE = """
             }
         }
 
-        function selectMasrwfRow(row, id, date, name, type, spentBy, amount, notes) {
+        function selectMasrwfRow(row, id, date, type, spentBy, amount, notes) {
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
 
             currentSelectedId = id;
             document.getElementById('selected_id').value = id;
             document.getElementById('txt_date').value = date;
-            document.getElementById('txt_name').value = (name === 'None' || !name) ? '' : name;
             document.getElementById('txt_type').value = (type === 'None' || !type) ? '' : type;
             document.getElementById('txt_spent_by').value = (spentBy === 'None' || !spentBy) ? '' : spentBy;
             
@@ -759,7 +751,6 @@ WEB_MASRWF_TEMPLATE = """
         function clearInputs() {
             currentSelectedId = 0;
             document.getElementById('selected_id').value = '0';
-            document.getElementById('txt_name').value = '';
             document.getElementById('txt_type').value = '';
             document.getElementById('txt_spent_by').value = '';
             document.getElementById('txt_amount').value = '';
@@ -1083,7 +1074,13 @@ WEB_USERS_TEMPLATE = """
                     <td style="font-weight:700; color:#10b981;">{{ u.username }}</td>
                     <td style="color:#cbd5e1; font-family:monospace; font-weight:bold;">{{ u.password }}</td>
                     <td>{{ u.full_name }}</td>
-                    <td>{{ u.role }}</td>
+                    <td>
+                        {% if u.role == 'Manager' %}👑 بەڕێوەبەر
+                        {% elif u.role == 'Waiter' %}🍽️ ئایپاد
+                        {% elif u.role == 'Mobile_Waiter' %}📱 مۆبایل
+                        {% elif u.role == 'Cashier' %}💵 کاشێر
+                        {% else %}{{ u.role }}{% endif %}
+                    </td>
                     <td>
                         <span class="status-badge {{ 'status-active' if u.is_active else 'status-blocked' }}">
                             {{ 'چالاکە' if u.is_active else 'بلۆککراوە' }}
@@ -2866,7 +2863,7 @@ def admin_qasa():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT DATE_FORMAT(transaction_time, '%Y-%m-%d %H:%i') AS transaction_time, place_id, amount, discount FROM qasa WHERE transaction_time >= NOW() - INTERVAL 1 DAY ORDER BY transaction_time DESC")
+            cur.execute("SELECT DATE_FORMAT(transaction_time, '%Y-%m-%d %H:%i') AS transaction_time, place_id, amount, discount FROM qasa ORDER BY transaction_time DESC")
             rows = cur.fetchall()
             tot_rec = sum(float(r['amount']) for r in rows)
             tot_disc = sum(float(r['discount']) for r in rows)
@@ -2879,7 +2876,7 @@ def admin_qasa():
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
 
 # ==========================================
-# مەسرووفات
+# مەسرووفات (دەستکاریکراو و بەستراو بە تەواوی ستوونەکان)
 # ==========================================
 @app.route('/admin/masrwf')
 def admin_masrwf():
@@ -2908,16 +2905,20 @@ def admin_masrwf():
                     id, 
                     DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
                     DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
-                    COALESCE(masrwf_name, '') AS masrwf_name,
                     COALESCE(masrwf_type, '') AS masrwf_type, 
                     COALESCE(spent_by, '') AS spent_by, 
                     COALESCE(amount, 0) AS amount, 
                     COALESCE(notes, '') AS notes 
                 FROM masrwf 
-                WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s
-                ORDER BY id DESC;
             """
-            cur.execute(query, (from_date, to_date))
+            params = []
+            if from_date and to_date:
+                query += " WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s "
+                params.append(from_date)
+                params.append(to_date)
+            
+            query += " ORDER BY masrwf_date DESC, id DESC;"
+            cur.execute(query, params)
             rows = cur.fetchall() or []
             tot = sum(float(r.get('amount') or 0) for r in rows)
 
@@ -2960,7 +2961,6 @@ def admin_save_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
         return redirect(url_for('login'))
     m_date = request.form.get('masrwf_date')
-    m_name = request.form.get('masrwf_name', '').strip()
     m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
@@ -2973,8 +2973,8 @@ def admin_save_masrwf():
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (m_date, m_name, m_type, spent_by, amt, notes))
+                    VALUES (%s, '', %s, %s, %s, %s)
+                """, (m_date, m_type, spent_by, amt, notes))
                 conn.commit()
         except Exception as ex:
             print("Save masrwf error:", ex)
@@ -2990,7 +2990,6 @@ def admin_update_masrwf():
         return redirect(url_for('login'))
     m_id = int(request.form.get('id', 0))
     m_date = request.form.get('masrwf_date')
-    m_name = request.form.get('masrwf_name', '').strip()
     m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
@@ -3003,9 +3002,9 @@ def admin_update_masrwf():
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE masrwf 
-                    SET masrwf_date = %s, masrwf_name = %s, masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
+                    SET masrwf_date = %s, masrwf_name = '', masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
                     WHERE id = %s
-                """, (m_date, m_name, m_type, spent_by, amt, notes, m_id))
+                """, (m_date, m_type, spent_by, amt, notes, m_id))
                 conn.commit()
         except Exception as ex:
             print("Update masrwf error:", ex)
