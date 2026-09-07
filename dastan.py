@@ -2885,11 +2885,11 @@ def admin_masrwf():
         return redirect(url_for('login'))
     
     today = datetime.now()
-    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
     today_str = today.strftime('%Y-%m-%d')
 
-    from_date = request.args.get('from_date', first_day_of_month).strip()
-    to_date = request.args.get('to_date', today_str).strip()
+    # بەتاڵکردنی فلتەرەکان بە شێوەیەکی بنەڕەتی بۆ بینینی هەموو داتاکان
+    from_date = request.args.get('from_date', '').strip()
+    to_date = request.args.get('to_date', '').strip()
 
     rows = []
     tot = 0
@@ -2900,12 +2900,13 @@ def admin_masrwf():
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # لێرەدا COALESCE بەکارهاتووە بۆ خوێندنەوەی masrwf_name ئەگەر masrwf_type بەتاڵ بێت
             query = """
                 SELECT 
                     id, 
                     DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
                     DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
-                    COALESCE(masrwf_type, '') AS masrwf_type, 
+                    COALESCE(NULLIF(masrwf_type, ''), masrwf_name, '') AS masrwf_type, 
                     COALESCE(spent_by, '') AS spent_by, 
                     COALESCE(amount, 0) AS amount, 
                     COALESCE(notes, '') AS notes 
