@@ -69,6 +69,20 @@ def ensure_all_tables():
                     VALUES ('admin', '1234', 'بەڕێوەبەری سەرەکی', 'Manager', 1, 1, 1, 1, 1, 1, 1)
                 """)
 
+            # خشتەی ئەرشیفی فرۆشتن (tomar)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS tomar (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    table_cabin VARCHAR(150),
+                    food_name VARCHAR(255),
+                    quantity INT,
+                    price DECIMAL(18, 0),
+                    total_price DECIMAL(18, 0),
+                    category VARCHAR(100),
+                    record_date DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS table_permissions (
                     table_number INT PRIMARY KEY,
@@ -134,9 +148,7 @@ def enforce_security():
     if is_api:
         return
 
-    referer = request.headers.get('Referer')
-    if not referer and request.endpoint != 'login':
-        session.clear()
+    if not session.get('authenticated'):
         return redirect(url_for('login'))
 
     if request.path.startswith('/admin') and session.get('role') != 'admin':
@@ -185,7 +197,7 @@ LOGIN_TEMPLATE = """
         </form>
         {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
         <div class="quick-hint">
-            👑 بەڕێوەبەر: admin / 1234 | بەتاڵ جێی بهێڵە بۆ چوونەژوورەوەی گارسۆن
+            👑 بەڕێوەبەر: admin / 1234 | بەتاڵ جێی بهێڵە بۆ گارسۆن
         </div>
     </div>
 </body>
@@ -274,7 +286,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/amar" class="module-card" style="border: 2px solid #f59e0b;">
                 <div class="module-top"><div class="module-icon">📊</div><span class="module-badge" style="background:#f59e0b; color:#fff;">سەربەخۆ</span></div>
                 <div class="module-title">ئامار و قازانج (ڕاپۆرت)</div>
-                <div class="module-desc">ڕاپۆرتی گشتی فرۆش لە froshtn، کۆی مەسرووفات و کرێی شاگرد، و قازانجی صافی.</div>
+                <div class="module-desc">ڕاپۆرتی گشتی فرۆش، کۆی مەسرووفات و کرێی شاگرد، و قازانجی صافی.</div>
             </a>
 
             <a href="/admin/cashier" class="module-card" style="border: 2px solid #10b981;">
@@ -337,7 +349,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی سەربەخۆی ئامار و قازانج (تەنها لە froshtn)
+# پەڕەی سەربەخۆی ئامار و قازانج
 # ==========================================
 WEB_AMAR_TEMPLATE = """
 <!DOCTYPE html>
@@ -949,379 +961,7 @@ WEB_CASHIER_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی بەڕێوەبردنی مێنۆ (ئیدیت و پۆلێن بە کۆمبۆبۆکس)
-# ==========================================
-WEB_MENU_MANAGER_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی مێنۆ - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
-        
-        .form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 18px; margin-bottom: 24px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
-        .form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 4px; }
-        .form-card input, .form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
-        .btn-add { background: #10b981; color: #03261d; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; }
-        
-        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-        .food-item-box { background: #ffffff; color: #0f172a; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .food-item-img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
-        .food-item-title { font-size: 15px; font-weight: 800; }
-        .food-item-details { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #059669; }
-        .food-actions { display: flex; gap: 8px; margin-top: 6px; }
-        .btn-edit-food { flex: 1; background: #3b82f6; color: #fff; border: none; padding: 7px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; text-align: center; }
-        .btn-del-food { flex: 1; background: #ef4444; color: #fff; border: none; padding: 7px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; text-align: center; text-decoration: none; }
-
-        .modal-edit { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
-        .modal-edit-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; color: #fff; }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <h2 style="color:#10b981;">📖 بەڕێوەبردنی خواردنەکان (ئیدیت و ئەپلۆدی وێنە)</h2>
-        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
-    </div>
-
-    <div class="form-card">
-        <h3 style="color:#a7f3d0; margin-bottom:12px; font-size:15px;">➕ زیادکردنی خواردنی نوێ</h3>
-        <form method="POST" action="/admin/add_food" enctype="multipart/form-data">
-            <div class="form-grid">
-                <div>
-                    <label>ناوی خواردن:</label>
-                    <input type="text" name="food_name" required placeholder="بۆ نموونە: کەبابی تایبەت">
-                </div>
-                <div>
-                    <label>نرخ (د.ع):</label>
-                    <input type="number" name="price" required placeholder="5000">
-                </div>
-                <div>
-                    <label>پۆلێن (کۆمبۆبۆکس):</label>
-                    <input list="categoryList" name="category" placeholder="پۆلێن هەڵبژێرە یان بنووسە..." required>
-                    <datalist id="categoryList">
-                        {% for c in existing_categories %}
-                            <option value="{{ c }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label>ئەپلۆدی وێنە (فایل):</label>
-                    <input type="file" name="food_image" accept="image/*">
-                </div>
-                <div>
-                    <label>یان لینکی وێنە:</label>
-                    <input type="text" name="image_path" placeholder="https://...">
-                </div>
-                <div>
-                    <button type="submit" class="btn-add">➕ زیادکردن</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="food-grid">
-        {% for f in foods %}
-        <div class="food-item-box">
-            <img src="{{ f.image_path if f.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="food-item-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
-            <div class="food-item-title">{{ f.food_name }}</div>
-            <div class="food-item-details">
-                <span>{{ "{:,.0f}".format(f.price) }} د.ع</span>
-                <span style="color:#64748b;">{{ f.category }}</span>
-            </div>
-            <div class="food-actions">
-                <button type="button" class="btn-edit-food" onclick="openEditModal({{ f.id }}, '{{ f.food_name }}', {{ f.price }}, '{{ f.category }}', '{{ f.image_path }}')">✏️ دەستکاری</button>
-                <a href="/admin/delete_food/{{ f.id }}" class="btn-del-food" onclick="return confirm('ئایا دڵنیایت لە سڕینەوە؟')">🗑️ سڕینەوە</a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <div class="modal-edit" id="editModal">
-        <div class="modal-edit-box">
-            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی خواردن</h3>
-            <form id="editForm" method="POST" action="" enctype="multipart/form-data">
-                <label style="font-size:12px; color:#a7f3d0;">ناوی خواردن:</label>
-                <input type="text" id="edit_food_name" name="food_name" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
-                
-                <label style="font-size:12px; color:#a7f3d0;">نرخ (دینار):</label>
-                <input type="number" id="edit_price" name="price" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
-                
-                <label style="font-size:12px; color:#a7f3d0;">پۆلێن (کۆمبۆبۆکس):</label>
-                <input list="categoryList" id="edit_category" name="category" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
-                
-                <label style="font-size:12px; color:#a7f3d0;">ئەپلۆدی وێنەی نوێ لە کۆمپیوتەر/مۆبایل:</label>
-                <input type="file" name="food_image" accept="image/*" style="width:100%; padding:7px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
-                
-                <label style="font-size:12px; color:#a7f3d0;">یان لینکی وێنە:</label>
-                <input type="text" id="edit_image_path" name="image_path" style="width:100%; padding:9px; margin-bottom:14px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
-                
-                <button type="submit" class="btn-add" style="width:100%;">💾 پاشەکەوتکردن</button>
-                <button type="button" onclick="closeEditModal()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function openEditModal(id, name, price, category, imgPath) {
-            document.getElementById('editForm').action = '/admin/edit_food/' + id;
-            document.getElementById('edit_food_name').value = name;
-            document.getElementById('edit_price').value = price;
-            document.getElementById('edit_category').value = category;
-            document.getElementById('edit_image_path').value = imgPath;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
-"""
-
-# ==========================================
-# پەڕەی مەسرووفات (کۆمبۆبۆکس)
-# ==========================================
-WEB_MASRWF_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مەسرووفات و خەرجی - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
-        
-        .masrwf-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
-        .masrwf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
-        .masrwf-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
-        .masrwf-form-card input, .masrwf-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
-        .masrwf-form-card input:focus, .masrwf-form-card select:focus { border-color: #10b981; }
-        .btn-save-m { background: #ef4444; color: #fff; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
-
-        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
-        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
-        tr:hover { background: #085341; }
-        .btn-del-m { background: #ef4444; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <h2 style="color:#ef4444;">💸 بەڕێوەبردنی مەسرووفات و خەرجییەکان</h2>
-        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
-    </div>
-
-    <div class="masrwf-form-card">
-        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ تۆمارکردنی خەرجی نوێ</h3>
-        <form method="POST" action="/admin/save_masrwf">
-            <div class="masrwf-grid">
-                <div>
-                    <label>بەرواری مەسرووف:</label>
-                    <input type="date" name="m_date" value="{{ today_date }}" required>
-                </div>
-                <div>
-                    <label>ناوی مەسرووف (کۆمبۆبۆکس):</label>
-                    <input list="namesList" name="masrwf_name" placeholder="هەڵبژێرە یان بنووسە..." required>
-                    <datalist id="namesList">
-                        {% for n in existing_names %}
-                            <option value="{{ n }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label>جۆری مەسرووف (کۆمبۆبۆکس):</label>
-                    <input list="typesList" name="m_type" placeholder="هەڵبژێرە یان بنووسە..." required>
-                    <datalist id="typesList">
-                        {% for t in existing_types %}
-                            <option value="{{ t }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label>شوێن یان کێ خەرجی کردووە (کۆمبۆبۆکس):</label>
-                    <input list="spendersList" name="spent_by" placeholder="هەڵبژێرە یان بنووسە...">
-                    <datalist id="spendersList">
-                        {% for s in existing_spenders %}
-                            <option value="{{ s }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label>تێبینی (کۆمبۆبۆکس):</label>
-                    <input list="notesList" name="notes" placeholder="هەڵبژێرە یان بنووسە...">
-                    <datalist id="notesList">
-                        {% for nt in existing_notes %}
-                            <option value="{{ nt }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label style="color:#f87171;">بڕی مەسرووف (تەنها ژمارە):</label>
-                    <input type="number" name="amount" placeholder="بۆ نموونە: 25000" required>
-                </div>
-                <div>
-                    <button type="submit" class="btn-save-m">💾 تۆمارکردنی خەرجی</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="summary-card">
-        <span style="font-size:16px; font-weight:800;">کۆی گشتی خەرجییە تۆمارکراوەکان:</span>
-        <span style="font-size:22px; font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(total_m) }} د.ع</span>
-    </div>
-
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>بەروار</th>
-                    <th>ناوی مەسرووف</th>
-                    <th>جۆری مەسرووف</th>
-                    <th>شوێن / کێ خەرجی کردووە</th>
-                    <th>بڕی پارە</th>
-                    <th>تێبینی</th>
-                    <th>کردار</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rows %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ r.m_date }}</td>
-                    <td style="font-weight:700; color:#10b981;">{{ r.masrwf_name }}</td>
-                    <td>{{ r.masrwf_type }}</td>
-                    <td>{{ r.spent_by }}</td>
-                    <td style="font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
-                    <td>{{ r.notes }}</td>
-                    <td>
-                        <a href="/admin/delete_masrwf/{{ r.id }}" class="btn-del-m" onclick="return confirm('ئایا دڵنیایت لە سڕینەوەی ئەم تۆمارە؟')">🗑️ سڕینەوە</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="8" style="text-align:center; padding:24px; color:#94a3b8;">هیچ مەسرووفێک تۆمار نەکراوە</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>
-"""
-
-# ==========================================
-# پەڕەی بەڕێوەبردنی QR کۆدەکان
-# ==========================================
-QR_MANAGER_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="ckb" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی QR - شاهور</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-action { background: #10b981; color: #03261d; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; border: none; cursor: pointer; font-size: 13px; }
-        .controls-panel { background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-        .qr-card { background: #ffffff; color: #0f172a; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
-        .qr-card img { width: 140px; height: 140px; border-radius: 8px; margin: 10px 0; }
-        .qr-title { font-size: 18px; font-weight: 800; color: #03261d; }
-        .perm-toggle-btn { margin-top: 8px; width: 100%; border: none; padding: 8px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer; }
-        .perm-enabled { background: #dcfce7; color: #166534; }
-        .perm-disabled { background: #fee2e2; color: #991b1b; }
-        @media print {
-            body { background: #fff !important; color: #000 !important; padding: 0 !important; }
-            .top-bar, .controls-panel, .perm-toggle-btn { display: none !important; }
-            .qr-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
-            .qr-card { border: 1px solid #000 !important; page-break-inside: avoid; }
-        }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        <h2 style="color:#10b981;">📱 بەڕێوەبردنی QR کۆد و مۆڵەتی مێزەکان</h2>
-        <div style="display:flex; gap:8px;">
-            <button class="btn-action" onclick="window.print()">🖨️ چاپی هەموو QRەکان</button>
-            <a href="/admin" class="btn-action" style="background:#334155; color:#fff;">⬅️ داشبۆرد</a>
-        </div>
-    </div>
-
-    <div class="controls-panel">
-        <span style="font-weight:700; color:#a7f3d0;">کۆنتڕۆڵی گشتی ئۆردەرکردنی موشتەری:</span>
-        <button class="btn-action" onclick="setAllPermissions(1)">✅ کاراکردنی هەموو مێزەکان</button>
-        <button class="btn-action" style="background:#ef4444; color:#fff;" onclick="setAllPermissions(0)">⛔ ناچالاککردنی هەموو مێزەکان (تەنها بینین)</button>
-    </div>
-
-    <div class="qr-grid">
-        {% for num in range(1, 91) %}
-        {% set is_allowed = perm_dict.get(num, 1) %}
-        <div class="qr-card">
-            <div class="qr-title">مێزی {{ num }}</div>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ base_url }}/table/{{ num }}" alt="QR Table {{ num }}">
-            <button type="button" class="perm-toggle-btn {{ 'perm-enabled' if is_allowed else 'perm-disabled' }}" id="btn-perm-{{ num }}" onclick="togglePerm({{ num }})">
-                {{ 'ئۆردەر: کراوەیە' if is_allowed else 'ئۆردەر: داخراوە (تەنها بینین)' }}
-            </button>
-        </div>
-        {% endfor %}
-    </div>
-
-    <script>
-        function togglePerm(tableNum) {
-            fetch('/toggle_table_permission', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ table_number: tableNum })
-            }).then(r => r.json()).then(data => {
-                if (data.status === 'success') {
-                    const btn = document.getElementById('btn-perm-' + tableNum);
-                    if (data.allow_ordering) {
-                        btn.innerText = 'ئۆردەر: کراوەیە';
-                        btn.className = 'perm-toggle-btn perm-enabled';
-                    } else {
-                        btn.innerText = 'ئۆردەر: داخراوە (تەنها بینین)';
-                        btn.className = 'perm-toggle-btn perm-disabled';
-                    }
-                }
-            });
-        }
-
-        function setAllPermissions(allow) {
-            if (confirm(allow ? "ئایا هەموو مێزەکان ڕێگەی ئۆردەریان پێبدرێت؟" : "ئایا هەموو مێزەکان ببنە تەنها بینین؟")) {
-                fetch('/set_all_table_permissions', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ allow_ordering: allow })
-                }).then(r => r.json()).then(data => {
-                    if (data.status === 'success') location.reload();
-                });
-            }
-        }
-    </script>
-</body>
-</html>
-"""
-
-# ==========================================
-# پەڕەی مێزەکان (ئایپاد و دیسکتۆپ)
+# تەمپلیتی مێنۆ و مۆبایل و بەشەکان
 # ==========================================
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -1354,7 +994,6 @@ DESKTOP_TABLES_TEMPLATE = """
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
         .modal-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 24px; color: #fff; }
         .modal-box input { width: 100%; padding: 12px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 12px; outline: none; }
-        .modal-box input:focus { border-color: #38bdf8; }
         
         @media (max-width: 900px) { .tables-grid { grid-template-columns: repeat(8, 1fr); gap: 10px; } .table-box { height: 80px; font-size: 24px; } }
     </style>
@@ -1372,7 +1011,7 @@ DESKTOP_TABLES_TEMPLATE = """
     </div>
 
     <div class="takeaway-bar">
-        <button type="button" class="btn-takeaway-main" onclick="openTakeawayModal()">
+        <button type="button" class="btn-takeaway-main" onclick="document.getElementById('takeawayModal').style.display='flex'">
             <span>🥡</span>
             <span>ئۆردەری نوێی سەفەری / دلیڤەری (تەلەفۆن)</span>
         </button>
@@ -1413,24 +1052,19 @@ DESKTOP_TABLES_TEMPLATE = """
             <input type="text" id="custAddress" placeholder="گەڕەک، شەقام، ژمارەی خانوو">
             
             <button type="button" class="btn-takeaway-main" onclick="startTakeawayOrder()" style="margin-top:10px; font-size:15px; padding:12px;">دەستپێکردنی ئۆردەر ➔</button>
-            <button type="button" onclick="closeTakeawayModal()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">پاشگەزبوونەوە</button>
+            <button type="button" onclick="document.getElementById('takeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">پاشگەزبوونەوە</button>
         </div>
     </div>
 
     <script>
-        function openTakeawayModal() { document.getElementById('takeawayModal').style.display = 'flex'; }
-        function closeTakeawayModal() { document.getElementById('takeawayModal').style.display = 'none'; }
-        
         function startTakeawayOrder() {
             let name = document.getElementById('custName').value.trim() || 'کڕیار';
             let phone = document.getElementById('custPhone').value.trim();
             let addr = document.getElementById('custAddress').value.trim();
-            
             let idStr = "سەفەری (" + name;
             if(phone) idStr += " - " + phone;
             if(addr) idStr += " - " + addr;
             idStr += ")";
-            
             window.location.href = "/desktop?table=" + encodeURIComponent(idStr);
         }
 
@@ -1457,9 +1091,6 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
-# ==========================================
-# پەڕەی دیسکتۆپ و ئایپاد (مێنۆ)
-# ==========================================
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1693,9 +1324,6 @@ DESKTOP_TEMPLATE = """
 </html>
 """
 
-# ==========================================
-# پەڕەی مێزەکانی مۆبایل
-# ==========================================
 MOBILE_TABLES_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1801,9 +1429,6 @@ MOBILE_TABLES_TEMPLATE = """
 </html>
 """
 
-# ==========================================
-# پەڕەی موشتەری و مۆبایل
-# ==========================================
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -2075,82 +1700,463 @@ CUSTOMER_MENU_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی گشتی ڕێڕەوەکانی فەرمانی پایسۆن
+# ڕێڕەوەکانی سیستەم (Routes)
 # ==========================================
-@app.route('/admin/menu_manager')
-def admin_menu_manager():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
-    foods = []
-    categories = ['برژاو', 'کوڵاو', 'پەلەوەر', 'شەربەت و خواردنەوە', 'سەوزە و زەڵاتە', 'کوردیەکان', 'خواردنی خێرا', 'شۆربا', 'شیرینی']
+@app.route('/')
+def index():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        uname = normalize_digits(request.form.get('username', '')).strip()
+        pwd = normalize_digits(request.form.get('password', '')).strip()
+
+        if uname == '' and pwd == '':
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'waiter'
+            session['full_name'] = 'گارسۆن'
+            return redirect(url_for('desktop_tables'))
+
+        conn = get_db()
+        user_row = None
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (uname, pwd))
+                user_row = cur.fetchone()
+            conn.close()
+        except Exception as ex:
+            print("Login error:", ex)
+
+        if user_row:
+            if not user_row.get('is_active', 1):
+                return render_template_string(LOGIN_TEMPLATE, error='ئەم بەکارهێنەرە بلۆککراوە! پەیوەندی بە بەڕێوەبەرەوە بکە.')
+
+            session.permanent = True
+            session['authenticated'] = True
+            session['user_id'] = user_row['id']
+            session['username'] = user_row['username']
+            session['full_name'] = user_row.get('full_name', '')
+            role = user_row.get('role', 'Waiter')
+
+            if role in ['Manager', 'Admin', 'admin']:
+                session['role'] = 'admin'
+                return redirect(url_for('admin_dashboard'))
+            elif role == 'Mobile_Waiter':
+                session['role'] = 'mobile_waiter'
+                return redirect(url_for('mobile_waiter_tables'))
+            elif role == 'Cashier':
+                session['role'] = 'admin'
+                return redirect(url_for('admin_cashier'))
+            else:
+                session['role'] = 'waiter'
+                return redirect(url_for('desktop_tables'))
+
+        if pwd in ['99', '٩٩', '222', '٢٢٢']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'admin'
+            session['full_name'] = 'بەڕێوەبەر'
+            return redirect(url_for('admin_dashboard'))
+        elif pwd in ['345678', '٣٤٥٦٧٨']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'mobile_waiter'
+            session['full_name'] = 'گارسۆنی مۆبایل'
+            return redirect(url_for('mobile_waiter_tables'))
+        elif pwd in ['22', '٢٢']:
+            session.permanent = True
+            session['authenticated'] = True
+            session['role'] = 'waiter'
+            session['full_name'] = 'گارسۆنی ئایپاد'
+            return redirect(url_for('desktop_tables'))
+
+        return render_template_string(LOGIN_TEMPLATE, error='ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە!')
+
+    return render_template_string(LOGIN_TEMPLATE)
+
+@app.route('/admin/amar')
+def admin_amar():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    today = datetime.now()
+    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
+    today_str = today.strftime('%Y-%m-%d')
+
+    start_date = request.args.get('start_date', first_day_of_month)
+    end_date = request.args.get('end_date', today_str)
+
+    start_dt = f"{start_date} 00:00:00"
+    end_dt = f"{end_date} 23:59:59"
+
+    report_rows = []
+    total_sales = 0
+    total_expenses = 0
+    total_workers_wage = 0
+    total_items_count = 0
+
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT id, food_name, price, category, image_path FROM nse ORDER BY id DESC")
-            foods = cur.fetchall()
-            for f in foods:
-                c = f.get('category')
-                if c and c.strip() and c.strip() not in categories:
-                    categories.append(c.strip())
+            query_sales = """
+                SELECT 
+                    food_name,
+                    CAST(SUM(quantity) AS SIGNED) AS qty,
+                    ROUND(AVG(price), 0) AS price,
+                    CAST(SUM(quantity * price) AS DECIMAL(18, 0)) AS total
+                FROM froshtn
+                WHERE created_at >= %s AND created_at <= %s
+                  AND food_name NOT LIKE '%قاپی نوێ%'
+                  AND food_name != ''
+                  AND food_name IS NOT NULL
+                GROUP BY food_name
+                ORDER BY SUM(quantity) DESC;
+            """
+            cur.execute(query_sales, (start_dt, end_dt))
+            report_rows = cur.fetchall()
+
+            total_items_count = sum(int(r['qty']) for r in report_rows)
+            total_sales = sum(float(r['total']) for r in report_rows)
+
+            cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= %s AND transaction_time <= %s", (start_dt, end_dt))
+            qasa_row = cur.fetchone()
+            qasa_sum = float(qasa_row['s']) if qasa_row else 0
+            if total_sales == 0 and qasa_sum > 0:
+                total_sales = qasa_sum
+
+            cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date >= %s AND masrwf_date <= %s", (start_dt, end_dt))
+            exp_row = cur.fetchone()
+            total_expenses = float(exp_row['e']) if exp_row else 0
+
+            query_workers = """
+                SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
+                FROM workers w
+                INNER JOIN worker_attendance wa ON w.id = wa.worker_id
+                WHERE wa.date >= %s AND wa.date <= %s;
+            """
+            cur.execute(query_workers, (start_date, end_date))
+            work_row = cur.fetchone()
+            total_workers_wage = float(work_row['w_due']) if work_row else 0
+
+        conn.close()
+    except Exception as ex:
+        print("Amar query error:", ex)
+
+    total_all_expenses = total_expenses + total_workers_wage
+    net_profit = total_sales - total_all_expenses
+
+    return render_template_string(
+        WEB_AMAR_TEMPLATE,
+        start_date=start_date,
+        end_date=end_date,
+        report_rows=report_rows,
+        total_sales=total_sales,
+        total_expenses=total_expenses,
+        total_workers_wage=total_workers_wage,
+        net_profit=net_profit,
+        total_items_count=total_items_count
+    )
+
+@app.route('/admin/users')
+def admin_users():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    users = []
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users ORDER BY id DESC")
+            users = cur.fetchall()
+        conn.close()
+    except Exception as ex:
+        print("Fetch users error:", ex)
+    return render_template_string(WEB_USERS_TEMPLATE, users=users)
+
+@app.route('/admin/add_user', methods=['POST'])
+def admin_add_user():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    uname = request.form.get('username', '').strip()
+    pwd = request.form.get('password', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    role = request.form.get('role', 'Waiter')
+
+    if uname and pwd:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO users (username, password, full_name, role, can_view_menu, can_view_tables, can_view_cashier, can_view_qsa, can_view_reports, can_view_settings, is_active)
+                    VALUES (%s, %s, %s, %s, 1, 1, 1, 1, 1, 1, 1)
+                """, (uname, pwd, full_name, role))
+                conn.commit()
+            conn.close()
+        except Exception as ex:
+            print("Insert user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/edit_user/<int:uid>', methods=['POST'])
+def admin_edit_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    uname = request.form.get('username', '').strip()
+    pwd = request.form.get('password', '').strip()
+    full_name = request.form.get('full_name', '').strip()
+    role = request.form.get('role', 'Waiter')
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE users SET username = %s, password = %s, full_name = %s, role = %s WHERE id = %s
+            """, (uname, pwd, full_name, role, uid))
+            conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Update user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/toggle_user/<int:uid>')
+def admin_toggle_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT is_active FROM users WHERE id = %s", (uid,))
+            row = cur.fetchone()
+            if row:
+                new_state = 0 if row.get('is_active', 1) else 1
+                cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_state, uid))
+                conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Toggle user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/delete_user/<int:uid>')
+def admin_delete_user(uid):
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id = %s AND username != 'admin'", (uid,))
+            conn.commit()
+        conn.close()
+    except Exception as ex:
+        print("Delete user error:", ex)
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin')
+def admin_dashboard():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    today_sales, today_expense, active_tables, total_workers = 0, 0, 0, 0
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= NOW() - INTERVAL 1 DAY")
+            today_sales = float(cur.fetchone()['s'])
+            cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) = CURDATE()")
+            today_expense = float(cur.fetchone()['e'])
+            cur.execute("SELECT COUNT(DISTINCT table_cabin) AS c FROM froshtn WHERE table_cabin NOT LIKE '%[%' AND table_cabin != ''")
+            active_tables = int(cur.fetchone()['c'])
+            cur.execute("SELECT COUNT(*) AS w FROM workers")
+            total_workers = int(cur.fetchone()['w'])
+        conn.close()
+    except Exception as ex:
+        print("Dashboard stats error:", ex)
+
+    return render_template_string(
+        ADMIN_DASHBOARD_TEMPLATE,
+        today_sales=today_sales,
+        today_expense=today_expense,
+        active_tables_count=active_tables,
+        total_workers=total_workers
+    )
+
+@app.route('/admin/cashier')
+def admin_cashier():
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    active_tables = []
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            query = """
+                SELECT table_cabin, COUNT(DISTINCT created_at) AS rounds 
+                FROM froshtn 
+                WHERE table_cabin IS NOT NULL AND table_cabin != '' AND table_cabin NOT LIKE '%[%'
+                GROUP BY table_cabin
+            """
+            cur.execute(query)
+            rows = cur.fetchall()
+
+            def sort_key(x):
+                val = str(x['table_cabin'])
+                if val.isdigit():
+                    return (0, int(val))
+                return (1, val)
+
+            active_tables = sorted(rows, key=sort_key)
+        conn.close()
+    except Exception as ex:
+        print("Cashier tables error:", ex)
+    return render_template_string(WEB_CASHIER_TEMPLATE, active_tables=active_tables)
+
+@app.route('/admin/complete_payment', methods=['POST'])
+def admin_complete_payment():
+    data = request.get_json()
+    t_num = str(data.get('table_number')).strip()
+    tot = float(data.get('total_amount', 0))
+    paid = float(data.get('amount_paid', 0))
+    disc = max(0, tot - paid)
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            p_id = t_num if ('سەفەری' in t_num or t_num.startswith('m')) else f"m{t_num}"
+            cur.execute("INSERT INTO qasa (transaction_time, place_id, amount, discount) VALUES (NOW(), %s, %s, %s)", (p_id, paid, disc))
+            cur.execute("DELETE FROM froshtn WHERE table_cabin = %s OR table_cabin LIKE %s", (t_num, f"{t_num} [%"))
+            conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as ex:
+        if conn: conn.close()
+        return jsonify({'status': 'error', 'message': str(ex)})
+
+@app.route('/admin/qasa')
+def admin_qasa():
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    rows = []
+    tot_rec, tot_disc = 0, 0
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT DATE_FORMAT(transaction_time, '%Y-%m-%d %H:%i') AS transaction_time, place_id, amount, discount FROM qasa WHERE transaction_time >= NOW() - INTERVAL 1 DAY ORDER BY transaction_time DESC")
+            rows = cur.fetchall()
+            tot_rec = sum(float(r['amount']) for r in rows)
+            tot_disc = sum(float(r['discount']) for r in rows)
         conn.close()
     except: pass
-    return render_template_string(WEB_MENU_MANAGER_TEMPLATE, foods=foods, existing_categories=categories)
+    return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
 
-@app.route('/admin/add_food', methods=['POST'])
-def admin_add_food():
-    name = request.form.get('food_name')
-    price = float(request.form.get('price', 0))
-    cat = request.form.get('category', 'گشتی').strip()
-    img = request.form.get('image_path', '').strip()
-
-    if 'food_image' in request.files:
-        file = request.files['food_image']
-        if file and file.filename != '' and allowed_file(file.filename):
-            fname = secure_filename(f"{int(datetime.now().timestamp())}_{file.filename}")
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-            file.save(save_path)
-            img = url_for('static', filename=f'uploads/{fname}')
-
-    conn = get_db()
-    with conn.cursor() as cur:
-        cur.execute("INSERT INTO nse (food_name, price, category, image_path, nsecol) VALUES (%s, %s, %s, %s, '')", (name, price, cat, img))
-        conn.commit()
-    conn.close()
-    return redirect(url_for('admin_menu_manager'))
-
-@app.route('/admin/edit_food/<int:fid>', methods=['POST'])
-def admin_edit_food(fid):
+@app.route('/admin/masrwf')
+def admin_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
-    name = request.form.get('food_name')
-    price = float(request.form.get('price', 0))
-    cat = request.form.get('category', 'گشتی').strip()
-    img = request.form.get('image_path', '').strip()
+    rows = []
+    tot = 0
+    existing_names = ['کڕینی گۆشت', 'کڕینی سەوزە', 'کرێی کارەبا', 'کڕینی برنج', 'پاککەرەوە', 'گاز و نەوت', 'کڕینی میوە', 'مەسرەفی ڕۆژانە']
+    existing_types = ['کڕین بۆ چێشتخانە', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'ترانسپۆرت', 'چاککردنەوە']
+    existing_spenders = ['بەڕێوەبەر', 'کاشێر', 'مەتبەخ', 'گارسۆن', 'شۆفێر', 'کڕیار']
+    existing_notes = ['بۆ مەتبەخ', 'بۆ کاشێر', 'پارەی تەواو دراوە', 'قەرز ماوەتەوە', 'پێداویستی سەرەکی']
+    
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date, masrwf_name, masrwf_type, spent_by, amount, notes FROM masrwf ORDER BY id DESC")
+            rows = cur.fetchall()
+            tot = sum(float(r['amount']) for r in rows)
 
-    if 'food_image' in request.files:
-        file = request.files['food_image']
-        if file and file.filename != '' and allowed_file(file.filename):
-            fname = secure_filename(f"{int(datetime.now().timestamp())}_{file.filename}")
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-            file.save(save_path)
-            img = url_for('static', filename=f'uploads/{fname}')
+            for r in rows:
+                if r.get('masrwf_name') and r['masrwf_name'] not in existing_names:
+                    existing_names.append(r['masrwf_name'])
+                if r.get('masrwf_type') and r['masrwf_type'] not in existing_types:
+                    existing_types.append(r['masrwf_type'])
+                if r.get('spent_by') and r['spent_by'] not in existing_spenders:
+                    existing_spenders.append(r['spent_by'])
+                if r.get('notes') and r['notes'] not in existing_notes:
+                    existing_notes.append(r['notes'])
 
+        conn.close()
+    except: pass
+
+    return render_template_string(
+        WEB_MASRWF_TEMPLATE, 
+        rows=rows, 
+        total_m=tot, 
+        today_date=datetime.now().strftime('%Y-%m-%d'),
+        existing_names=existing_names,
+        existing_types=existing_types,
+        existing_spenders=existing_spenders,
+        existing_notes=existing_notes
+    )
+
+@app.route('/admin/save_masrwf', methods=['POST'])
+def admin_save_masrwf():
+    m_date = request.form.get('m_date')
+    m_name = request.form.get('masrwf_name', '').strip()
+    m_type = request.form.get('m_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
+    amt = float(request.form.get('amount', 0))
+    notes = request.form.get('notes', '').strip()
+    
     conn = get_db()
     with conn.cursor() as cur:
-        if img:
-            cur.execute("UPDATE nse SET food_name = %s, price = %s, category = %s, image_path = %s WHERE id = %s", (name, price, cat, img, fid))
-        else:
-            cur.execute("UPDATE nse SET food_name = %s, price = %s, category = %s WHERE id = %s", (name, price, cat, fid))
+        cur.execute("""
+            INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (m_date, m_name, m_type, spent_by, amt, notes))
         conn.commit()
     conn.close()
-    return redirect(url_for('admin_menu_manager'))
+    return redirect(url_for('admin_masrwf'))
 
-@app.route('/admin/delete_food/<int:fid>')
-def admin_delete_food(fid):
+@app.route('/admin/delete_masrwf/<int:mid>')
+def admin_delete_masrwf(mid):
     conn = get_db()
     with conn.cursor() as cur:
-        cur.execute("DELETE FROM nse WHERE id = %s", (fid,))
+        cur.execute("DELETE FROM masrwf WHERE id = %s", (mid,))
         conn.commit()
     conn.close()
-    return redirect(url_for('admin_menu_manager'))
+    return redirect(url_for('admin_masrwf'))
+
+@app.route('/admin/workers')
+def admin_workers():
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    rows = []
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT w.id, w.name, w.phone, w.salary,
+                       COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
+                       (COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) AS total_salary,
+                       IFNULL(SUM(wa.bonus), 0) AS total_bonus,
+                       ((COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) + IFNULL(SUM(wa.bonus), 0)) AS total_due
+                FROM workers w
+                LEFT JOIN worker_attendance wa ON w.id = wa.worker_id AND MONTH(wa.date) = MONTH(CURRENT_DATE())
+                GROUP BY w.id, w.name, w.phone, w.salary
+            """)
+            rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        print("Worker list error:", e)
+    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows)
+
+@app.route('/admin/add_worker', methods=['POST'])
+def admin_add_worker():
+    name = request.form.get('name')
+    phone = request.form.get('phone', '')
+    salary = float(request.form.get('salary', 25000))
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO workers (name, phone, salary) VALUES (%s, %s, %s)", (name, phone, salary))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('admin_workers'))
+
+@app.route('/admin/delete_worker/<int:wid>')
+def admin_delete_worker(wid):
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM worker_attendance WHERE worker_id = %s", (wid,))
+        cur.execute("DELETE FROM workers WHERE id = %s", (wid,))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('admin_workers'))
 
 @app.route('/desktop/tables')
 def desktop_tables():
