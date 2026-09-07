@@ -460,6 +460,142 @@ WEB_AMAR_TEMPLATE = """
 </body>
 </html>
 """
+# ==========================================
+# پەڕەی مێنۆ (ئیدیت و پۆلێن بە کۆمبۆبۆکس)
+# ==========================================
+WEB_MENU_MANAGER_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بەڕێوەبردنی مێنۆ - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 18px; margin-bottom: 24px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
+        .form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 4px; }
+        .form-card input, .form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
+        .btn-add { background: #10b981; color: #03261d; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; }
+        
+        .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .food-item-box { background: #ffffff; color: #0f172a; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .food-item-img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
+        .food-item-title { font-size: 15px; font-weight: 800; }
+        .food-item-details { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #059669; }
+        .food-actions { display: flex; gap: 8px; margin-top: 6px; }
+        .btn-edit-food { flex: 1; background: #3b82f6; color: #fff; border: none; padding: 7px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; text-align: center; }
+        .btn-del-food { flex: 1; background: #ef4444; color: #fff; border: none; padding: 7px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; text-align: center; text-decoration: none; }
+
+        .modal-edit { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-edit-box { background: #064032; border: 2px solid #0b5e4a; border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">📖 بەڕێوەبردنی خواردنەکان (ئیدیت و ئەپلۆدی وێنە)</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="form-card">
+        <h3 style="color:#a7f3d0; margin-bottom:12px; font-size:15px;">➕ زیادکردنی خواردنی نوێ</h3>
+        <form method="POST" action="/admin/add_food" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div>
+                    <label>ناوی خواردن:</label>
+                    <input type="text" name="food_name" required placeholder="بۆ نموونە: کەبابی تایبەت">
+                </div>
+                <div>
+                    <label>نرخ (د.ع):</label>
+                    <input type="number" name="price" required placeholder="5000">
+                </div>
+                <div>
+                    <label>پۆلێن (کۆمبۆبۆکس):</label>
+                    <input list="categoryList" name="category" placeholder="پۆلێن هەڵبژێرە یان بنووسە..." required>
+                    <datalist id="categoryList">
+                        {% for c in existing_categories %}
+                            <option value="{{ c }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label>ئەپلۆدی وێنە (فایل):</label>
+                    <input type="file" name="food_image" accept="image/*">
+                </div>
+                <div>
+                    <label>یان لینکی وێنە:</label>
+                    <input type="text" name="image_path" placeholder="https://...">
+                </div>
+                <div>
+                    <button type="submit" class="btn-add">➕ زیادکردن</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="food-grid">
+        {% for f in foods %}
+        <div class="food-item-box">
+            <img src="{{ f.image_path if f.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="food-item-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
+            <div class="food-item-title">{{ f.food_name }}</div>
+            <div class="food-item-details">
+                <span>{{ "{:,.0f}".format(f.price) }} د.ع</span>
+                <span style="color:#64748b;">{{ f.category }}</span>
+            </div>
+            <div class="food-actions">
+                <button type="button" class="btn-edit-food" onclick="openEditModal({{ f.id }}, '{{ f.food_name }}', {{ f.price }}, '{{ f.category }}', '{{ f.image_path }}')">✏️ دەستکاری</button>
+                <a href="/admin/delete_food/{{ f.id }}" class="btn-del-food" onclick="return confirm('ئایا دڵنیایت لە سڕینەوە؟')">🗑️ سڕینەوە</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="modal-edit" id="editModal">
+        <div class="modal-edit-box">
+            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی خواردن</h3>
+            <form id="editForm" method="POST" action="" enctype="multipart/form-data">
+                <label style="font-size:12px; color:#a7f3d0;">ناوی خواردن:</label>
+                <input type="text" id="edit_food_name" name="food_name" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">نرخ (دینار):</label>
+                <input type="number" id="edit_price" name="price" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">پۆلێن (کۆمبۆبۆکس):</label>
+                <input list="categoryList" id="edit_category" name="category" style="width:100%; padding:9px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;" required>
+                
+                <label style="font-size:12px; color:#a7f3d0;">ئەپلۆدی وێنەی نوێ لە کۆمپیوتەر/مۆبایل:</label>
+                <input type="file" name="food_image" accept="image/*" style="width:100%; padding:7px; margin-bottom:10px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                
+                <label style="font-size:12px; color:#a7f3d0;">یان لینکی وێنە:</label>
+                <input type="text" id="edit_image_path" name="image_path" style="width:100%; padding:9px; margin-bottom:14px; border-radius:8px; border:1px solid #0b5e4a; background:#03261d; color:#fff;">
+                
+                <button type="submit" class="btn-add" style="width:100%;">💾 پاشەکەوتکردن</button>
+                <button type="button" onclick="closeEditModal()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditModal(id, name, price, category, imgPath) {
+            document.getElementById('editForm').action = '/admin/edit_food/' + id;
+            document.getElementById('edit_food_name').value = name;
+            document.getElementById('edit_price').value = price;
+            document.getElementById('edit_category').value = category;
+            document.getElementById('edit_image_path').value = imgPath;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+"""
 
 # ==========================================
 # تەمپلیتی بەڕێوەبردنی بەکارهێنەران
