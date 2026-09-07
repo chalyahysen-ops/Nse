@@ -128,6 +128,11 @@ def ensure_all_tables():
                 );
             """)
 
+            try:
+                cursor.execute("ALTER TABLE masrwf ADD COLUMN IF NOT EXISTS spent_by VARCHAR(100) DEFAULT '' AFTER masrwf_type;")
+            except:
+                pass
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS qasa (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -325,14 +330,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <div class="module-desc">بینینی تەواوی پسولە واصڵکراوەکان، کۆی داهات، داشکاندن و کاتی وەسڵەکان.</div>
             </a>
 
-            <a href="/admin/masrwf" class="module-card">
-                <div class="module-top"><div class="module-icon">💸</div><span class="module-badge">مەسرووف</span></div>
-                <div class="module-title">مەسرووفات و خەرجی</div>
-                <div class="module-desc">تۆمارکردن، دەستکاری، سڕینەوە، و فلتەری بەروارەکان.</div>
+            <a href="/admin/masrwf" class="module-card" style="border: 2px solid #ef4444;">
+                <div class="module-top"><div class="module-icon">🧾</div><span class="module-badge" style="background:#ef4444; color:#fff;">مەسرووف</span></div>
+                <div class="module-title">مەسرووفات و خەرجییەکان</div>
+                <div class="module-desc">تۆمارکردن، دەستکاری، سڕینەوە بە شێوازی فۆڕمی سی شارپ لەگەڵ فلتەر.</div>
             </a>
 
-            <a href="/admin/workers" class="module-card" style="border: 2px solid #38bdf8;">
-                <div class="module-top"><div class="module-icon">👥</div><span class="module-badge" style="background:#38bdf8; color:#03261d;">شاگرد</span></div>
+            <a href="/admin/workers" class="module-card">
+                <div class="module-top"><div class="module-icon">👥</div><span class="module-badge">شاگرد</span></div>
                 <div class="module-title">حیساباتی شاگردەکان</div>
                 <div class="module-desc">ئامادەبوونی ڕۆژانە، فلتەری ڕۆژانە/مانگانە، بەخشش و دەستکاریکردنی مووچە.</div>
             </a>
@@ -402,32 +407,21 @@ WEB_AMAR_TEMPLATE = """
         td { padding: 10px; border-bottom: 1px solid #334155; font-size: 13px; }
         tr:nth-child(even) { background: #162032; }
 
-        /* بەشی تایبەت بە چاپی A4 وەک فۆڕمی سی شارپ */
         .print-only-header, .print-only-footer { display: none; }
 
         @media print {
             body { background: #fff !important; color: #000 !important; padding: 10mm !important; }
             .top-bar, .filter-card, .btn-print, .btn-dash, .summary-grid { display: none !important; }
-            
             .print-only-header { display: block !important; text-align: center; margin-bottom: 15px; }
             .print-only-header h2 { font-size: 18px; color: #d97706 !important; margin-bottom: 4px; }
             .print-only-header p { font-size: 12px; color: #333; margin-bottom: 10px; }
             .print-divider { border-top: 2px solid #d97706; margin-bottom: 15px; }
-
             .table-responsive { background: #fff !important; border: 1px solid #000 !important; }
             table { border: 1px solid #000 !important; }
             th { background: #e2e8f0 !important; color: #000 !important; border: 1px solid #000 !important; font-size: 11px; }
             td { color: #000 !important; border: 1px solid #000 !important; font-size: 11px; padding: 6px; }
             tr:nth-child(even) { background: #fff !important; }
-
-            .print-only-footer { 
-                display: block !important; 
-                margin-top: 15px; 
-                border: 1px solid #000; 
-                background: #f8fafc; 
-                padding: 12px; 
-                border-radius: 6px; 
-            }
+            .print-only-footer { display: block !important; margin-top: 15px; border: 1px solid #000; background: #f8fafc; padding: 12px; border-radius: 6px; }
             .print-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; font-weight: bold; }
         }
     </style>
@@ -441,10 +435,9 @@ WEB_AMAR_TEMPLATE = """
         </div>
     </div>
 
-    <!-- سەرپەڕەی فەرمی چاپی A4 -->
     <div class="print-only-header">
         <h2>✨ شاهور ڕێستۆرانت - ڕاپۆرتی گشتی فرۆش و دارایی</h2>
-        <p>ماوەی بەروار: لە [{{ start_date }}]  تا  [{{ end_date }}]</p>
+        <p>ماوەی بەروار: لە [{{ start_date }}] تا [{{ end_date }}]</p>
         <div class="print-divider"></div>
     </div>
 
@@ -520,7 +513,6 @@ WEB_AMAR_TEMPLATE = """
         </table>
     </div>
 
-    <!-- پێڕستی کۆتایی لە کاتی چاپکردن لەسەر پەڕەی A4 -->
     <div class="print-only-footer">
         <div class="print-footer-grid">
             <div>کۆی گشتی ژمارەی خواردن: {{ "{:,.0f}".format(total_items_count) }} دانە</div>
@@ -536,6 +528,7 @@ WEB_AMAR_TEMPLATE = """
 </body>
 </html>
 """
+
 # ==========================================
 # پەڕەی بەڕێوەبردنی بەکارهێنەران
 # ==========================================
@@ -1158,7 +1151,7 @@ WEB_MENU_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مەسرووفات
+# پەڕەی مەسرووفات بە دیزاینی سی شارپ (Two Columns + Filters)
 # ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
@@ -1166,122 +1159,249 @@ WEB_MASRWF_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مەسرووفات و خەرجی - شاهور</title>
+    <title>مەسرووفات و خەرجییەکان - شاهور</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
-        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
-        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
-        
-        .masrwf-form-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
-        .masrwf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end; }
-        .masrwf-form-card label { display: block; font-size: 12px; font-weight: 700; color: #a7f3d0; margin-bottom: 5px; }
-        .masrwf-form-card input, .masrwf-form-card select { width: 100%; padding: 10px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
-        .masrwf-form-card input:focus, .masrwf-form-card select:focus { border-color: #10b981; }
-        .btn-save-m { background: #ef4444; color: #fff; border: none; padding: 11px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 14px; width: 100%; }
+        body { background-color: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
-        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
-        tr:hover { background: #085341; }
-        .btn-del-m { background: #ef4444; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .header-panel { background-color: #0f172a; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 2px solid #1e293b; }
+        .header-title { font-size: 17px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 8px; }
+        .btn-dash { background: #334155; color: #ffffff; padding: 7px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+
+        .masrwf-layout { display: grid; grid-template-columns: 1fr 370px; flex: 1; min-height: calc(100vh - 58px); }
+
+        /* لای چەپ: خشتە و فلتەر */
+        .grid-area { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; background: #f8fafc; }
+        
+        .filter-bar { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-item { display: flex; flex-direction: column; gap: 4px; }
+        .filter-item label { font-size: 12px; font-weight: 700; color: #475569; }
+        .filter-input { padding: 8px 12px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; color: #0f172a; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: #0f172a; }
+        
+        .btn-filter { background: #0f172a; color: #ffffff; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; }
+        .btn-reset { background: #f1f5f9; color: #0f172a; border: 1.5px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; }
+
+        .table-wrap { flex: 1; overflow-y: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #1e293b; color: #ffffff; padding: 12px 14px; font-size: 13px; font-weight: 800; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #0f172a; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: 600; }
+        tbody tr { cursor: pointer; transition: background 0.15s; }
+        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody tr:hover { background: #fef3c7 !important; }
+        tbody tr.selected-row { background: #fef3c7 !important; outline: 2px solid #f59e0b; }
+
+        /* لای ڕاست: کارتی داخڵکردن و دوگمەکان وەک سی شارپ */
+        .input-sidebar { background: #ffffff; border-right: 1px solid #e2e8f0; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.03); }
+        .field-group { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+        .field-group label { font-size: 12.5px; font-weight: 800; color: #334155; }
+        .c-input { width: 100%; padding: 10px 12px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 700; color: #0f172a; outline: none; }
+        .c-input:focus { border-color: #10b981; background: #ffffff; }
+
+        .c-amount { font-size: 16px; font-weight: 800; color: #10b981; background: #f1f5f9; text-align: center; }
+
+        .btn-grid-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+        .action-btn { border: none; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; text-align: center; }
+        .btn-save { background: #10b981; color: #ffffff; }
+        .btn-update { background: #f59e0b; color: #0f172a; }
+        .btn-delete { background: #ef4444; color: #ffffff; }
+        .btn-clear { background: #64748b; color: #ffffff; }
+
+        .card-total-box { background: #fef3c7; border: 1.5px solid #fde68a; border-radius: 10px; padding: 12px 14px; text-align: right; margin-top: 8px; }
+        .card-total-label { font-size: 11.5px; font-weight: 800; color: #b45309; margin-bottom: 2px; }
+        .card-total-val { font-size: 20px; font-weight: 900; color: #b45309; }
+
+        @media (max-width: 1000px) {
+            .masrwf-layout { grid-template-columns: 1fr; }
+            .input-sidebar { border-right: none; border-top: 2px solid #e2e8f0; }
+        }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <h2 style="color:#ef4444;">💸 بەڕێوەبردنی مەسرووفات و خەرجییەکان</h2>
+    <header class="header-panel">
+        <div class="header-title">🧾 سیستەمی بەڕێوەبردنی مەسرووفات و خەرجییەکان</div>
         <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
-    </div>
+    </header>
 
-    <div class="masrwf-form-card">
-        <h3 style="color:#a7f3d0; margin-bottom:14px; font-size:15px;">➕ تۆمارکردنی خەرجی نوێ</h3>
-        <form method="POST" action="/admin/save_masrwf">
-            <div class="masrwf-grid">
-                <div>
-                    <label>بەرواری مەسرووف:</label>
-                    <input type="date" name="m_date" value="{{ today_date }}" required>
+    <div class="masrwf-layout">
+        <!-- بەشی چەپ: خشتە و فلتەر -->
+        <main class="grid-area">
+            <div class="filter-bar">
+                <form method="GET" action="/admin/masrwf" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; width:100%;">
+                    <div class="filter-item">
+                        <label>لە بەرواری:</label>
+                        <input type="date" name="from_date" value="{{ from_date }}" class="filter-input">
+                    </div>
+                    <div class="filter-item">
+                        <label>تا بەرواری:</label>
+                        <input type="date" name="to_date" value="{{ to_date }}" class="filter-input">
+                    </div>
+                    <button type="submit" class="btn-filter">🔍 فلتەر</button>
+                    <a href="/admin/masrwf" class="btn-reset">🔄 هەمووی</a>
+                </form>
+            </div>
+
+            <div class="table-wrap">
+                <table id="tblMasrwf">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">ژمارە</th>
+                            <th>بەروار</th>
+                            <th>جۆری مەسرووف</th>
+                            <th>مەسرووفکەر</th>
+                            <th>بڕی مەسرووف</th>
+                            <th>تێبینی</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rows %}
+                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ r.m_date }}</td>
+                            <td style="font-weight:700;">{{ r.masrwf_type }}</td>
+                            <td style="color:#0284c7; font-weight:700;">{{ r.spent_by }}</td>
+                            <td style="color:#ef4444; font-weight:800; font-size:14px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                            <td style="color:#475569; text-align:right;">{{ r.notes }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="padding:40px; color:#94a3b8;">هیچ مەسرووفێک لەم ماوەیەدا تۆمار نەکراوە</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- بەشی ڕاست: کارتەی داخڵکردنی لای ڕاست -->
+        <aside class="input-sidebar">
+            <form id="masrwfForm" method="POST" action="/admin/save_masrwf">
+                <input type="hidden" id="selected_id" name="id" value="0">
+
+                <div class="field-group">
+                    <label>📅 بەرواری خەرجی:</label>
+                    <input type="date" id="txt_date" name="masrwf_date" class="c-input" value="{{ today_date }}" required>
                 </div>
-                <div>
-                    <label>ناوی مەسرووف (کۆمبۆبۆکس):</label>
-                    <input list="namesList" name="masrwf_name" placeholder="هەڵبژێرە یان بنووسە..." required>
-                    <datalist id="namesList">
-                        {% for n in existing_names %}<option value="{{ n }}">{% endfor %}
-                    </datalist>
-                </div>
-                <div>
-                    <label>جۆری مەسرووف (کۆمبۆبۆکس):</label>
-                    <input list="typesList" name="m_type" placeholder="هەڵبژێرە یان بنووسە..." required>
-                    <datalist id="typesList">
+
+                <div class="field-group">
+                    <label>🏷️ جۆری مەسرووف:</label>
+                    <input list="typeOptions" id="txt_type" name="masrwf_type" class="c-input" placeholder="هەڵبژێرە یان بنووسە..." required autocomplete="off">
+                    <datalist id="typeOptions">
                         {% for t in existing_types %}<option value="{{ t }}">{% endfor %}
                     </datalist>
                 </div>
-                <div>
-                    <label>شوێن / کێ خەرجی کردووە:</label>
-                    <input list="spendersList" name="spent_by" placeholder="هەڵبژێرە یان بنووسە...">
-                    <datalist id="spendersList">
+
+                <div class="field-group">
+                    <label>👤 کێ مەسرووفی کردووە؟:</label>
+                    <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" placeholder="هەڵبژێرە یان بنووسە..." autocomplete="off">
+                    <datalist id="spentOptions">
                         {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
                     </datalist>
                 </div>
-                <div>
-                    <label>تێبینی:</label>
-                    <input list="notesList" name="notes" placeholder="هەڵبژێرە یان بنووسە...">
-                    <datalist id="notesList">
-                        {% for nt in existing_notes %}<option value="{{ nt }}">{% endfor %}
-                    </datalist>
+
+                <div class="field-group">
+                    <label style="color:#d97706;">💵 بڕی پارە (دینار):</label>
+                    <input type="text" id="txt_amount" name="amount_display" class="c-input c-amount" placeholder="0" required oninput="formatCurrency(this)">
+                    <input type="hidden" id="real_amount" name="amount" value="0">
                 </div>
-                <div>
-                    <label style="color:#f87171;">بڕی مەسرووف:</label>
-                    <input type="number" name="amount" placeholder="25000" required>
+
+                <div class="field-group">
+                    <label>📝 تێبینی و ڕوونکردنەوە:</label>
+                    <textarea id="txt_notes" name="notes" class="c-input" style="height: 65px; resize:none;" placeholder="تێبینی بنووسە..."></textarea>
                 </div>
-                <div>
-                    <button type="submit" class="btn-save-m">💾 تۆمارکردن</button>
+
+                <div class="btn-grid-actions">
+                    <button type="button" class="action-btn btn-save" onclick="submitForm('/admin/save_masrwf')">💾 تۆمارکردن</button>
+                    <button type="button" class="action-btn btn-update" onclick="submitForm('/admin/update_masrwf')">✏️ گۆڕانکاری</button>
+                    <button type="button" class="action-btn btn-delete" onclick="deleteRecord()">🗑️ سڕینەوە</button>
+                    <button type="button" class="action-btn btn-clear" onclick="clearInputs()">🧹 پاککردنەوە</button>
                 </div>
+            </form>
+
+            <div class="card-total-box">
+                <div class="card-total-label">کۆی گشتی خەرجییەکان:</div>
+                <div class="card-total-val" id="lblTotal">{{ "{:,.0f}".format(total_m) }} دینار</div>
             </div>
-        </form>
+        </aside>
     </div>
 
-    <div class="summary-card">
-        <span style="font-size:16px; font-weight:800;">کۆی گشتی خەرجییەکان:</span>
-        <span style="font-size:22px; font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(total_m) }} د.ع</span>
-    </div>
+    <script>
+        let currentSelectedId = 0;
 
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>بەروار</th>
-                    <th>ناوی مەسرووف</th>
-                    <th>جۆری مەسرووف</th>
-                    <th>شوێن / کێ خەرجی کردووە</th>
-                    <th>بڕی پارە</th>
-                    <th>تێبینی</th>
-                    <th>کردار</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in rows %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ r.m_date }}</td>
-                    <td style="font-weight:700; color:#10b981;">{{ r.masrwf_name }}</td>
-                    <td>{{ r.masrwf_type }}</td>
-                    <td>{{ r.spent_by }}</td>
-                    <td style="font-weight:800; color:#ef4444;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
-                    <td>{{ r.notes }}</td>
-                    <td>
-                        <a href="/admin/delete_masrwf/{{ r.id }}" class="btn-del-m" onclick="return confirm('دڵنیایت؟')">🗑️ سڕینەوە</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="8" style="text-align:center; padding:24px; color:#94a3b8;">هیچ مەسرووفێک نییە</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        function formatCurrency(input) {
+            let val = input.value.replace(/,/g, '').trim();
+            if (!isNaN(val) && val.length > 0) {
+                let num = parseFloat(val);
+                input.value = num.toLocaleString('en-US');
+                document.getElementById('real_amount').value = num;
+            } else {
+                input.value = '';
+                document.getElementById('real_amount').value = '0';
+            }
+        }
+
+        function selectMasrwfRow(row, id, date, type, spentBy, amount, notes) {
+            document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
+            row.classList.add('selected-row');
+
+            currentSelectedId = id;
+            document.getElementById('selected_id').value = id;
+            document.getElementById('txt_date').value = date;
+            document.getElementById('txt_type').value = type;
+            document.getElementById('txt_spent_by').value = spentBy;
+            
+            document.getElementById('real_amount').value = amount;
+            document.getElementById('txt_amount').value = Number(amount).toLocaleString('en-US');
+            
+            document.getElementById('txt_notes').value = notes;
+        }
+
+        function clearInputs() {
+            currentSelectedId = 0;
+            document.getElementById('selected_id').value = '0';
+            document.getElementById('txt_type').value = '';
+            document.getElementById('txt_spent_by').value = '';
+            document.getElementById('txt_amount').value = '';
+            document.getElementById('real_amount').value = '0';
+            document.getElementById('txt_notes').value = '';
+            document.getElementById('txt_date').value = '{{ today_date }}';
+            document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
+        }
+
+        function submitForm(actionUrl) {
+            let form = document.getElementById('masrwfForm');
+            let typeVal = document.getElementById('txt_type').value.trim();
+            let amtVal = parseFloat(document.getElementById('real_amount').value) || 0;
+
+            if (actionUrl.includes('update_masrwf') && currentSelectedId <= 0) {
+                alert('تکایە سەرەتا دێڕێک لە خشتەکە دەستنیشان بکە بۆ گۆڕانکاری!');
+                return;
+            }
+
+            if (!typeVal) {
+                alert('تکایە جۆری مەسرووف دیاری بکە یان بنووسە!');
+                return;
+            }
+
+            if (amtVal <= 0) {
+                alert('تکایە بڕی پارەکە بە دروستی بنووسە!');
+                return;
+            }
+
+            form.action = actionUrl;
+            form.submit();
+        }
+
+        function deleteRecord() {
+            if (currentSelectedId <= 0) {
+                alert('تکایە سەرەتا دێڕێک لە خشتەکە هەڵبژێرە بۆ سڕینەوە!');
+                return;
+            }
+
+            if (confirm('ئایا دڵنیایت لە سڕینەوەی ئەم تۆمارەی خەرجییە؟')) {
+                window.location.href = '/admin/delete_masrwf/' + currentSelectedId;
+            }
+        }
+    </script>
 </body>
 </html>
 """
@@ -1323,7 +1443,7 @@ WEB_QASA_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی شاگردەکان (نوێکراوە لەگەڵ دەستکاری، ئامادەبوون و فلتەر)
+# پەڕەی شاگردەکان
 # ==========================================
 WEB_WORKERS_TEMPLATE = """
 <!DOCTYPE html>
@@ -1598,7 +1718,7 @@ QR_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# تێمپلێتەکانی ئایپاد و دیسکتۆپ (سەفەری لە هێدەرە)
+# تێمپلێتەکانی ئایپاد و دیسکتۆپ
 # ==========================================
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -1721,9 +1841,6 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
-# ==========================================
-# مێنیوی ئایپاد/دیسکتۆپ (لەگەڵ دوگمە و فەنکشنی گواستنەوەی مێز)
-# ==========================================
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1850,7 +1967,6 @@ DESKTOP_TEMPLATE = """
         </div>
     </div>
 
-    <!-- مۆداڵی گواستنەوەی مێز -->
     <div class="modal-transfer" id="transferModal">
         <div class="modal-transfer-box">
             <h3 style="color:var(--gold); margin-bottom:12px;">گواستنەوە بۆ مێزێکی تر</h3>
@@ -2470,7 +2586,7 @@ def logout():
     return redirect(url_for('login'))
 
 # ==========================================
-# ڕێڕەوەکانی ئەدمین (داشبۆرد، بەکارهێنەر، کاشێر، و هتد)
+# ڕێڕەوەکانی ئەدمین
 # ==========================================
 @app.route('/admin')
 def admin_dashboard():
@@ -2521,9 +2637,9 @@ def admin_amar():
     end_dt = f"{end_date} 23:59:59"
 
     report_rows = []
-    total_sales = 0
-    total_expenses = 0
-    total_workers_wage = 0
+    total_sales = 0.0
+    total_expenses = 0.0
+    total_workers_wage = 0.0
     total_items_count = 0
 
     conn = None
@@ -2547,31 +2663,41 @@ def admin_amar():
             cur.execute(query_sales, (start_dt, end_dt))
             report_rows = cur.fetchall()
 
-            total_items_count = sum(int(r['qty']) for r in report_rows)
-            total_sales = sum(float(r['total']) for r in report_rows)
+            items_total_sum = sum(float(r['total']) for r in report_rows) if report_rows else 0.0
+            total_items_count = sum(int(r['qty']) for r in report_rows) if report_rows else 0
 
-            cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= %s AND transaction_time <= %s", (start_dt, end_dt))
-            qasa_row = cur.fetchone()
-            qasa_sum = float(qasa_row['s']) if qasa_row else 0
-            if total_sales == 0 and qasa_sum > 0:
-                total_sales = qasa_sum
+            try:
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= %s AND transaction_time <= %s", (start_dt, end_dt))
+                qasa_row = cur.fetchone()
+                total_sales = float(qasa_row['s']) if qasa_row else 0.0
+            except:
+                total_sales = 0.0
 
-            cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date >= %s AND masrwf_date <= %s", (start_dt, end_dt))
-            exp_row = cur.fetchone()
-            total_expenses = float(exp_row['e']) if exp_row else 0
+            if total_sales == 0:
+                total_sales = items_total_sum
 
-            query_workers = """
-                SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
-                FROM workers w
-                INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                WHERE wa.date >= %s AND wa.date <= %s;
-            """
-            cur.execute(query_workers, (start_date, end_date))
-            work_row = cur.fetchone()
-            total_workers_wage = float(work_row['w_due']) if work_row else 0
+            try:
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date >= %s AND masrwf_date <= %s", (start_dt, end_dt))
+                exp_row = cur.fetchone()
+                total_expenses = float(exp_row['e']) if exp_row else 0.0
+            except:
+                total_expenses = 0.0
+
+            try:
+                query_workers = """
+                    SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
+                    FROM workers w
+                    INNER JOIN worker_attendance wa ON w.id = wa.worker_id
+                    WHERE wa.date >= %s AND wa.date <= %s;
+                """
+                cur.execute(query_workers, (start_date, end_date))
+                work_row = cur.fetchone()
+                total_workers_wage = float(work_row['w_due']) if work_row else 0.0
+            except:
+                total_workers_wage = 0.0
 
     except Exception as ex:
-        print("Amar query error:", ex)
+        print("LoadAmarData error:", ex)
     finally:
         if conn:
             try: conn.close()
@@ -2588,6 +2714,7 @@ def admin_amar():
         total_sales=total_sales,
         total_expenses=total_expenses,
         total_workers_wage=total_workers_wage,
+        total_all_expenses=total_all_expenses,
         net_profit=net_profit,
         total_items_count=total_items_count
     )
@@ -2779,33 +2906,59 @@ def admin_qasa():
             except: pass
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
 
+# ==========================================
+# بەشی نوێکراوەی مەسرووفات بە لۆژیکی سی شارپ
+# ==========================================
 @app.route('/admin/masrwf')
 def admin_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    
+    from_date = request.args.get('from_date', '')
+    to_date = request.args.get('to_date', '')
+
     rows = []
     tot = 0
-    existing_names = ['کڕینی گۆشت', 'کڕینی سەوزە', 'کرێی کارەبا', 'کڕینی برنج', 'پاککەرەوە', 'گاز و نەوت', 'کڕینی میوە', 'مەسرەفی ڕۆژانە']
-    existing_types = ['کڕین بۆ چێشتخانە', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'ترانسپۆرت', 'چاککردنەوە']
+    existing_types = ['کڕین بۆ چێشتخانە', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'ترانسپۆرت', 'چاککردنەوە', 'کڕینی گۆشت', 'کڕینی سەوزە', 'کڕینی برنج', 'گاز و نەوت']
     existing_spenders = ['بەڕێوەبەر', 'کاشێر', 'مەتبەخ', 'گارسۆن', 'شۆفێر', 'کڕیار']
-    existing_notes = ['بۆ مەتبەخ', 'بۆ کاشێر', 'پارەی تەواو دراوە', 'قەرز ماوەتەوە', 'پێداویستی سەرەکی']
     
     conn = None
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT id, DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date, masrwf_name, masrwf_type, spent_by, amount, notes FROM masrwf ORDER BY id DESC")
+            query = """
+                SELECT 
+                    id, 
+                    DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
+                    DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
+                    masrwf_type, 
+                    spent_by, 
+                    amount, 
+                    IFNULL(notes, '') AS notes 
+                FROM masrwf 
+            """
+            params = []
+            if from_date and to_date:
+                query += " WHERE masrwf_date BETWEEN %s AND %s "
+                params.append(f"{from_date} 00:00:00")
+                params.append(f"{to_date} 23:59:59")
+            
+            query += " ORDER BY id DESC;"
+            cur.execute(query, params)
             rows = cur.fetchall()
             tot = sum(float(r['amount']) for r in rows)
 
-            for r in rows:
-                if r.get('masrwf_name') and r['masrwf_name'] not in existing_names:
-                    existing_names.append(r['masrwf_name'])
-                if r.get('masrwf_type') and r['masrwf_type'] not in existing_types:
-                    existing_types.append(r['masrwf_type'])
-                if r.get('spent_by') and r['spent_by'] not in existing_spenders:
-                    existing_spenders.append(r['spent_by'])
-                if r.get('notes') and r['notes'] not in existing_notes:
-                    existing_notes.append(r['notes'])
+            cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type != '' AND masrwf_type IS NOT NULL ORDER BY masrwf_type ASC;")
+            for r in cur.fetchall():
+                t = r['masrwf_type'].strip()
+                if t and t not in existing_types:
+                    existing_types.append(t)
+
+            cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by != '' AND spent_by IS NOT NULL ORDER BY spent_by ASC;")
+            for r in cur.fetchall():
+                s = r['spent_by'].strip()
+                if s and s not in existing_spenders:
+                    existing_spenders.append(s)
+
     except Exception as ex:
         print("Masrwf error:", ex)
     finally:
@@ -2818,36 +2971,64 @@ def admin_masrwf():
         rows=rows, 
         total_m=tot, 
         today_date=datetime.now().strftime('%Y-%m-%d'),
-        existing_names=existing_names,
+        from_date=from_date,
+        to_date=to_date,
         existing_types=existing_types,
-        existing_spenders=existing_spenders,
-        existing_notes=existing_notes
+        existing_spenders=existing_spenders
     )
 
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
-    m_date = request.form.get('m_date')
-    m_name = request.form.get('masrwf_name', '').strip()
-    m_type = request.form.get('m_type', '').strip()
+    m_date = request.form.get('masrwf_date')
+    m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
     notes = request.form.get('notes', '').strip()
     
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (m_date, m_name, m_type, spent_by, amt, notes))
-            conn.commit()
-    except Exception as ex:
-        print("Save masrwf error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
+    if m_type and amt > 0:
+        conn = None
+        try:
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO masrwf (masrwf_date, masrwf_type, spent_by, amount, notes) 
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (m_date, m_type, spent_by, amt, notes))
+                conn.commit()
+        except Exception as ex:
+            print("Save masrwf error:", ex)
+        finally:
+            if conn:
+                try: conn.close()
+                except: pass
+    return redirect(url_for('admin_masrwf'))
+
+@app.route('/admin/update_masrwf', methods=['POST'])
+def admin_update_masrwf():
+    m_id = int(request.form.get('id', 0))
+    m_date = request.form.get('masrwf_date')
+    m_type = request.form.get('masrwf_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
+    amt = float(request.form.get('amount', 0))
+    notes = request.form.get('notes', '').strip()
+    
+    if m_id > 0 and m_type and amt > 0:
+        conn = None
+        try:
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE masrwf 
+                    SET masrwf_date = %s, masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
+                    WHERE id = %s
+                """, (m_date, m_type, spent_by, amt, notes, m_id))
+                conn.commit()
+        except Exception as ex:
+            print("Update masrwf error:", ex)
+        finally:
+            if conn:
+                try: conn.close()
+                except: pass
     return redirect(url_for('admin_masrwf'))
 
 @app.route('/admin/delete_masrwf/<int:mid>')
@@ -2867,7 +3048,7 @@ def admin_delete_masrwf(mid):
     return redirect(url_for('admin_masrwf'))
 
 # ==========================================
-# بەشی حیساباتی شاگردەکان (فلتەری کات، ئامادەبوون و دەستکاری)
+# بەشی حیساباتی شاگردەکان
 # ==========================================
 @app.route('/admin/workers')
 def admin_workers():
@@ -3087,7 +3268,7 @@ def admin_delete_food(fid):
     return redirect(url_for('admin_menu_manager'))
 
 # ==========================================
-# ڕێڕەوەکانی ئۆردەر، دیسکتۆپ، مۆبایل و گواستنەوەی مێز
+# ڕێڕەوەکانی ئۆردەر و مێزەکان
 # ==========================================
 @app.route('/desktop/tables')
 def desktop_tables():
