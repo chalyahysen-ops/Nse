@@ -391,10 +391,10 @@ WEB_AMAR_TEMPLATE = """
         .filter-item input { background: #0f172a; border: 1.5px solid #334155; border-radius: 8px; padding: 8px 14px; color: #fff; font-size: 13px; outline: none; }
         .btn-search { background: #10b981; color: #03261d; border: none; padding: 9px 22px; border-radius: 8px; font-weight: 800; cursor: pointer; }
 
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 22px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
         .sum-card { background: #1e293b; border: 1.5px solid #334155; border-radius: 14px; padding: 16px; text-align: center; }
         .sum-label { font-size: 12.5px; color: #94a3b8; font-weight: 700; margin-bottom: 6px; }
-        .sum-val { font-size: 20px; font-weight: 800; }
+        .sum-val { font-size: 18px; font-weight: 800; }
 
         .table-responsive { overflow-x: auto; background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
         table { width: 100%; border-collapse: collapse; text-align: center; }
@@ -402,15 +402,33 @@ WEB_AMAR_TEMPLATE = """
         td { padding: 10px; border-bottom: 1px solid #334155; font-size: 13px; }
         tr:nth-child(even) { background: #162032; }
 
+        /* بەشی تایبەت بە چاپی A4 وەک فۆڕمی سی شارپ */
+        .print-only-header, .print-only-footer { display: none; }
+
         @media print {
-            body { background: #fff !important; color: #000 !important; padding: 0 !important; }
-            .top-bar, .filter-card, .btn-print, .btn-dash { display: none !important; }
-            .sum-card { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; }
-            .sum-val { color: #000 !important; }
+            body { background: #fff !important; color: #000 !important; padding: 10mm !important; }
+            .top-bar, .filter-card, .btn-print, .btn-dash, .summary-grid { display: none !important; }
+            
+            .print-only-header { display: block !important; text-align: center; margin-bottom: 15px; }
+            .print-only-header h2 { font-size: 18px; color: #d97706 !important; margin-bottom: 4px; }
+            .print-only-header p { font-size: 12px; color: #333; margin-bottom: 10px; }
+            .print-divider { border-top: 2px solid #d97706; margin-bottom: 15px; }
+
+            .table-responsive { background: #fff !important; border: 1px solid #000 !important; }
             table { border: 1px solid #000 !important; }
-            th { background: #e2e8f0 !important; color: #000 !important; border: 1px solid #000 !important; }
-            td { color: #000 !important; border: 1px solid #000 !important; }
+            th { background: #e2e8f0 !important; color: #000 !important; border: 1px solid #000 !important; font-size: 11px; }
+            td { color: #000 !important; border: 1px solid #000 !important; font-size: 11px; padding: 6px; }
             tr:nth-child(even) { background: #fff !important; }
+
+            .print-only-footer { 
+                display: block !important; 
+                margin-top: 15px; 
+                border: 1px solid #000; 
+                background: #f8fafc; 
+                padding: 12px; 
+                border-radius: 6px; 
+            }
+            .print-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; font-weight: bold; }
         }
     </style>
 </head>
@@ -421,6 +439,13 @@ WEB_AMAR_TEMPLATE = """
             <button type="button" class="btn-print" onclick="window.print()">🖨️ چاپی ڕاپۆرت (A4)</button>
             <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
         </div>
+    </div>
+
+    <!-- سەرپەڕەی فەرمی چاپی A4 -->
+    <div class="print-only-header">
+        <h2>✨ شاهور ڕێستۆرانت - ڕاپۆرتی گشتی فرۆش و دارایی</h2>
+        <p>ماوەی بەروار: لە [{{ start_date }}]  تا  [{{ end_date }}]</p>
+        <div class="print-divider"></div>
     </div>
 
     <div class="filter-card">
@@ -443,7 +468,7 @@ WEB_AMAR_TEMPLATE = """
             <div class="sum-val" style="color: #10b981;">{{ "{:,.0f}".format(total_sales) }} د.ع</div>
         </div>
         <div class="sum-card">
-            <div class="sum-label">💸 کۆی مەسرووفات</div>
+            <div class="sum-label">💸 کۆی خەرجی مەسرووف</div>
             <div class="sum-val" style="color: #ef4444;">{{ "{:,.0f}".format(total_expenses) }} د.ع</div>
         </div>
         <div class="sum-card">
@@ -451,7 +476,11 @@ WEB_AMAR_TEMPLATE = """
             <div class="sum-val" style="color: #f59e0b;">{{ "{:,.0f}".format(total_workers_wage) }} د.ع</div>
         </div>
         <div class="sum-card">
-            <div class="sum-label">✨ قازانجی سافی</div>
+            <div class="sum-label">🧾 کۆی هەموو خەرجییەکان</div>
+            <div class="sum-val" style="color: #e2e8f0;">{{ "{:,.0f}".format(total_all_expenses) }} د.ع</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">✨ قازانجی سافی (بڕی ماوە)</div>
             <div class="sum-val" style="color: {{ '#10b981' if net_profit >= 0 else '#ef4444' }};">
                 {{ "{:,.0f}".format(net_profit) }} د.ع
             </div>
@@ -466,7 +495,7 @@ WEB_AMAR_TEMPLATE = """
         <table>
             <thead>
                 <tr>
-                    <th>ڕیزبەندی</th>
+                    <th style="width: 70px;">ڕیزبەندی</th>
                     <th style="text-align:right;">ناوی خواردن / خواردنەوە</th>
                     <th>کۆی ژمارەی فرۆشراو</th>
                     <th>نرخی تاک</th>
@@ -490,10 +519,23 @@ WEB_AMAR_TEMPLATE = """
             </tbody>
         </table>
     </div>
+
+    <!-- پێڕستی کۆتایی لە کاتی چاپکردن لەسەر پەڕەی A4 -->
+    <div class="print-only-footer">
+        <div class="print-footer-grid">
+            <div>کۆی گشتی ژمارەی خواردن: {{ "{:,.0f}".format(total_items_count) }} دانە</div>
+            <div style="color: darkgreen;">کۆی گشتی فرۆش: {{ "{:,.0f}".format(total_sales) }} دینار</div>
+            <div style="color: darkred;">کۆی خەرجی مەسرووف: {{ "{:,.0f}".format(total_expenses) }} دینار</div>
+            <div style="color: darkred;">کۆی کرێی شاگردەکان: {{ "{:,.0f}".format(total_workers_wage) }} دینار</div>
+            <div>کۆی هەموو خەرجییەکان: {{ "{:,.0f}".format(total_all_expenses) }} دینار</div>
+            <div style="font-size: 13px; color: {{ 'darkgreen' if net_profit >= 0 else 'red' }};">
+                قازانجی سافی (بڕی ماوە): {{ "{:,.0f}".format(net_profit) }} دینار
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 """
-
 # ==========================================
 # پەڕەی بەڕێوەبردنی بەکارهێنەران
 # ==========================================
