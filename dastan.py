@@ -2432,6 +2432,9 @@ def admin_amar():
     end_date = request.args.get('end_date', today_str)
 
     report_rows = []
+    expense_rows = []
+    worker_rows = []
+    
     total_sales = 0.0
     total_expenses = 0.0
     total_workers_wage = 0.0
@@ -2441,6 +2444,7 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # ١. وەرگرتن و کۆکردنەوەی فرۆش لەو ماوەیەدا
             query_sales = """
                 SELECT food_name, quantity, price
                 FROM froshtn
@@ -2471,25 +2475,41 @@ def admin_amar():
             total_sales = sum(r['total'] for r in report_rows)
             total_items_count = sum(r['qty'] for r in report_rows)
 
+            # ٢. وەرگرتنی وردەکاریی مەسرووفات لەو ماوەیەدا
             try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s", (start_date, end_date))
-                exp_row = cur.fetchone()
-                total_expenses = float(exp_row['e']) if exp_row else 0.0
-            except:
-                total_expenses = 0.0
+                query_exp = """
+                    SELECT DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
+                           masrwf_name, masrwf_type, spent_by, amount, notes 
+                    FROM masrwf 
+                    WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s
+                    ORDER BY masrwf_date DESC, id DESC
+                """
+                cur.execute(query_exp, (start_date, end_date))
+                expense_rows = cur.fetchall()
+                total_expenses = sum(float(r['amount'] or 0) for r in expense_rows)
+            except Exception as ex:
+                print("Amar Expenses Fetch Error:", ex)
 
+            # ٣. وەرگرتنی وردەکاریی کرێ و شایستەی شاگردەکان لەو ماوەیەدا
             try:
                 query_workers = """
-                    SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
+                    SELECT w.name, w.phone, w.salary,
+                           COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
+                           (COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) AS total_salary,
+                           IFNULL(SUM(wa.bonus), 0) AS total_bonus,
+                           ((COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) + IFNULL(SUM(wa.bonus), 0)) AS total_due
                     FROM workers w
                     INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                    WHERE wa.date >= %s AND wa.date <= %s;
+                    WHERE wa.date >= %s AND wa.date <= %s
+                    GROUP BY w.id, w.name, w.phone, w.salary
+                    HAVING total_due > 0
+                    ORDER BY total_due DESC;
                 """
                 cur.execute(query_workers, (start_date, end_date))
-                work_row = cur.fetchone()
-                total_workers_wage = float(work_row['w_due']) if work_row else 0.0
-            except:
-                total_workers_wage = 0.0
+                worker_rows = cur.fetchall()
+                total_workers_wage = sum(float(w['total_due'] or 0) for w in worker_rows)
+            except Exception as ex:
+                print("Amar Workers Fetch Error:", ex)
 
     except Exception as ex:
         print("LoadAmarData error:", ex)
@@ -2506,6 +2526,8 @@ def admin_amar():
         start_date=start_date,
         end_date=end_date,
         report_rows=report_rows,
+        expense_rows=expense_rows,
+        worker_rows=worker_rows,
         total_sales=total_sales,
         total_expenses=total_expenses,
         total_workers_wage=total_workers_wage,
@@ -2513,7 +2535,6 @@ def admin_amar():
         net_profit=net_profit,
         total_items_count=total_items_count
     )
-
 @app.route('/admin/users')
 def admin_users():
     if not session.get('authenticated') or session.get('role') != 'admin':
