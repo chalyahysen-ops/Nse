@@ -2902,6 +2902,75 @@ def admin_qasa():
             try: conn.close()
             except: pass
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
+    # ==========================================
+# پەڕەی قاسە (Qasa)
+# ==========================================
+WEB_QASA_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قاسە - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .summary-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; margin-bottom: 24px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .summary-item { font-size: 16px; font-weight: bold; background: #03261d; padding: 12px 20px; border-radius: 10px; border: 1px solid #0b5e4a; }
+        
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: #085341; padding: 12px 14px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px 14px; border-bottom: 1px solid #0b5e4a; font-size: 13px; color: #f8fafc; }
+        tr:hover { background: #085341; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">💵 قاسەی فرۆشتن (٢٤ کاتژمێری ڕابردوو)</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-item" style="color: #10b981;">💰 کۆی گشتی وەرگیراو: {{ "{:,.0f}".format(total_received) }} د.ع</div>
+        <div class="summary-item" style="color: #ef4444;">🔻 کۆی گشتی داشکاندن: {{ "{:,.0f}".format(total_discount) }} د.ع</div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>کات و بەروار</th>
+                    <th>مێز / کڕیار</th>
+                    <th>بڕی واصڵکراو</th>
+                    <th>داشکاندن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in qasa_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td dir="ltr" style="text-align: right; color: #cbd5e1;">{{ r.transaction_time }}</td>
+                    <td style="color:#a7f3d0; font-weight:bold; font-size: 14px;">{{ r.place_id }}</td>
+                    <td style="color:#10b981; font-weight:bold; font-size: 15px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                    <td style="color:#ef4444;">{{ "{:,.0f}".format(r.discount) }} د.ع</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">هیچ واصڵکردنێک تۆمار نەکراوە لە ٢٤ کاتژمێری ڕابردوودا</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
 # ==========================================
 # ڕێڕەوەکانی بەڕێوەبردنی مەسرووفات و خەرجییەکان
 # ==========================================
