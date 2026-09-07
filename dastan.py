@@ -8,7 +8,8 @@ import re
 app = Flask(__name__)
 app.secret_key = 'shahoor_all_in_one_pos_2026'
 
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
+# سێشنەکە کورت دەکەینەوە تا بە بەردەوامی بە کراوەیی نەمێنێتەوە
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 
 # ڕێکخستنی فۆڵدەری ئەپلۆدکردنی وێنە
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
@@ -161,21 +162,30 @@ def ensure_all_tables():
 
 ensure_all_tables()
 
+# ==========================================
+# مەرجی توندی سکویریتی بۆ دڵنیابوونەوە لە Login
+# ==========================================
 @app.before_request
 def enforce_security():
     endpoint = request.endpoint or ''
+    
+    # لاپەڕە کراوەکان بۆ موشتەری و چوونەژوورەوە
     exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static', 'index']
     if endpoint in exempt_endpoints:
         return
 
+    # ڕێپێدان بە پەیوەندییە ناوەکییەکان (APIs)
     is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_', '/api_'))
     if is_api:
         return
 
+    # ئەگەر لۆگین نەبووبوو، ڕاستەوخۆ بیبە بۆ Login
     if not session.get('authenticated'):
         return redirect(url_for('login'))
 
+    # ئەگەر چوو بۆ لاپەڕەی ئەدمین دەبێت ڕۆڵەکەی ئەدمین بێت
     if request.path.startswith('/admin') and session.get('role') != 'admin':
+        session.clear()
         return redirect(url_for('login'))
 
 # ==========================================
@@ -2498,7 +2508,7 @@ CUSTOMER_MENU_TEMPLATE = """
 # ڕێڕەوەکانی سەرەکی و چوونەژوورەوە
 # ==========================================
 
-# چارەسەری کێشەی سکیوریتی و نەچوونەوە سەر Login لەکاتی ئینتەرکردن
+# کاتێک لە تایتڵ باڕ ئینتەر دەکەیت لەسەر دۆمەینەکە ڕاستەوخۆ دەتباتە سەر login
 @app.route('/')
 def index():
     session.clear()
@@ -2511,7 +2521,9 @@ def login():
         uname = normalize_digits(request.form.get('username', '')).strip()
         pwd = normalize_digits(request.form.get('password', '')).strip()
 
+        # چوونەژوورەوەی گارسۆن بە فۆڕمی بەتاڵ
         if uname == '' and pwd == '':
+            session.clear()
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
@@ -2536,6 +2548,7 @@ def login():
             if not user_row.get('is_active', 1):
                 return render_template_string(LOGIN_TEMPLATE, error='ئەم بەکارهێنەرە بلۆککراوە!')
 
+            session.clear()
             session.permanent = True
             session['authenticated'] = True
             session['user_id'] = user_row['id']
@@ -2556,19 +2569,23 @@ def login():
                 session['role'] = 'waiter'
                 return redirect(url_for('desktop_tables'))
 
+        # پاسوۆردە خێراکان
         if pwd in ['99', '٩٩', '222', '٢٢٢']:
+            session.clear()
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'admin'
             session['full_name'] = 'بەڕێوەبەر'
             return redirect(url_for('admin_dashboard'))
         elif pwd in ['345678', '٣٤٥٦٧٨']:
+            session.clear()
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'mobile_waiter'
             session['full_name'] = 'گارسۆنی مۆبایل'
             return redirect(url_for('mobile_waiter_tables'))
         elif pwd in ['22', '٢٢']:
+            session.clear()
             session.permanent = True
             session['authenticated'] = True
             session['role'] = 'waiter'
@@ -2590,6 +2607,7 @@ def logout():
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
         return redirect(url_for('login'))
 
     today_sales, today_expense, active_tables, total_workers = 0, 0, 0, 0
@@ -2625,10 +2643,10 @@ def admin_dashboard():
         total_workers=total_workers
     )
 
-# چارەسەری کۆتایی و یەکلاکەرەوەی بەشی ئامار بەپێی وێنەکەی MySQL
 @app.route('/admin/amar')
 def admin_amar():
     if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
         return redirect(url_for('login'))
 
     today = datetime.now()
@@ -2648,7 +2666,6 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # بەپێی وێنەکەت: created_at لە فۆرماتی TIMESTAMP دایە و خواردنەکان نیشانەی + یان پێوەیە
             query_sales = """
                 SELECT 
                     food_name,
@@ -2663,7 +2680,6 @@ def admin_amar():
             cur.execute(query_sales, (start_date, end_date))
             raw_data = cur.fetchall()
 
-            # کۆکردنەوە و پاککردنەوەی ناوی خواردنەکان (لابردنی + و بۆشایی)
             aggregated = {}
             for item in raw_data:
                 raw_name = str(item.get('food_name') or '').strip()
@@ -2729,6 +2745,7 @@ def admin_amar():
 @app.route('/admin/users')
 def admin_users():
     if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
         return redirect(url_for('login'))
     users = []
     conn = None
@@ -2839,7 +2856,9 @@ def admin_delete_user(uid):
 
 @app.route('/admin/cashier')
 def admin_cashier():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
     active_tables = []
     conn = None
     try:
@@ -2894,7 +2913,9 @@ def admin_complete_payment():
 
 @app.route('/admin/qasa')
 def admin_qasa():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
     rows = []
     tot_rec, tot_disc = 0, 0
     conn = None
@@ -2918,7 +2939,9 @@ def admin_qasa():
 # ==========================================
 @app.route('/admin/masrwf')
 def admin_masrwf():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
     
     from_date = request.args.get('from_date', '')
     to_date = request.args.get('to_date', '')
@@ -3059,7 +3082,9 @@ def admin_delete_masrwf(mid):
 # ==========================================
 @app.route('/admin/workers')
 def admin_workers():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
     today_dt = datetime.now()
     first_day_of_month = today_dt.replace(day=1).strftime('%Y-%m-%d')
     today_str = today_dt.strftime('%Y-%m-%d')
@@ -3175,7 +3200,9 @@ def admin_delete_worker(wid):
 
 @app.route('/admin/menu_manager')
 def admin_menu_manager():
-    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        session.clear()
+        return redirect(url_for('login'))
     foods = []
     categories = ['برژاو', 'کوڵاو', 'پەلەوەر', 'شەربەت و خواردنەوە', 'سەوزە و زەڵاتە', 'کوردیەکان', 'خواردنی خێرا', 'شۆربا', 'شیرینی']
     conn = None
