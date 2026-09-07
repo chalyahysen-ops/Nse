@@ -163,7 +163,8 @@ ensure_all_tables()
 @app.before_request
 def enforce_security():
     endpoint = request.endpoint or ''
-    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static', 'index']
+    # پەڕە و ئەندرۆپۆینتە کراوەکان کە پێویستیان بە چوونەژوورەوە نییە
+    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
     if endpoint in exempt_endpoints:
         return
 
@@ -372,7 +373,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی ئامار و قازانج (کۆدی خاوێنکراوەی فرۆشتن لە froshtn)
+# پەڕەی ئامار و قازانج (چارەسەرکراو)
 # ==========================================
 WEB_AMAR_TEMPLATE = """
 <!DOCTYPE html>
@@ -499,7 +500,7 @@ WEB_AMAR_TEMPLATE = """
                 {% for r in report_rows %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td style="text-align:right; font-weight:700;">{{ r.clean_food_name }}</td>
+                    <td style="text-align:right; font-weight:700;">{{ r.food_name }}</td>
                     <td style="color:#38bdf8; font-weight:800;">{{ "{:,.0f}".format(r.qty) }}</td>
                     <td>{{ "{:,.0f}".format(r.price) }} د.ع</td>
                     <td style="color:#10b981; font-weight:800;">{{ "{:,.0f}".format(r.total) }} د.ع</td>
@@ -1151,7 +1152,7 @@ WEB_MENU_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی مەسرووفات بە دیزاینی سی شارپ (Two Columns + Filters)
+# پەڕەی مەسرووفات
 # ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
@@ -1171,7 +1172,6 @@ WEB_MASRWF_TEMPLATE = """
 
         .masrwf-layout { display: grid; grid-template-columns: 1fr 370px; flex: 1; min-height: calc(100vh - 58px); }
 
-        /* لای چەپ: خشتە و فلتەر */
         .grid-area { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; background: #f8fafc; }
         
         .filter-bar { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -1192,7 +1192,6 @@ WEB_MASRWF_TEMPLATE = """
         tbody tr:hover { background: #fef3c7 !important; }
         tbody tr.selected-row { background: #fef3c7 !important; outline: 2px solid #f59e0b; }
 
-        /* لای ڕاست: کارتی داخڵکردن و دوگمەکان وەک سی شارپ */
         .input-sidebar { background: #ffffff; border-right: 1px solid #e2e8f0; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.03); }
         .field-group { display: flex; flex-direction: column; gap: 4px; text-align: right; }
         .field-group label { font-size: 12.5px; font-weight: 800; color: #334155; }
@@ -1225,7 +1224,6 @@ WEB_MASRWF_TEMPLATE = """
     </header>
 
     <div class="masrwf-layout">
-        <!-- بەشی چەپ: خشتە و فلتەر -->
         <main class="grid-area">
             <div class="filter-bar">
                 <form method="GET" action="/admin/masrwf" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; width:100%;">
@@ -1272,7 +1270,6 @@ WEB_MASRWF_TEMPLATE = """
             </div>
         </main>
 
-        <!-- بەشی ڕاست: کارتەی داخڵکردنی لای ڕاست -->
         <aside class="input-sidebar">
             <form id="masrwfForm" method="POST" action="/admin/save_masrwf">
                 <input type="hidden" id="selected_id" name="id" value="0">
@@ -2502,8 +2499,13 @@ CUSTOMER_MENU_TEMPLATE = """
 # ==========================================
 @app.route('/')
 def index():
-    session.clear()
-    return redirect(url_for('login'))
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    if session.get('role') == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    elif session.get('role') == 'mobile_waiter':
+        return redirect(url_for('mobile_waiter_tables'))
+    return redirect(url_for('desktop_tables'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -2600,6 +2602,12 @@ def admin_dashboard():
         with conn.cursor() as cur:
             cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= NOW() - INTERVAL 1 DAY")
             today_sales = float(cur.fetchone()['s'])
+            
+            # ئەگەر قاسە سفر بوو لە فڕۆشتنی ئەو ٢٤ کاتژمێرە وەریگرە
+            if today_sales == 0:
+                cur.execute("SELECT IFNULL(SUM(quantity * price), 0) AS s FROM froshtn WHERE created_at >= NOW() - INTERVAL 1 DAY AND food_name NOT LIKE '%قاپی نوێ%'")
+                today_sales = float(cur.fetchone()['s'])
+
             cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) = CURDATE()")
             today_expense = float(cur.fetchone()['e'])
             cur.execute("SELECT COUNT(DISTINCT table_cabin) AS c FROM froshtn WHERE table_cabin NOT LIKE '%[%' AND table_cabin != ''")
@@ -2653,7 +2661,7 @@ def admin_amar():
                     ROUND(AVG(price), 0) AS price,
                     CAST(SUM(quantity * price) AS DECIMAL(18, 0)) AS total
                 FROM froshtn
-                WHERE created_at >= %s AND created_at <= %s
+                WHERE created_at BETWEEN %s AND %s
                   AND food_name NOT LIKE '%قاپی نوێ%'
                   AND food_name != ''
                   AND food_name IS NOT NULL
@@ -2661,23 +2669,35 @@ def admin_amar():
                 ORDER BY SUM(quantity) DESC;
             """
             cur.execute(query_sales, (start_dt, end_dt))
-            report_rows = cur.fetchall()
+            raw_rows = cur.fetchall()
+
+            for r in raw_rows:
+                f_name = r['food_name'] or ''
+                # پاککردنەوەی ناوی خواردن لە نیشانەی زیادکراو
+                clean_name = f_name.replace('+ ', '').strip()
+                report_rows.append({
+                    'food_name': clean_name,
+                    'qty': int(r['qty']),
+                    'price': float(r['price']),
+                    'total': float(r['total'])
+                })
 
             items_total_sum = sum(float(r['total']) for r in report_rows) if report_rows else 0.0
             total_items_count = sum(int(r['qty']) for r in report_rows) if report_rows else 0
 
             try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= %s AND transaction_time <= %s", (start_dt, end_dt))
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time BETWEEN %s AND %s", (start_dt, end_dt))
                 qasa_row = cur.fetchone()
                 total_sales = float(qasa_row['s']) if qasa_row else 0.0
             except:
                 total_sales = 0.0
 
+            # ئەگەر لە قاسە تۆمار نەکرابوو، کۆی فرۆش لە خشتەی فرۆشتن بە وردی وەردەگرێت
             if total_sales == 0:
                 total_sales = items_total_sum
 
             try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date >= %s AND masrwf_date <= %s", (start_dt, end_dt))
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date BETWEEN %s AND %s", (start_dt, end_dt))
                 exp_row = cur.fetchone()
                 total_expenses = float(exp_row['e']) if exp_row else 0.0
             except:
@@ -2688,7 +2708,7 @@ def admin_amar():
                     SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
                     FROM workers w
                     INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                    WHERE wa.date >= %s AND wa.date <= %s;
+                    WHERE wa.date BETWEEN %s AND %s;
                 """
                 cur.execute(query_workers, (start_date, end_date))
                 work_row = cur.fetchone()
@@ -2907,7 +2927,7 @@ def admin_qasa():
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
 
 # ==========================================
-# بەشی نوێکراوەی مەسرووفات بە لۆژیکی سی شارپ
+# مەسرووفات
 # ==========================================
 @app.route('/admin/masrwf')
 def admin_masrwf():
