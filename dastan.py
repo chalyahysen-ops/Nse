@@ -150,10 +150,8 @@ def ensure_all_tables():
         print("Setup tables error:", ex)
     finally:
         if conn:
-            try:
-                conn.close()
-            except:
-                pass
+            try: conn.close()
+            except: pass
 
 ensure_all_tables()
 
@@ -306,19 +304,19 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/amar" class="module-card" style="border: 2px solid #f59e0b;">
                 <div class="module-top"><div class="module-icon">📊</div><span class="module-badge" style="background:#f59e0b; color:#fff;">سەربەخۆ</span></div>
                 <div class="module-title">ئامار و قازانج (ڕاپۆرت)</div>
-                <div class="module-desc">ڕاپۆرتی گشتی فرۆش لە froshtn، کۆی مەسرووفات و کرێی شاگرد، و قازانجی صافی.</div>
+                <div class="module-desc">ڕاپۆرتی گشتی فرۆش، کۆی مەسرووفات و کرێی شاگرد، و قازانجی صافی.</div>
             </a>
 
             <a href="/admin/cashier" class="module-card" style="border: 2px solid #10b981;">
                 <div class="module-top"><div class="module-icon">🛎️</div><span class="module-badge">کاشێر</span></div>
-                <div class="module-title">کاشێر و واصڵکردن (پرێنتەری کاشێر)</div>
-                <div class="module-desc">شاشەی مێزە داواکراوەکان بە شێوازی سی شارپ، دوگمەی +٥٠٠ و -٥٠٠، و چاپی وەسڵی ٨٠مم.</div>
+                <div class="module-title">کاشێر و واصڵکردن</div>
+                <div class="module-desc">شاشەی مێزە داواکراوەکان، دوگمەی +٥٠٠ و -٥٠٠، و چاپی وەسڵی ٨٠مم.</div>
             </a>
 
             <a href="/admin/users" class="module-card">
                 <div class="module-top"><div class="module-icon">🔐</div><span class="module-badge">بەکارهێنەر</span></div>
                 <div class="module-title">بەکارهێنەران و دەسەڵاتەکان</div>
-                <div class="module-desc">دانانی ناوی بەکارهێنەر و وشەی نهێنی، دەستکاری، بلۆککردن، سڕینەوە و دیاریکردنی ڕۆڵ.</div>
+                <div class="module-desc">دانانی ناوی بەکارهێنەر و وشەی نهێنی، دەستکاری، بلۆککردن، سڕینەوە.</div>
             </a>
 
             <a href="/admin/qasa" class="module-card">
@@ -330,37 +328,37 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <a href="/admin/masrwf" class="module-card">
                 <div class="module-top"><div class="module-icon">💸</div><span class="module-badge">مەسرووف</span></div>
                 <div class="module-title">مەسرووفات و خەرجی</div>
-                <div class="module-desc">تۆمارکردن بە کۆمبۆبۆکس، دەستکاری، سڕینەوە، و فلتەری بەروارەکان.</div>
+                <div class="module-desc">تۆمارکردن، دەستکاری، سڕینەوە، و فلتەری بەروارەکان.</div>
             </a>
 
-            <a href="/admin/workers" class="module-card">
-                <div class="module-top"><div class="module-icon">👥</div><span class="module-badge">شاگرد</span></div>
+            <a href="/admin/workers" class="module-card" style="border: 2px solid #38bdf8;">
+                <div class="module-top"><div class="module-icon">👥</div><span class="module-badge" style="background:#38bdf8; color:#03261d;">شاگرد</span></div>
                 <div class="module-title">حیساباتی شاگردەکان</div>
-                <div class="module-desc">تۆماری ئامادەبوون (هاتوو/نەهاتوو/مۆڵەت)، بەخشش، و ڕاپۆرتی حیساباتی شایستە.</div>
+                <div class="module-desc">ئامادەبوونی ڕۆژانە، فلتەری ڕۆژانە/مانگانە، بەخشش و دەستکاریکردنی مووچە.</div>
             </a>
 
             <a href="/admin/menu_manager" class="module-card">
                 <div class="module-top"><div class="module-icon">📖</div><span class="module-badge">مێنۆ</span></div>
-                <div class="module-title">بەڕێوەبردنی خواردنەکان (ئیدیت و ئەپلۆد)</div>
+                <div class="module-title">بەڕێوەبردنی خواردنەکان</div>
                 <div class="module-desc">زیادکردنی خواردنی نوێ، کۆمبۆبۆکسی پۆلێن، و ئەپلۆدکردنی وێنە ڕاستەوخۆ.</div>
             </a>
 
             <a href="/desktop/tables" class="module-card">
                 <div class="module-top"><div class="module-icon">🍽️</div><span class="module-badge">ئایپاد</span></div>
                 <div class="module-title">مێزەکان و گارسۆن (ئایپاد)</div>
-                <div class="module-desc">چوونە ناو شاشەی مێزەکان و ئۆردەرکردنی خواردن بۆ ئایپاد و دیسکتۆپ.</div>
+                <div class="module-desc">شاشەی مێزەکان، ئۆردەری خواردن و گواستنەوەی مێز.</div>
             </a>
 
             <a href="/mobile/tables" class="module-card">
                 <div class="module-top"><div class="module-icon">📱</div><span class="module-badge">مۆبایل</span></div>
                 <div class="module-title">مێزەکانی مۆبایل</div>
-                <div class="module-desc">شاشەی ئۆردەرکردنی خواردن تایبەت بە قەبارە و شاشەی مۆبایل.</div>
+                <div class="module-desc">شاشەی ئۆردەرکردنی خواردن تایبەت بە مۆبایل.</div>
             </a>
 
             <a href="/qr_manager" class="module-card">
                 <div class="module-top"><div class="module-icon">🖨️</div><span class="module-badge">QR</span></div>
                 <div class="module-title">بەڕێوەبردنی QR مێزەکان</div>
-                <div class="module-desc">چاپی ٩٠ کیوئاڕ کۆدەکە لەگەڵ دیاریکردنی مۆڵەت بۆ موشتەری.</div>
+                <div class="module-desc">چاپی ٩٠ کیوئاڕ کۆدەکە لەگەڵ دیاریکردنی مۆڵەتی ئۆردەر.</div>
             </a>
         </div>
     </main>
@@ -1283,45 +1281,180 @@ WEB_QASA_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی شاگردەکان
+# پەڕەی شاگردەکان (نوێکراوە لەگەڵ دەستکاری، ئامادەبوون و فلتەر)
 # ==========================================
 WEB_WORKERS_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
-    <meta charset="UTF-8"><title>شاگردەکان</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@700&display=swap" rel="stylesheet">
-    <style>* { box-sizing: border-box; font-family: 'Noto Kufi Arabic', sans-serif; } body { background:#03261d; color:#fff; padding:20px; } .btn-dash { background:#334155; color:#fff; text-decoration:none; padding:8px 16px; border-radius:8px; font-weight:bold; } table { width:100%; border-collapse:collapse; margin-top:20px; } th, td { padding:12px; border:1px solid #0b5e4a; text-align:center; } th { background:#064032; color:#10b981; } input { padding:8px; background:#03261d; border:1px solid #0b5e4a; color:#fff; border-radius:6px; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حیساباتی شاگردەکان - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .box-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+        .box-title { color: #10b981; font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; font-weight: 700; color: #a7f3d0; }
+        .form-input { padding: 9px 12px; background: #03261d; border: 1.5px solid #0b5e4a; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
+        .form-input:focus { border-color: #10b981; }
+        .btn-act { padding: 9px 18px; border-radius: 8px; border: none; font-weight: 800; cursor: pointer; font-size: 13px; }
+        .btn-add { background: #10b981; color: #03261d; }
+        .btn-filter { background: #3b82f6; color: #fff; }
+
+        .table-wrap { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #085341; padding: 12px; color: #a7f3d0; font-size: 13px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 10px; border-bottom: 1px solid #0b5e4a; font-size: 13px; }
+        tr:hover { background: #085341; }
+        .btn-edit { background: #3b82f6; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; border: none; font-weight: 700; }
+        .btn-del { color: #ef4444; text-decoration: none; font-weight: bold; font-size: 13px; }
+
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-content { background: #064032; border: 2px solid #0b5e4a; border-radius: 14px; width: 100%; max-width: 420px; padding: 20px; }
+    </style>
 </head>
 <body>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>👥 حیساباتی شاگردەکان</h2>
-        <a href="/admin" class="btn-dash">⬅️ گەڕانەوە بۆ داشبۆرد</a>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">👥 حیساباتی پێشکەوتووی شاگردەکان</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
     </div>
-    <div style="background:#064032; padding:16px; border-radius:12px; margin-top:20px;">
-        <h3>➕ زیادکردنی شاگرد</h3>
-        <form method="POST" action="/admin/add_worker" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-            <input type="text" name="name" placeholder="ناوی شاگرد" required>
-            <input type="text" name="phone" placeholder="تەلەفۆن">
-            <input type="number" name="salary" placeholder="مووچە" required>
-            <button type="submit" style="background:#10b981; color:#000; border:none; padding:8px 18px; border-radius:6px; font-weight:bold; cursor:pointer;">تۆمارکردن</button>
+
+    <div class="box-card">
+        <div class="box-title">🗓️ فلتەری حیسابات (ڕۆژانە / مانگانە بە ئارەزووی خۆت)</div>
+        <form method="GET" action="/admin/workers" class="form-row">
+            <div class="form-group">
+                <label>لە بەرواری:</label>
+                <input type="date" name="start_date" class="form-input" value="{{ start_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>تا بەرواری:</label>
+                <input type="date" name="end_date" class="form-input" value="{{ end_date }}" required>
+            </div>
+            <button type="submit" class="btn-act btn-filter">🔍 حیسابکردن</button>
+            <a href="/admin/workers" style="color:#94a3b8; font-size:12px; margin-bottom:10px; text-decoration:none;">پاککردنەوە (مانگی ئێستا)</a>
         </form>
     </div>
-    <table>
-        <thead>
-            <tr><th>#</th><th>ناو</th><th>تەلەفۆن</th><th>مووچە</th><th>ڕۆژانی کار</th><th>کۆی مووچە</th><th>بەخشش</th><th>کۆی شایستە</th><th>کردار</th></tr>
-        </thead>
-        <tbody>
-            {% for w in wage_rows %}
-            <tr>
-                <td>{{ loop.index }}</td><td>{{ w.name }}</td><td>{{ w.phone }}</td><td>{{ "{:,.0f}".format(w.salary) }}</td><td>{{ w.work_days }}</td><td>{{ "{:,.0f}".format(w.total_salary) }}</td><td>{{ "{:,.0f}".format(w.total_bonus) }}</td><td style="color:#10b981; font-weight:bold;">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
-                <td><a href="/admin/delete_worker/{{ w.id }}" style="color:#ef4444; text-decoration:none; font-weight:bold;" onclick="return confirm('دڵنیایت؟')">سڕینەوە</a></td>
-            </tr>
-            {% else %}
-            <tr><td colspan="9">هیچ شاگردێک نییە</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="box-card">
+        <div class="box-title">📝 تۆماری ئامادەبوونی ڕۆژانە (ئەمڕۆ)</div>
+        <form method="POST" action="/admin/save_attendance" class="form-row">
+            <div class="form-group">
+                <label>بەروار:</label>
+                <input type="date" name="att_date" class="form-input" value="{{ today_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>شاگرد:</label>
+                <select name="worker_id" class="form-input" required>
+                    {% for w in wage_rows %}
+                        <option value="{{ w.id }}">{{ w.name }} (ڕۆژانە: {{ "{:,.0f}".format(w.salary) }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>دۆخی ئامادەبوون:</label>
+                <select name="status" class="form-input">
+                    <option value="هاتوو">✅ هاتوو</option>
+                    <option value="نەهاتوو">❌ نەهاتوو</option>
+                    <option value="مۆڵەت">🏖️ مۆڵەت</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>پاداشت / بەخشش (Bonus):</label>
+                <input type="number" name="bonus" class="form-input" placeholder="0" value="0">
+            </div>
+            <button type="submit" class="btn-act btn-add">💾 پاشەکەوتکردنی ئامادەبوون</button>
+        </form>
+    </div>
+
+    <div class="box-card">
+        <div class="box-title">➕ زیادکردنی شاگردی نوێ</div>
+        <form method="POST" action="/admin/add_worker" class="form-row">
+            <div class="form-group"><label>ناوی شاگرد:</label><input type="text" name="name" class="form-input" required placeholder="ناوی تەواو"></div>
+            <div class="form-group"><label>تەلەفۆن:</label><input type="text" name="phone" class="form-input" placeholder="0770xxxxxxx"></div>
+            <div class="form-group"><label>مووچەی ڕۆژانە (دینار):</label><input type="number" name="salary" class="form-input" required placeholder="25000"></div>
+            <button type="submit" class="btn-act btn-add">➕ تۆمارکردن</button>
+        </form>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ناو</th>
+                    <th>تەلەفۆن</th>
+                    <th>مووچەی ڕۆژانە</th>
+                    <th>ڕۆژانی ئامادەبوون</th>
+                    <th>کۆی مووچە لە ماوەکەدا</th>
+                    <th>کۆی بەخشش</th>
+                    <th>کۆی شایستەی دارایی</th>
+                    <th>کردارەکان</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in wage_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="font-weight:bold; color:#10b981;">{{ w.name }}</td>
+                    <td>{{ w.phone }}</td>
+                    <td>{{ "{:,.0f}".format(w.salary) }} د.ع</td>
+                    <td style="color:#38bdf8; font-weight:bold;">{{ w.work_days }} ڕۆژ</td>
+                    <td>{{ "{:,.0f}".format(w.total_salary) }} د.ع</td>
+                    <td style="color:#f59e0b;">{{ "{:,.0f}".format(w.total_bonus) }} د.ع</td>
+                    <td style="color:#10b981; font-weight:bold; font-size:14px;">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
+                    <td>
+                        <button type="button" class="btn-edit" onclick="openWorkerModal({{ w.id }}, '{{ w.name }}', '{{ w.phone }}', {{ w.salary }})">✏️ دەستکاری</button>
+                        <a href="/admin/delete_worker/{{ w.id }}" class="btn-del" onclick="return confirm('دڵنیایت لە سڕینەوە؟')">🗑️ سڕینەوە</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" style="padding:20px; color:#94a3b8;">هیچ شاگردێک تۆمار نەکراوە</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal" id="workerEditModal">
+        <div class="modal-content">
+            <h3 style="color:#10b981; margin-bottom:14px; text-align:center;">✏️ دەستکاریکردنی زانیاری شاگرد</h3>
+            <form id="editWorkerForm" method="POST" action="">
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>ناوی شاگرد:</label>
+                    <input type="text" id="m_worker_name" name="name" class="form-input" style="width:100%;" required>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>تەلەفۆن:</label>
+                    <input type="text" id="m_worker_phone" name="phone" class="form-input" style="width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>مووچەی ڕۆژانە (دینار):</label>
+                    <input type="number" id="m_worker_salary" name="salary" class="form-input" style="width:100%;" required>
+                </div>
+                <button type="submit" class="btn-act btn-add" style="width:100%;">💾 پاشەکەوتکردن</button>
+                <button type="button" onclick="closeWorkerModal()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">داخستن</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openWorkerModal(id, name, phone, salary) {
+            document.getElementById('editWorkerForm').action = '/admin/edit_worker/' + id;
+            document.getElementById('m_worker_name').value = name;
+            document.getElementById('m_worker_phone').value = phone;
+            document.getElementById('m_worker_salary').value = salary;
+            document.getElementById('workerEditModal').style.display = 'flex';
+        }
+        function closeWorkerModal() {
+            document.getElementById('workerEditModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
 """
@@ -1423,7 +1556,7 @@ QR_MANAGER_TEMPLATE = """
 """
 
 # ==========================================
-# تێمپلێتەکانی ئایپاد و دیسکتۆپ
+# تێمپلێتەکانی ئایپاد و دیسکتۆپ (سەفەری لە هێدەرە)
 # ==========================================
 DESKTOP_TABLES_TEMPLATE = """
 <!DOCTYPE html>
@@ -1436,18 +1569,18 @@ DESKTOP_TABLES_TEMPLATE = """
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         html, body { background-color: #03261d; color: #ffffff; min-height: 100%; height: auto; overflow-x: hidden; overflow-y: scroll; }
-        .header-bar { background-color: #064032; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0b5e4a; position: sticky; top: 0; z-index: 1000; }
-        .header-title { font-size: 17px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
+        .header-bar { background-color: #064032; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0b5e4a; position: sticky; top: 0; z-index: 1000; }
+        .header-title { font-size: 16px; font-weight: 800; color: #ffffff; text-align: center; flex: 1; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        .btn-qr-mgr { background-color: #3b82f6; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
-        .btn-exit { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
+        .btn-header { color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn-takeaway-hdr { background-color: #0284c7; border: 1.5px solid #38bdf8; }
+        .btn-qr-mgr { background-color: #3b82f6; }
+        .btn-exit { background-color: #ef4444; }
         
-        .takeaway-bar { padding: 16px 20px 0 20px; width: 100%; max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-        .btn-takeaway-main { width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: 2px solid #38bdf8; padding: 14px; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        
-        .active-takeaways-container { display: flex; flex-wrap: wrap; gap: 10px; background: #064032; padding: 12px; border-radius: 12px; border: 1.5px solid #0284c7; }
-        .active-takeaway-btn { background: #0284c7; color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 8px; border: 1.5px solid #38bdf8; }
-        
+        .active-takeaways-bar { padding: 10px 20px 0 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
+        .active-takeaways-container { display: flex; flex-wrap: wrap; gap: 8px; background: #064032; padding: 10px; border-radius: 12px; border: 1.5px solid #0284c7; }
+        .active-takeaway-btn { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
         .tables-grid-wrapper { padding: 16px 20px 80px 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
         .tables-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 12px; width: 100%; }
         .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; cursor: pointer; }
@@ -1461,27 +1594,21 @@ DESKTOP_TABLES_TEMPLATE = """
 </head>
 <body>
     <div class="header-bar">
-        <a href="/logout" class="btn-exit">✕ دەرچوون</a>
+        <a href="/logout" class="btn-header btn-exit">✕ دەرچوون</a>
         <div class="header-title">تکایە بۆ ئۆردەرکردنی خواردن و خواردنەوە مێزێک دیاری بکە!</div>
         <div class="header-actions">
             {% if session.get('role') == 'admin' %}
-            <a href="/admin" class="btn-qr-mgr" style="background-color:#10b981;">👑 داشبۆرد</a>
+            <a href="/admin" class="btn-header" style="background-color:#10b981;">👑 داشبۆرد</a>
             {% endif %}
-            <a href="/qr_manager" class="btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
+            <button type="button" class="btn-header btn-takeaway-hdr" onclick="document.getElementById('takeawayModal').style.display='flex'">🥡 سەفەری</button>
+            <a href="/qr_manager" class="btn-header btn-qr-mgr">📱 بەڕێوەبردنی QR</a>
         </div>
     </div>
 
-    <div class="takeaway-bar">
-        <button type="button" class="btn-takeaway-main" onclick="document.getElementById('takeawayModal').style.display='flex'">
-            <span>🥡</span>
-            <span>ئۆردەری نوێی سەفەری / دلیڤەری (تەلەفۆن)</span>
-        </button>
-        
-        {% if active_takeaways %}
-        <div style="font-size:13px; font-weight:800; color:#38bdf8; margin-top:6px;">
-            ⚠️ داواکارییە کراوەکانی دلیڤەری:
-        </div>
+    {% if active_takeaways %}
+    <div class="active-takeaways-bar">
         <div class="active-takeaways-container">
+            <span style="font-size:12px; font-weight:bold; color:#38bdf8; display:flex; align-items:center;">سەفەرییە چالاکەکان:</span>
             {% for t in active_takeaways %}
                 <a href="/desktop?table={{ t|urlencode }}" class="active-takeaway-btn">
                     <span>🛵</span>
@@ -1489,8 +1616,8 @@ DESKTOP_TABLES_TEMPLATE = """
                 </a>
             {% endfor %}
         </div>
-        {% endif %}
     </div>
+    {% endif %}
 
     <div class="tables-grid-wrapper">
         <div class="tables-grid" id="tablesGrid">
@@ -1510,9 +1637,9 @@ DESKTOP_TABLES_TEMPLATE = """
             <input type="text" id="custPhone" placeholder="0770xxxxxxx">
             
             <label style="font-size:12px; color:#a7f3d0;">ناونیشان (ئەگەر دلیڤەری بێت):</label>
-            <input type="text" id="custAddress" placeholder="گەڕەک، شەقام، ژمارەی خانوو">
+            <input type="text" id="custAddress" placeholder="گەڕەک، شەقام، خانوو">
             
-            <button type="button" class="btn-takeaway-main" onclick="startTakeawayOrder()" style="margin-top:10px; font-size:15px; padding:12px;">دەستپێکردنی ئۆردەر ➔</button>
+            <button type="button" class="btn-header btn-takeaway-hdr" onclick="startTakeawayOrder()" style="margin-top:10px; font-size:15px; padding:12px; width:100%; justify-content:center;">دەستپێکردنی ئۆردەر ➔</button>
             <button type="button" onclick="document.getElementById('takeawayModal').style.display='none'" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">پاشگەزبوونەوە</button>
         </div>
     </div>
@@ -1552,6 +1679,9 @@ DESKTOP_TABLES_TEMPLATE = """
 </html>
 """
 
+# ==========================================
+# مێنیوی ئایپاد/دیسکتۆپ (لەگەڵ دوگمە و فەنکشنی گواستنەوەی مێز)
+# ==========================================
 DESKTOP_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -1589,10 +1719,13 @@ DESKTOP_TEMPLATE = """
         .btn-send-desktop { flex: 2; background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%); color: var(--bg-main); border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; }
         .btn-add-plate-desktop { flex: 1; background: #8b5cf6; color: #fff; border: none; padding: 11px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: none; }
         #toastMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #fff; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; z-index: 1000; display: none; }
+
+        .modal-transfer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .modal-transfer-box { background: #151d30; border: 2px solid var(--border-color); border-radius: 14px; padding: 20px; width: 100%; max-width: 360px; color: #fff; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="toastMsg">✅ بە سەرکەوتوویی بۆ مەتبەخ نێردرا</div>
+    <div id="toastMsg">✅ بە سەرکەوتوویی نێردرا</div>
     <div class="desktop-main-layout">
         <div class="menu-section">
             <div class="categories-visual-bar">
@@ -1656,6 +1789,7 @@ DESKTOP_TEMPLATE = """
                 <div class="table-badge-header">📍 {{ selected_table }}</div>
                 <input type="hidden" id="currentTableNum" value="{{ selected_table }}">
                 <div style="display:flex; gap:4px;">
+                    <button type="button" class="btn-top-action" style="background:#3b82f6;" onclick="openTransferModal()">🔄 گواستنەوە</button>
                     <a href="/desktop/tables" class="btn-top-action">⬅️ گەڕانەوە</a>
                     <button type="button" class="btn-top-action" style="color:var(--danger);" onclick="clearCurrentTableOrders()">🗑 سڕینەوە</button>
                 </div>
@@ -1671,6 +1805,21 @@ DESKTOP_TEMPLATE = """
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- مۆداڵی گواستنەوەی مێز -->
+    <div class="modal-transfer" id="transferModal">
+        <div class="modal-transfer-box">
+            <h3 style="color:var(--gold); margin-bottom:12px;">گواستنەوە بۆ مێزێکی تر</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">مێزی نوێ هەڵبژێرە بۆ گواستنەوەی هەموو داواکارییەکان:</p>
+            <select id="newTableSelect" style="width:100%; padding:10px; background:var(--bg-main); border:1px solid var(--border-color); color:#fff; border-radius:8px; font-weight:bold; margin-bottom:14px;">
+                {% for n in range(1, 91) %}
+                    <option value="{{ n }}">مێزی {{ n }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="confirmTransferTable()" style="background:var(--success); border:none; color:#fff; padding:10px; border-radius:8px; font-weight:bold; width:100%; cursor:pointer;">پشتڕاستکردنەوە و گواستنەوە</button>
+            <button type="button" onclick="closeTransferModal()" style="background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">داخستن</button>
         </div>
     </div>
 
@@ -1779,6 +1928,33 @@ DESKTOP_TEMPLATE = """
                 .then(() => fetchTableOrders());
             }
         }
+
+        function openTransferModal() {
+            document.getElementById('transferModal').style.display = 'flex';
+        }
+        function closeTransferModal() {
+            document.getElementById('transferModal').style.display = 'none';
+        }
+        function confirmTransferTable() {
+            let target = document.getElementById('newTableSelect').value;
+            if (target === tableNum) {
+                alert("مێزی مەبەست ناتوانێت هەمان مێز بێت!");
+                return;
+            }
+            fetch('/transfer_table_orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ from_table: tableNum, to_table: target })
+            }).then(r => r.json()).then(res => {
+                if(res.status === 'success') {
+                    showToast("مێزەکە بەسەرکەوتوویی گوازرایەوە");
+                    setTimeout(() => { window.location.href = '/desktop?table=' + target; }, 800);
+                } else {
+                    alert("هەڵە: " + res.message);
+                }
+            });
+        }
+
         window.onload = function() { fetchTableOrders(); };
     </script>
 </body>
@@ -2648,9 +2824,19 @@ def admin_delete_masrwf(mid):
             except: pass
     return redirect(url_for('admin_masrwf'))
 
+# ==========================================
+# بەشی حیساباتی شاگردەکان (فلتەری کات، ئامادەبوون و دەستکاری)
+# ==========================================
 @app.route('/admin/workers')
 def admin_workers():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    today_dt = datetime.now()
+    first_day_of_month = today_dt.replace(day=1).strftime('%Y-%m-%d')
+    today_str = today_dt.strftime('%Y-%m-%d')
+
+    start_date = request.args.get('start_date', first_day_of_month)
+    end_date = request.args.get('end_date', today_str)
+
     rows = []
     conn = None
     try:
@@ -2663,9 +2849,10 @@ def admin_workers():
                        IFNULL(SUM(wa.bonus), 0) AS total_bonus,
                        ((COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) + IFNULL(SUM(wa.bonus), 0)) AS total_due
                 FROM workers w
-                LEFT JOIN worker_attendance wa ON w.id = wa.worker_id AND MONTH(wa.date) = MONTH(CURRENT_DATE())
+                LEFT JOIN worker_attendance wa ON w.id = wa.worker_id AND wa.date >= %s AND wa.date <= %s
                 GROUP BY w.id, w.name, w.phone, w.salary
-            """)
+                ORDER BY w.id DESC
+            """, (start_date, end_date))
             rows = cur.fetchall()
     except Exception as e:
         print("Worker list error:", e)
@@ -2673,7 +2860,7 @@ def admin_workers():
         if conn:
             try: conn.close()
             except: pass
-    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows)
+    return render_template_string(WEB_WORKERS_TEMPLATE, wage_rows=rows, start_date=start_date, end_date=end_date, today_date=today_str)
 
 @app.route('/admin/add_worker', methods=['POST'])
 def admin_add_worker():
@@ -2688,6 +2875,51 @@ def admin_add_worker():
             conn.commit()
     except Exception as ex:
         print("Add worker error:", ex)
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
+    return redirect(url_for('admin_workers'))
+
+@app.route('/admin/edit_worker/<int:wid>', methods=['POST'])
+def admin_edit_worker(wid):
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    name = request.form.get('name')
+    phone = request.form.get('phone', '')
+    salary = float(request.form.get('salary', 0))
+    conn = None
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("UPDATE workers SET name = %s, phone = %s, salary = %s WHERE id = %s", (name, phone, salary, wid))
+            conn.commit()
+    except Exception as ex:
+        print("Edit worker error:", ex)
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
+    return redirect(url_for('admin_workers'))
+
+@app.route('/admin/save_attendance', methods=['POST'])
+def admin_save_attendance():
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
+    w_id = int(request.form.get('worker_id'))
+    a_date = request.form.get('att_date')
+    status = request.form.get('status', 'هاتوو')
+    bonus = float(request.form.get('bonus', 0))
+    conn = None
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO worker_attendance (worker_id, date, status, bonus)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE status = %s, bonus = %s
+            """, (w_id, a_date, status, bonus, status, bonus))
+            conn.commit()
+    except Exception as ex:
+        print("Save attendance error:", ex)
     finally:
         if conn:
             try: conn.close()
@@ -2813,7 +3045,7 @@ def admin_delete_food(fid):
     return redirect(url_for('admin_menu_manager'))
 
 # ==========================================
-# ڕێڕەوەکانی ئۆردەر، دیسکتۆپ، مۆبایل و QR
+# ڕێڕەوەکانی ئۆردەر، دیسکتۆپ، مۆبایل و گواستنەوەی مێز
 # ==========================================
 @app.route('/desktop/tables')
 def desktop_tables():
@@ -2854,6 +3086,34 @@ def desktop_menu():
             try: conn.close()
             except: pass
     return render_template_string(DESKTOP_TEMPLATE, categories=categories, selected_table=tbl)
+
+@app.route('/transfer_table_orders', methods=['POST'])
+def transfer_table_orders():
+    if not session.get('authenticated'): return jsonify({'status': 'error', 'message': 'ڕێگەپێنەدراو'})
+    data = request.get_json() or {}
+    from_tbl = str(data.get('from_table', '')).strip()
+    to_tbl = str(data.get('to_table', '')).strip()
+
+    if not from_tbl or not to_tbl:
+        return jsonify({'status': 'error', 'message': 'تکایە هەردوو مێز دیاری بکە'})
+
+    conn = None
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE froshtn 
+                SET table_cabin = REPLACE(table_cabin, %s, %s)
+                WHERE table_cabin = %s OR table_cabin LIKE %s
+            """, (from_tbl, to_tbl, from_tbl, f"{from_tbl} [%"))
+            conn.commit()
+        return jsonify({'status': 'success'})
+    except Exception as ex:
+        return jsonify({'status': 'error', 'message': str(ex)})
+    finally:
+        if conn:
+            try: conn.close()
+            except: pass
 
 @app.route('/mobile/tables')
 def mobile_waiter_tables():
