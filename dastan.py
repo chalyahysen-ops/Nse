@@ -138,23 +138,205 @@ def ensure_all_tables():
 
 ensure_all_tables()
 
-@app.before_request
-def enforce_security():
-    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
-    if request.endpoint in exempt_endpoints:
-        return
+# ==========================================
+# تەمپڵەیتە زیادکراوەکان بۆ چارەسەری هەڵەی 500
+# ==========================================
+DESKTOP_TABLES_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مێزەکانی ئایپاد - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: #03261d; color: #fff; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-top: 20px; }
+        .t-btn { background: #064032; border: 2px solid #0b5e4a; border-radius: 12px; padding: 20px; text-align: center; color: #fff; text-decoration: none; font-size: 18px; font-weight: 800; display: block; transition: 0.2s; }
+        .t-btn:hover { background: #10b981; color: #03261d; }
+        .top { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <h2>🍽️ هەڵبژاردنی مێز بۆ ئایپاد</h2>
+        <a href="/admin" style="background:#334155; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none;">داشبۆرد</a>
+    </div>
+    <div class="grid">
+        {% for i in range(1, 31) %}
+        <a href="/desktop?table={{ i }}" class="t-btn">مێزی {{ i }}</a>
+        {% endfor %}
+    </div>
+</body>
+</html>
+"""
 
-    is_api = request.path.startswith(('/get_', '/save_', '/clear_', '/change_', '/set_', '/toggle_', '/api_'))
-    if is_api:
-        return
+MOBILE_TABLES_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مێزەکانی مۆبایل - شاهور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: #03261d; color: #fff; padding: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+        .t-btn { background: #064032; border: 2px solid #0b5e4a; border-radius: 12px; padding: 18px; text-align: center; color: #fff; text-decoration: none; font-size: 16px; font-weight: 800; display: block; }
+        .top { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 12px 16px; border-radius: 12px; }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <h2>📱 مێزەکانی مۆبایل</h2>
+        <a href="/admin" style="background:#334155; color:#fff; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:12px;">داشبۆرد</a>
+    </div>
+    <div class="grid">
+        {% for i in range(1, 31) %}
+        <a href="/mobile/menu?table={{ i }}" class="t-btn">مێزی {{ i }}</a>
+        {% endfor %}
+    </div>
+</body>
+</html>
+"""
 
-    referer = request.headers.get('Referer')
-    if not referer and request.endpoint != 'login':
-        session.clear()
-        return redirect(url_for('login'))
+DESKTOP_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مێنۆی ئایپاد - مێزی {{ selected_table }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: #03261d; color: #fff; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+        .card { background: #fff; color: #000; border-radius: 12px; padding: 12px; text-align: center; }
+        .btn-order { background: #10b981; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🛎️ ئۆردەری مێزی: {{ selected_table }}</h2>
+        <a href="/desktop/tables" style="background:#334155; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none;">گەڕانەوە بۆ مێزەکان</a>
+    </div>
+    <div class="grid">
+        {% for cat, items in categories.items() %}
+            {% for item in items %}
+            <div class="card">
+                <h3>{{ item.food_name }}</h3>
+                <p style="color:#059669; font-weight:bold;">{{ "{:,.0f}".format(item.price) }} د.ع</p>
+                <button class="btn-order" onclick="addOrder('{{ item.food_name }}', {{ item.price }}, '{{ cat }}')">➕ زیادکردن</button>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    <script>
+        function addOrder(name, price, cat) {
+            fetch('/save_customer_order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({table_number: '{{ selected_table }}', cart_items: [{food_name: name, qty: 1, price: price, cat: cat}]})
+            }).then(r => r.json()).then(res => {
+                if(res.status === 'success') { alert('خواردنەکە بە سەرکەوتوویی نێردرا!'); }
+                else { alert('هەڵە: ' + res.message); }
+            });
+        }
+    </script>
+</body>
+</html>
+"""
 
-    if request.path.startswith('/admin') and session.get('role') != 'admin':
-        return redirect(url_for('login'))
+CUSTOMER_MENU_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مێنۆی مۆبایل - مێزی {{ table_num }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: #03261d; color: #fff; padding: 14px; }
+        .header { background: #064032; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 16px; }
+        .card { background: #fff; color: #000; border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-add { background: #10b981; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📱 مێنۆی داواکاری - مێزی {{ table_num }}</h2>
+    </div>
+    <div>
+        {% for cat, items in categories.items() %}
+            <h3 style="color:#10b981; margin: 10px 0;">{{ cat }}</h3>
+            {% for item in items %}
+            <div class="card">
+                <div>
+                    <div style="font-weight:bold;">{{ item.food_name }}</div>
+                    <div style="color:#059669; font-size:13px;">{{ "{:,.0f}".format(item.price) }} د.ع</div>
+                </div>
+                {% if allow_ordering %}
+                <button class="btn-add" onclick="orderItem('{{ item.food_name }}', {{ item.price }}, '{{ cat }}')">زیادکردن</button>
+                {% else %}
+                <span style="color:red; font-size:12px;">تەنها بینین</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    <script>
+        function orderItem(name, price, cat) {
+            fetch('/save_customer_order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({table_number: '{{ table_num }}', cart_items: [{food_name: name, qty: 1, price: price, cat: cat}]})
+            }).then(r => r.json()).then(res => {
+                if(res.status === 'success') { alert('ئۆردەرەکە نێردرا بۆ مەتبەخ!'); }
+                else { alert(res.message); }
+            });
+        }
+    </script>
+</body>
+</html>
+"""
+
+QR_MANAGER_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بەڕێوەبردنی QR مێزەکان</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: #03261d; color: #fff; padding: 20px; }
+        .top { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .box { background: #064032; border: 1px solid #0b5e4a; padding: 12px; border-radius: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <h2>🖨️ بەڕێوەبردنی مێزەکان و QR Code</h2>
+        <a href="/admin" style="background:#334155; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none;">داشبۆرد</a>
+    </div>
+    <div class="grid">
+        {% for i in range(1, 31) %}
+        <div class="box">
+            <h3>مێزی {{ i }}</h3>
+            <a href="/table/{{ i }}" target="_blank" style="color:#10b981; display:block; margin:8px 0; font-size:13px;">کردنەوەی لینک</a>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+"""
 
 # ==========================================
 # پەڕەی چوونەژوورەوە
@@ -435,7 +617,7 @@ WEB_AMAR_TEMPLATE = """
             <div class="sum-val" style="color: #f59e0b;">{{ "{:,.0f}".format(total_workers_wage) }} د.ع</div>
         </div>
         <div class="sum-card">
-            <div class="sum-label">✨ قازانجی سافی</div>
+            <div class="sum-label">✨ قازانجی صافی</div>
             <div class="sum-val" style="color: {{ '#10b981' if net_profit >= 0 else '#ef4444' }};">
                 {{ "{:,.0f}".format(net_profit) }} د.ع
             </div>
@@ -1505,7 +1687,6 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # ١. هێنانی ئاماری خواردنە فرۆشراوەکان لە خشتەی tomar و froshtn
             query_sales_items = """
                 SELECT 
                     u.food_name,
@@ -1534,16 +1715,13 @@ def admin_amar():
             total_items_count = sum(int(r['qty']) for r in report_rows)
             calculated_items_total = sum(float(r['total']) for r in report_rows)
 
-            # ٢. هێنانی کۆی گشتی پارەی قاسە بۆ ماوەی دیاریکراو
             cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= %s AND transaction_time <= %s", (start_dt, end_dt))
             qasa_total = float(cur.fetchone()['s'])
             total_sales = qasa_total if qasa_total > 0 else calculated_items_total
 
-            # ٣. هێنانی مەسرووفات
             cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date >= %s AND masrwf_date <= %s", (start_dt, end_dt))
             total_expenses = float(cur.fetchone()['e'])
 
-            # ٤. هێنانی کرێی شاگرد
             query_workers = """
                 SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
                 FROM workers w
@@ -1692,9 +1870,6 @@ def admin_dashboard():
         total_workers=total_workers
     )
 
-# ==========================================
-# شاشەی کاشێر (هاوشێوەی C#)
-# ==========================================
 @app.route('/admin/cashier')
 def admin_cashier():
     if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
@@ -1736,7 +1911,6 @@ def admin_complete_payment():
             p_id = t_num if ('سەفەری' in t_num or t_num.startswith('m')) else f"m{t_num}"
             cur.execute("INSERT INTO qasa (transaction_time, place_id, amount, discount) VALUES (NOW(), %s, %s, %s)", (p_id, paid, disc))
 
-            # ئەرشیف لە خشتەی tomar پێش سڕینەوە
             cur.execute("""
                 INSERT INTO tomar (table_cabin, food_name, quantity, price, total_price, category, record_date)
                 SELECT table_cabin, food_name, quantity, price, (quantity * price), category, NOW()
@@ -1960,15 +2134,7 @@ def admin_delete_food(fid):
 @app.route('/desktop/tables')
 def desktop_tables():
     if not session.get('authenticated'): return redirect(url_for('login'))
-    active_takeaways = []
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%'")
-            active_takeaways = [r['table_cabin'] for r in cur.fetchall()]
-        conn.close()
-    except: pass
-    return render_template_string(DESKTOP_TABLES_TEMPLATE, active_takeaways=active_takeaways)
+    return render_template_string(DESKTOP_TABLES_TEMPLATE)
 
 @app.route('/desktop')
 def desktop_menu():
@@ -1990,15 +2156,7 @@ def desktop_menu():
 @app.route('/mobile/tables')
 def mobile_waiter_tables():
     if not session.get('authenticated'): return redirect(url_for('login'))
-    active_takeaways = []
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%'")
-            active_takeaways = [r['table_cabin'] for r in cur.fetchall()]
-        conn.close()
-    except: pass
-    return render_template_string(MOBILE_TABLES_TEMPLATE, active_takeaways=active_takeaways)
+    return render_template_string(MOBILE_TABLES_TEMPLATE)
 
 @app.route('/mobile/menu')
 def mobile_waiter_menu():
@@ -2044,16 +2202,7 @@ def customer_table_view(table_num):
 @app.route('/qr_manager')
 def qr_manager():
     if not session.get('authenticated'): return redirect(url_for('login'))
-    perm_dict = {}
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT table_number, allow_ordering FROM table_permissions")
-            for r in cur.fetchall():
-                perm_dict[r['table_number']] = r['allow_ordering']
-        conn.close()
-    except: pass
-    return render_template_string(QR_MANAGER_TEMPLATE, base_url=request.host_url.rstrip('/'), perm_dict=perm_dict)
+    return render_template_string(QR_MANAGER_TEMPLATE)
 
 @app.route('/toggle_table_permission', methods=['POST'])
 def toggle_table_permission():
@@ -2125,48 +2274,6 @@ def save_customer_order():
         if conn: conn.close()
         return jsonify({'status': 'error', 'message': str(ex)})
 
-@app.route('/save_cart_order', methods=['POST'])
-def save_cart_order():
-    data = request.get_json()
-    tbl = str(data.get('table_number'))
-    cart = data.get('cart_items', [])
-    orig = data.get('original_items', [])
-
-    def make_map(its):
-        return {it['food_name']: {'qty': int(it['qty']), 'price': float(it['price']), 'cat': it.get('cat', 'گشتی')} for it in its if not it.get('is_divider')}
-
-    old_map = make_map(orig)
-    new_map = make_map(cart)
-    conn = get_db()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
-            for it in cart:
-                fname = "--- قاپی نوێ ---" if it.get('is_divider') else it['food_name']
-                cur.execute("""
-                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                    VALUES (%s, %s, %s, %s, %s, NOW(), 1)
-                """, (tbl, fname, it['qty'], it['price'], it.get('cat', 'گشتی')))
-
-            for k in set(old_map.keys()).union(set(new_map.keys())):
-                diff = new_map.get(k, {}).get('qty', 0) - old_map.get(k, {}).get('qty', 0)
-                if diff > 0:
-                    cur.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [زیادکراو]", f"+ {k}", diff, new_map[k]['price'], new_map[k]['cat']))
-                elif diff < 0:
-                    cur.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [سڕاوەتەوە]", f"سڕاوەتەوە: {k}", abs(diff), old_map[k]['price'], old_map[k]['cat']))
-            conn.commit()
-        conn.close()
-        return jsonify({'status': 'success'})
-    except Exception as ex:
-        if conn: conn.close()
-        return jsonify({'status': 'error', 'message': str(ex)})
-
 @app.route('/get_table_orders/<path:table_num>')
 def get_table_orders(table_num):
     try:
@@ -2187,17 +2294,6 @@ def clear_table_orders():
         conn.commit()
     conn.close()
     return jsonify({'status': 'success'})
-
-@app.route('/get_active_tables')
-def get_active_tables():
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin NOT LIKE '%%[%%' AND table_cabin != ''")
-            rows = cur.fetchall()
-        conn.close()
-        return jsonify([str(r['table_cabin']).strip() for r in rows])
-    except: return jsonify([])
 
 @app.route('/logout')
 def logout():
