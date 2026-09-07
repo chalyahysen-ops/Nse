@@ -445,6 +445,7 @@ WEB_AMAR_TEMPLATE = """
     </div>
 
    <!-- کارتی فلتەرکردنی بەروار و دوگمە خێراکان -->
+  <!-- کارتی فلتەرکردنی بەروار و دوگمە خێراکان -->
     <div class="filter-card">
         <form method="GET" action="/admin/amar" id="amarFilterForm" class="filter-form">
             <div class="filter-item">
@@ -457,14 +458,12 @@ WEB_AMAR_TEMPLATE = """
             </div>
             <button type="submit" class="btn-search">🔍 گەڕان و حیسابکردن</button>
 
-            <!-- دوگمە خێراکانی دەستنیشانکردنی ئۆتۆماتیکیی بەروار -->
+            <!-- دوگمە خێراکانی دەستنیشانکردنی ئۆتۆماتیکی -->
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-right: auto; align-items: center;">
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('today')">ئەمڕۆ</button>
-                <button type="button" class="btn-quick-date" onclick="setFilterPreset('yesterday')">دوێنێ</button>
-                <button type="button" class="btn-quick-date" onclick="setFilterPreset('this_week')">ئەم هەفتەیە</button>
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('this_month')">ئەم مانگە</button>
                 <button type="button" class="btn-quick-date" onclick="setFilterPreset('last_month')">مانگی پێشوو</button>
-                <button type="button" class="btn-quick-date" onclick="setFilterPreset('all_time')" style="background: #3b82f6;">هەموو کات</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('all_time')" style="background: #3b82f6;">هەموو کات (ئۆتۆماتیک)</button>
             </div>
         </form>
     </div>
@@ -488,6 +487,39 @@ WEB_AMAR_TEMPLATE = """
     </style>
 
     <script>
+        function setFilterPreset(preset) {
+            const now = new Date();
+            let start = new Date();
+            let end = new Date();
+
+            const formatDate = (d) => {
+                let month = '' + (d.getMonth() + 1);
+                let day = '' + d.getDate();
+                let year = d.getFullYear();
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+                return [year, month, day].join('-');
+            };
+
+            if (preset === 'today') {
+                start = now;
+                end = now;
+            } else if (preset === 'this_month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = now;
+            } else if (preset === 'last_month') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+            } else if (preset === 'all_time') {
+                start = new Date(2025, 0, 1);
+                end = now;
+            }
+
+            document.getElementById('txt_start_date').value = formatDate(start);
+            document.getElementById('txt_end_date').value = formatDate(end);
+            document.getElementById('amarFilterForm').submit();
+        }
+    </script>
         function setFilterPreset(preset) {
             const now = new Date();
             let start = new Date();
@@ -2560,7 +2592,6 @@ def admin_dashboard():
         active_tables_count=active_tables,
         total_workers=total_workers
     )
-
 @app.route('/admin/amar')
 def admin_amar():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -2569,10 +2600,11 @@ def admin_amar():
 
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
-    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
+    
+    # ئەگەر بەروار دیاری نەکراوە، با بە شێوازی ئۆتۆماتیکی هەموو کاتێک بهێنێت (لە ساڵی ٢٠٢٥ تا ئێستا)
+    default_start = '2025-01-01'
 
-    # وەرگرتنی بەروارەکان بەپێی فلتەر
-    start_date = request.args.get('start_date', first_day_of_month)
+    start_date = request.args.get('start_date', default_start)
     end_date = request.args.get('end_date', today_str)
 
     report_rows = []
@@ -2619,14 +2651,13 @@ def admin_amar():
             total_sales = sum(r['total'] for r in report_rows)
             total_items_count = sum(r['qty'] for r in report_rows)
 
-            # ٢. هێنانی مەسرووفات بە سەلامەتی بەپێی بەرواری خەرجی یان دروستبوون
+            # ٢. هێنانی مەسرووفات بەپێی بەروار بە سەلامەتی
             query_exp = """
-                SELECT DATE_FORMAT(COALESCE(masrwf_date, created_at), '%Y/%m/%d') AS m_date, 
+                SELECT DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
                        masrwf_name, masrwf_type, spent_by, amount, notes 
                 FROM masrwf 
-                WHERE DATE(COALESCE(masrwf_date, created_at)) >= %s 
-                  AND DATE(COALESCE(masrwf_date, created_at)) <= %s
-                ORDER BY COALESCE(masrwf_date, created_at) DESC, id DESC
+                WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s
+                ORDER BY masrwf_date DESC, id DESC
             """
             cur.execute(query_exp, (start_date, end_date))
             expense_rows = cur.fetchall()
