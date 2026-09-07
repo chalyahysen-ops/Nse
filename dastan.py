@@ -189,7 +189,7 @@ LOGIN_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>چوونەژوورەوە - شاهور</title>
+    <title>چوونەژوورەوە - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -208,7 +208,7 @@ LOGIN_TEMPLATE = """
 </head>
 <body>
     <div class="login-card">
-        <div class="brand-title">✨ شاهور ڕێستۆرانت</div>
+        <div class="brand-title">✨ دیوانی سوڵتان ڕێستۆرانت</div>
         <div class="brand-sub">تکایە ناوی بەکارهێنەر و وشەی نهێنی بنووسە</div>
         <form method="POST" action="/login">
             <div class="input-group">
@@ -239,7 +239,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبۆردی سەرەکی - شاهور</title>
+    <title>داشبۆردی سەرەکی - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -268,7 +268,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 </head>
 <body>
     <header class="admin-nav">
-        <div class="admin-brand">✨ شاهور ڕێستۆرانت - داشبۆردی بەڕێوەبەر</div>
+        <div class="admin-brand">✨ دیوانی سوڵتان ڕێستۆرانت - داشبۆردی بەڕێوەبەر</div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <span style="color:#a7f3d0; font-size:13px; font-weight:700;">👑 {{ session.get('full_name', 'بەڕێوەبەر') }}</span>
             <a href="/logout" class="btn-exit">✕ دەرچوون</a>
@@ -383,7 +383,7 @@ WEB_AMAR_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ئامار و قازانج - شاهور</title>
+    <title>ئامار و قازانج - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -442,7 +442,7 @@ WEB_AMAR_TEMPLATE = """
     </div>
 
     <div class="print-only-header">
-        <h2>✨ شاهور ڕێستۆرانت - ڕاپۆرتی گشتی فرۆش و دارایی</h2>
+        <h2>✨ دیوانی سوڵتان ڕێستۆرانت - ڕاپۆرتی گشتی فرۆش و دارایی</h2>
         <p>ماوەی دیاریکراو: لە [{{ start_date }}] تا [{{ end_date }}]</p>
         <div class="print-divider"></div>
     </div>
@@ -548,7 +548,7 @@ WEB_MASRWF_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مەسرووفات و خەرجییەکان - شاهور</title>
+    <title>مەسرووفات و خەرجییەکان - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
