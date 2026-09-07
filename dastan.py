@@ -10,6 +10,7 @@ app.secret_key = 'shahoor_all_in_one_pos_2026'
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 
+# ڕێکخستنی فۆڵدەری ئەپلۆدکردنی وێنە
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -1230,7 +1231,7 @@ WEB_CASHIER_TEMPLATE = """
             {% for t in active_tables %}
             <div class="table-card" onclick="openCheckout('{{ t.table_cabin }}')" data-table="{{ t.table_cabin }}">
                 <div class="card-icon">🍽️</div>
-                <div class="card-title">مێزی {{ t.table_cabin }}</div>
+                <div class="card-title">{{ t.table_cabin if 'سەفەری' in t.table_cabin else 'مێزی ' ~ t.table_cabin }}</div>
                 <div class="card-badge">
                     {{ '🔥 ' ~ t.rounds ~ ' جار داواکراوە' if t.rounds > 1 else '✓ ١ جار داواکراوە' }}
                 </div>
@@ -1715,14 +1716,10 @@ DESKTOP_TABLES_TEMPLATE = """
         .btn-takeaway-hdr { background-color: #0284c7; border: 1.5px solid #38bdf8; }
         .btn-qr-mgr { background-color: #3b82f6; }
         .btn-exit { background-color: #ef4444; }
-        
-        .active-takeaways-bar { padding: 10px 20px 0 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
-        .active-takeaways-container { display: flex; flex-wrap: wrap; gap: 8px; background: #064032; padding: 10px; border-radius: 12px; border: 1.5px solid #0284c7; }
-        .active-takeaway-btn { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 
-        .tables-grid-wrapper { padding: 16px 20px 80px 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
+        .tables-grid-wrapper { padding: 20px 20px 80px 20px; width: 100%; max-width: 1500px; margin: 0 auto; }
         .tables-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 12px; width: 100%; }
-        .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; cursor: pointer; }
+        .table-box { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #03261d; text-decoration: none; height: 90px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .table-box.active-occupied { background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-color: #047857 !important; }
         
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
@@ -1744,24 +1741,16 @@ DESKTOP_TABLES_TEMPLATE = """
         </div>
     </div>
 
-    {% if active_takeaways %}
-    <div class="active-takeaways-bar">
-        <div class="active-takeaways-container">
-            <span style="font-size:12px; font-weight:bold; color:#38bdf8; display:flex; align-items:center;">سەفەرییە چالاکەکان:</span>
-            {% for t in active_takeaways %}
-                <a href="/desktop?table={{ t|urlencode }}" class="active-takeaway-btn">
-                    <span>🛵</span>
-                    <span>{{ t }}</span>
-                </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
     <div class="tables-grid-wrapper">
         <div class="tables-grid" id="tablesGrid">
             {% for num in range(1, 91) %}
                 <a href="/desktop?table={{ num }}" class="table-box" id="tbl-box-{{ num }}">{{ num }}</a>
+            {% endfor %}
+            {% for t in active_takeaways %}
+                <a href="/desktop?table={{ t|urlencode }}" class="table-box active-occupied" style="font-size: 16px; flex-direction: column; gap: 4px; padding: 4px; text-align: center; line-height: 1.2;">
+                    <span style="font-size: 20px;">🛵</span>
+                    <span style="font-size: 13px;">{{ t.replace('سەفەری (', '').replace(')', '') }}</span>
+                </a>
             {% endfor %}
         </div>
     </div>
@@ -2114,10 +2103,7 @@ MOBILE_TABLES_TEMPLATE = """
         .m-title { font-size: 15px; font-weight: 800; color: #10b981; }
         .btn-logout { background: #ef4444; color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 12px; }
         
-        .btn-takeaway-mobile { width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: 2px solid #38bdf8; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        
-        .active-takeaways-box { background: #064032; border: 1.5px solid #0284c7; border-radius: 10px; padding: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .active-takeaway-link { background: #0284c7; color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 8px; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .btn-takeaway-mobile { width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: 2px solid #38bdf8; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
         .tables-grid-mobile { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .m-table-btn { background: #ffffff; color: #03261d; border-radius: 12px; height: 75px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; text-decoration: none; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #e2e8f0; }
@@ -2140,23 +2126,17 @@ MOBILE_TABLES_TEMPLATE = """
         <span>ئۆردەری نوێی سەفەری / دلیڤەری</span>
     </button>
 
-    {% if active_takeaways %}
-    <div class="active-takeaways-box">
-        <div style="font-size:11px; font-weight:800; color:#38bdf8;">داواکارییە چالاکەکان:</div>
-        {% for t in active_takeaways %}
-            <a href="/mobile/menu?table={{ t|urlencode }}" class="active-takeaway-link">
-                <span>🛵</span>
-                <span>{{ t }}</span>
-            </a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <div class="tables-grid-mobile">
         {% for num in range(1, 91) %}
             <a href="/mobile/menu?table={{ num }}" class="m-table-btn" id="m-tbl-{{ num }}">
                 <span>{{ num }}</span>
                 <span class="t-sub">مێز</span>
+            </a>
+        {% endfor %}
+        {% for t in active_takeaways %}
+            <a href="/mobile/menu?table={{ t|urlencode }}" class="m-table-btn active-occupied" style="font-size: 12px; text-align: center; padding: 4px;">
+                <span>🛵</span>
+                <span style="font-size: 10px; margin-top: 4px;">{{ t.replace('سەفەری (', '').replace(')', '') }}</span>
             </a>
         {% endfor %}
     </div>
@@ -2907,8 +2887,12 @@ def admin_masrwf():
         session.clear()
         return redirect(url_for('login'))
     
-    from_date = request.args.get('from_date', '')
-    to_date = request.args.get('to_date', '')
+    today = datetime.now()
+    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
+    today_str = today.strftime('%Y-%m-%d')
+
+    from_date = request.args.get('from_date', first_day_of_month).strip()
+    to_date = request.args.get('to_date', today_str).strip()
 
     rows = []
     tot = 0
@@ -2930,15 +2914,10 @@ def admin_masrwf():
                     COALESCE(amount, 0) AS amount, 
                     COALESCE(notes, '') AS notes 
                 FROM masrwf 
+                WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s
+                ORDER BY id DESC;
             """
-            params = []
-            if from_date and to_date:
-                query += " WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s "
-                params.append(from_date)
-                params.append(to_date)
-            
-            query += " ORDER BY id DESC;"
-            cur.execute(query, params)
+            cur.execute(query, (from_date, to_date))
             rows = cur.fetchall() or []
             tot = sum(float(r.get('amount') or 0) for r in rows)
 
@@ -2969,7 +2948,7 @@ def admin_masrwf():
         WEB_MASRWF_TEMPLATE, 
         rows=rows, 
         total_m=tot, 
-        today_date=datetime.now().strftime('%Y-%m-%d'),
+        today_date=today_str,
         from_date=from_date,
         to_date=to_date,
         existing_types=existing_types,
@@ -3293,7 +3272,7 @@ def desktop_tables():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%'")
+            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%' AND table_cabin NOT LIKE '%%[%%'")
             active_takeaways = [r['table_cabin'] for r in cur.fetchall()]
     except Exception as ex:
         print("Desktop tables error:", ex)
@@ -3361,7 +3340,7 @@ def mobile_waiter_tables():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%'")
+            cur.execute("SELECT DISTINCT table_cabin FROM froshtn WHERE table_cabin LIKE 'سەفەری%' AND table_cabin NOT LIKE '%%[%%'")
             active_takeaways = [r['table_cabin'] for r in cur.fetchall()]
     except Exception as ex:
         print("Mobile tables error:", ex)
@@ -3511,7 +3490,6 @@ def save_customer_order():
                     if cat == 'پەلەوەر' and chick_p:
                         fname += f" ({chick_p})"
 
-                # پشکنین بۆ دڵنیابوون لەوەی ئەگەر ئەم خواردنە لەسەر ئەم مێزە پێشتر داواکرابوو، تەنها بڕەکەی بۆ زیاد بکرێت
                 cur.execute("SELECT order_id, quantity FROM froshtn WHERE table_cabin = %s AND food_name = %s", (tbl, fname))
                 existing = cur.fetchone()
                 if existing:
