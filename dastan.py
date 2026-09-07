@@ -639,14 +639,14 @@ WEB_MASRWF_TEMPLATE = """
                         <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_name }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
                             <td>{{ loop.index }}</td>
                             <td>{{ r.m_date }}</td>
-                            <td style="font-weight:700; color:#0f172a;">{{ r.masrwf_name }}</td>
+                            <td style="font-weight:700; color:#0f172a;">{{ r.masrwf_name if r.masrwf_name else '—' }}</td>
                             <td style="font-weight:700; color:#d97706;">{{ r.masrwf_type }}</td>
                             <td style="color:#0284c7; font-weight:700;">{{ r.spent_by }}</td>
                             <td style="color:#ef4444; font-weight:800; font-size:14px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
                             <td style="color:#64748b; text-align:right;">{{ r.notes }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="7" style="padding:40px; color:#94a3b8;">هیچ مەسرووفێک تۆمار نەکراوە</td></tr>
+                        <tr><td colspan="7" style="padding:40px; color:#94a3b8;">هیچ مەسرووفێک لەم ماوەیەدا تۆمار نەکراوە</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -731,14 +731,14 @@ WEB_MASRWF_TEMPLATE = """
             currentSelectedId = id;
             document.getElementById('selected_id').value = id;
             document.getElementById('txt_date').value = date;
-            document.getElementById('txt_name').value = name;
-            document.getElementById('txt_type').value = type;
-            document.getElementById('txt_spent_by').value = spentBy;
+            document.getElementById('txt_name').value = (name === 'None' || !name) ? '' : name;
+            document.getElementById('txt_type').value = (type === 'None' || !type) ? '' : type;
+            document.getElementById('txt_spent_by').value = (spentBy === 'None' || !spentBy) ? '' : spentBy;
             
             document.getElementById('real_amount').value = amount;
             document.getElementById('txt_amount').value = Number(amount).toLocaleString('en-US');
             
-            document.getElementById('txt_notes').value = notes;
+            document.getElementById('txt_notes').value = (notes === 'None' || !notes) ? '' : notes;
         }
 
         function clearInputs() {
@@ -756,16 +756,10 @@ WEB_MASRWF_TEMPLATE = """
 
         function submitForm(actionUrl) {
             let form = document.getElementById('masrwfForm');
-            let typeVal = document.getElementById('txt_type').value.trim();
             let amtVal = parseFloat(document.getElementById('real_amount').value) || 0;
 
             if (actionUrl.includes('update_masrwf') && currentSelectedId <= 0) {
                 alert('تکایە سەرەتا دێڕێک لە خشتەکە دەستنیشان بکە بۆ گۆڕانکاری!');
-                return;
-            }
-
-            if (!typeVal) {
-                alert('تکایە جۆری مەسرووف دیاری بکە یان بنووسە!');
                 return;
             }
 
@@ -792,7 +786,6 @@ WEB_MASRWF_TEMPLATE = """
 </body>
 </html>
 """
-
 # ==========================================
 # پەڕەی بەڕێوەبردنی بەکارهێنەران
 # ==========================================
@@ -2712,152 +2705,6 @@ def admin_qasa():
             try: conn.close()
             except: pass
     return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
-
-# ==========================================
-# مەسرووفات
-# ==========================================
-@app.route('/admin/masrwf')
-def admin_masrwf():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        session.clear()
-        return redirect(url_for('login'))
-    
-    from_date = request.args.get('from_date', '')
-    to_date = request.args.get('to_date', '')
-
-    rows = []
-    tot = 0
-    existing_types = ['کڕینی گۆشت', 'کڕینی سەوزە', 'کڕینی برنج', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'گاز و نەوت']
-    existing_spenders = ['ئادەم', 'کاک شاهۆ', 'ئازاد', 'بەڕێوەبەر', 'کاشێر', 'مەتبەخ']
-    
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            query = """
-                SELECT 
-                    id, 
-                    DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
-                    DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
-                    IFNULL(masrwf_name, '') AS masrwf_name,
-                    masrwf_type, 
-                    spent_by, 
-                    amount, 
-                    IFNULL(notes, '') AS notes 
-                FROM masrwf 
-            """
-            params = []
-            if from_date and to_date:
-                query += " WHERE DATE(masrwf_date) BETWEEN %s AND %s "
-                params.append(from_date)
-                params.append(to_date)
-            
-            query += " ORDER BY id DESC;"
-            cur.execute(query, params)
-            rows = cur.fetchall()
-            tot = sum(float(r['amount']) for r in rows)
-
-            cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type != '' AND masrwf_type IS NOT NULL;")
-            for r in cur.fetchall():
-                t = r['masrwf_type'].strip()
-                if t and t not in existing_types:
-                    existing_types.append(t)
-
-            cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by != '' AND spent_by IS NOT NULL;")
-            for r in cur.fetchall():
-                s = r['spent_by'].strip()
-                if s and s not in existing_spenders:
-                    existing_spenders.append(s)
-
-    except Exception as ex:
-        print("Masrwf error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-
-    return render_template_string(
-        WEB_MASRWF_TEMPLATE, 
-        rows=rows, 
-        total_m=tot, 
-        today_date=datetime.now().strftime('%Y-%m-%d'),
-        from_date=from_date,
-        to_date=to_date,
-        existing_types=existing_types,
-        existing_spenders=existing_spenders
-    )
-
-@app.route('/admin/save_masrwf', methods=['POST'])
-def admin_save_masrwf():
-    m_date = request.form.get('masrwf_date')
-    m_name = request.form.get('masrwf_name', '').strip()
-    m_type = request.form.get('masrwf_type', '').strip()
-    spent_by = request.form.get('spent_by', '').strip()
-    amt = float(request.form.get('amount', 0))
-    notes = request.form.get('notes', '').strip()
-    
-    if m_type and amt > 0:
-        conn = None
-        try:
-            conn = get_db()
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (m_date, m_name, m_type, spent_by, amt, notes))
-                conn.commit()
-        except Exception as ex:
-            print("Save masrwf error:", ex)
-        finally:
-            if conn:
-                try: conn.close()
-                except: pass
-    return redirect(url_for('admin_masrwf'))
-
-@app.route('/admin/update_masrwf', methods=['POST'])
-def admin_update_masrwf():
-    m_id = int(request.form.get('id', 0))
-    m_date = request.form.get('masrwf_date')
-    m_name = request.form.get('masrwf_name', '').strip()
-    m_type = request.form.get('masrwf_type', '').strip()
-    spent_by = request.form.get('spent_by', '').strip()
-    amt = float(request.form.get('amount', 0))
-    notes = request.form.get('notes', '').strip()
-    
-    if m_id > 0 and m_type and amt > 0:
-        conn = None
-        try:
-            conn = get_db()
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE masrwf 
-                    SET masrwf_date = %s, masrwf_name = %s, masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
-                    WHERE id = %s
-                """, (m_date, m_name, m_type, spent_by, amt, notes, m_id))
-                conn.commit()
-        except Exception as ex:
-            print("Update masrwf error:", ex)
-        finally:
-            if conn:
-                try: conn.close()
-                except: pass
-    return redirect(url_for('admin_masrwf'))
-
-@app.route('/admin/delete_masrwf/<int:mid>')
-def admin_delete_masrwf(mid):
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM masrwf WHERE id = %s", (mid,))
-            conn.commit()
-    except Exception as ex:
-        print("Delete masrwf error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return redirect(url_for('admin_masrwf'))
 
 # ==========================================
 # بەشی حیساباتی شاگردەکان
