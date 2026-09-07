@@ -812,7 +812,6 @@ WEB_WORKERS_TEMPLATE = """
         .main-title { font-size: 24px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; }
         .btn-dash { background: #262730; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; border: 1px solid #31333F; }
         
-        /* شێوازی تابەکان (Tabs) هاوشێوەی Streamlit */
         .st-tabs { display: flex; gap: 30px; border-bottom: 1px solid #31333F; margin-bottom: 24px; }
         .st-tab-btn { background: none; border: none; color: #94a3b8; font-size: 15px; font-weight: 700; padding: 12px 0; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .st-tab-btn:hover { color: #ffffff; }
@@ -822,7 +821,6 @@ WEB_WORKERS_TEMPLATE = """
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* شێوازی فۆڕم و ئینپووتەکان */
         .section-title { font-size: 18px; font-weight: 800; color: #f59e0b; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
         .st-form-row { display: flex; flex-direction: column; gap: 16px; background: #161b22; padding: 24px; border-radius: 12px; border: 1px solid #31333F; max-width: 600px; margin: 0 auto; }
         
@@ -834,7 +832,6 @@ WEB_WORKERS_TEMPLATE = """
         .st-btn { background: #10b981; color: #0e1117; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; transition: opacity 0.2s; }
         .st-btn:hover { opacity: 0.9; }
 
-        /* شێوازی خشتە (Table) */
         .st-table-wrap { overflow-x: auto; background: #161b22; border-radius: 12px; border: 1px solid #31333F; margin-top: 20px; }
         .st-table { width: 100%; border-collapse: collapse; text-align: center; }
         .st-table th { background: #012e22; color: #10b981; padding: 14px; font-size: 13.5px; font-weight: 800; border-bottom: 2px solid #047857; }
@@ -845,14 +842,23 @@ WEB_WORKERS_TEMPLATE = """
         .btn-edit { background: #3b82f6; color: #fff; }
         .btn-del { background: transparent; color: #ef4444; border: 1px solid #ef4444; }
 
-        /* مۆدێڵی دەستکاری (Modal) */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
         .modal-content { background: #161b22; border: 1px solid #31333F; border-radius: 14px; width: 100%; max-width: 420px; padding: 24px; }
         
-        /* دیزاینی فلتەری کات هاوشێوەی وێنەکە */
         .filter-bar-stream { display: flex; gap: 16px; margin-bottom: 20px; }
         .filter-bar-stream .st-input-group { flex: 1; }
         .filter-bar-stream .st-btn { width: auto; padding: 12px 30px; margin-top: 24px; background: #3b82f6; color: #fff; }
+
+        /* دیزاینی نوێی ڕیزی شاگردەکان بۆ دەوام */
+        .worker-row { background: #161b22; border: 1px solid #31333F; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; transition: transform 0.15s; }
+        .worker-row:hover { border-color: #10b981; }
+        .worker-info { flex: 1; min-width: 150px; text-align: right; }
+        .worker-name { font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
+        .worker-salary { font-size: 12px; color: #10b981; font-weight: 700; }
+        .status-toggles { display: flex; gap: 16px; justify-content: center; flex: 1.5; min-width: 200px; }
+        .radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700; font-size: 14px; }
+        .bonus-box { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 6px; }
+        .bonus-box label { font-size: 11px; color: #f59e0b; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -861,15 +867,14 @@ WEB_WORKERS_TEMPLATE = """
         <a href="/admin" class="btn-dash">⬅️ گەڕانەوە بۆ داشبۆرد</a>
     </div>
 
-    <!-- تابەکان -->
     <div class="st-tabs">
-        <button class="st-tab-btn active" onclick="openTab(event, 'tab-calc')">💰 هەژمارکردنی مووچە و بەخشش</button>
-        <button class="st-tab-btn" onclick="openTab(event, 'tab-att')">🗓️ تۆمارکردنی دەوام (هاتن / نەهاتن)</button>
+        <button class="st-tab-btn" onclick="openTab(event, 'tab-calc')">💰 هەژمارکردنی مووچە و بەخشش</button>
+        <button class="st-tab-btn active" onclick="openTab(event, 'tab-att')">🗓️ تۆمارکردنی دەوام (هاتن / نەهاتن)</button>
         <button class="st-tab-btn" onclick="openTab(event, 'tab-add')">➕ زیادکردنی شاگرد</button>
     </div>
 
-    <!-- تابی 1: هەژمارکردنی مووچە (چالاک) -->
-    <div id="tab-calc" class="tab-content active">
+    <!-- تابی 1: هەژمارکردنی مووچە -->
+    <div id="tab-calc" class="tab-content">
         <div class="section-title">💰 هەژمارکردنی مووچەی کۆکراوە و بەخششی شاگردەکان بەپێی بەروار</div>
         
         <form method="GET" action="/admin/workers" class="filter-bar-stream">
@@ -921,35 +926,52 @@ WEB_WORKERS_TEMPLATE = """
         </div>
     </div>
 
-    <!-- تابی 2: تۆمارکردنی دەوام -->
-    <div id="tab-att" class="tab-content">
-        <form method="POST" action="/admin/save_attendance" class="st-form-row">
-            <div class="section-title">🗓️ تۆمارکردنی دەوامی ڕۆژانە و بەخشش</div>
-            <div class="st-input-group">
-                <label>بەرواری دەوام:</label>
-                <input type="date" name="att_date" class="st-input" value="{{ today_date }}" required>
+    <!-- تابی 2: تۆمارکردنی دەوام (بە شێوەی لیست) -->
+    <div id="tab-att" class="tab-content active">
+        <form method="POST" action="/admin/save_attendance">
+            <div class="section-title" style="justify-content:center; border-bottom: 2px solid #10b981; padding-bottom: 12px; margin-bottom: 24px;">
+                📅 دیاریکردنی دۆخی دەوامی ڕۆژانە و بەخشش
             </div>
-            <div class="st-input-group">
-                <label>هەڵبژاردنی شاگرد:</label>
-                <select name="worker_id" class="st-input" required>
-                    {% for w in wage_rows %}
-                        <option value="{{ w.id }}">{{ w.name }}</option>
-                    {% endfor %}
-                </select>
+            
+            <div class="st-input-group" style="margin-bottom: 24px; max-width: 350px; margin-left: 0; margin-right: auto;">
+                <label style="text-align: right; color:#f59e0b;">ڕۆژی دەوام:</label>
+                <input type="date" name="att_date" class="st-input" value="{{ today_date }}" required style="font-size: 16px; padding: 14px;">
             </div>
-            <div class="st-input-group">
-                <label>دۆخی دەوامکردن:</label>
-                <select name="status" class="st-input">
-                    <option value="هاتوو">✅ ئامادەبوو (هاتوو)</option>
-                    <option value="نەهاتوو">❌ غائیب (نەهاتوو)</option>
-                    <option value="مۆڵەت">🏖️ مۆڵەت</option>
-                </select>
+
+            <div style="display:flex; flex-direction:column;">
+                {% for aw in all_workers %}
+                <input type="hidden" name="worker_ids" value="{{ aw.id }}">
+                <div class="worker-row">
+                    <!-- ناوی شاگرد -->
+                    <div class="worker-info">
+                        <div class="worker-name">👷‍♂️ {{ aw.name }}</div>
+                        <div class="worker-salary">ڕۆژانە: {{ "{:,.0f}".format(aw.salary) }} د.ع</div>
+                    </div>
+
+                    <!-- دۆخی هاتن / نەهاتن -->
+                    <div class="status-toggles">
+                        <label class="radio-label" style="color: #10b981;">
+                            <input type="radio" name="status_{{ aw.id }}" value="هاتوو" {{ 'checked' if aw.last_status != 'نەهاتوو' else '' }} style="transform: scale(1.4);">
+                            هاتوو
+                        </label>
+                        <label class="radio-label" style="color: #fca5a5;">
+                            <input type="radio" name="status_{{ aw.id }}" value="نەهاتوو" {{ 'checked' if aw.last_status == 'نەهاتوو' else '' }} style="transform: scale(1.4);">
+                            نەهاتوو
+                        </label>
+                    </div>
+
+                    <!-- بەخشش -->
+                    <div class="bonus-box">
+                        <label>🎁 بەخشش / هەدیە (د.ع):</label>
+                        <input type="number" name="bonus_{{ aw.id }}" class="st-input" value="0" style="text-align: left; direction: ltr; padding: 10px;">
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align:center; color:#94a3b8; padding:30px;">هیچ شاگردێک لە سیستەمەکەدا نییە. تکایە سەرەتا شاگرد زیاد بکە.</div>
+                {% endfor %}
             </div>
-            <div class="st-input-group">
-                <label>بڕی بەخشش (پاداشت) بە دینار:</label>
-                <input type="number" name="bonus" class="st-input" value="0">
-            </div>
-            <button type="submit" class="st-btn">💾 تۆمارکردنی دەوام</button>
+            
+            <button type="submit" class="st-btn" style="margin-top: 30px; padding: 16px; font-size: 16px;">💾 پاشەکەوتکردنی دەوامی هەموو شاگردەکان</button>
         </form>
     </div>
 
@@ -997,7 +1019,6 @@ WEB_WORKERS_TEMPLATE = """
     </div>
 
     <script>
-        // سکرێپتی گۆڕینی تابەکان
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
@@ -1014,7 +1035,6 @@ WEB_WORKERS_TEMPLATE = """
             evt.currentTarget.className += " active";
         }
 
-        // سکرێپتی مۆدێڵی ئیدیت
         function openWorkerModal(id, name, phone, salary) {
             document.getElementById('editWorkerForm').action = '/admin/edit_worker/' + id;
             document.getElementById('m_worker_name').value = name;
