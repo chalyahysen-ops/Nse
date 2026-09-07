@@ -2887,7 +2887,6 @@ def admin_masrwf():
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
 
-    # بەتاڵکردنی فلتەرەکان بە شێوەیەکی بنەڕەتی بۆ بینینی هەموو داتاکان
     from_date = request.args.get('from_date', '').strip()
     to_date = request.args.get('to_date', '').strip()
 
@@ -2900,16 +2899,17 @@ def admin_masrwf():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # لێرەدا COALESCE بەکارهاتووە بۆ خوێندنەوەی masrwf_name ئەگەر masrwf_type بەتاڵ بێت
+            # کێشەکە لێرە چارەسەر کرا: بەکارهێنانی %% لەبری % بۆ ڕێگریکردن لە کێشەی PyMySQL
             query = """
                 SELECT 
                     id, 
-                    DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
-                    DATE_FORMAT(masrwf_date, '%Y-%m-%d') AS m_date_raw, 
-                    COALESCE(NULLIF(masrwf_type, ''), masrwf_name, '') AS masrwf_type, 
-                    COALESCE(spent_by, '') AS spent_by, 
-                    COALESCE(amount, 0) AS amount, 
-                    COALESCE(notes, '') AS notes 
+                    DATE_FORMAT(masrwf_date, '%%Y/%%m/%%d') AS m_date, 
+                    DATE_FORMAT(masrwf_date, '%%Y-%%m-%%d') AS m_date_raw, 
+                    masrwf_type, 
+                    masrwf_name, 
+                    spent_by, 
+                    amount, 
+                    notes 
                 FROM masrwf 
             """
             params = []
@@ -2920,13 +2920,40 @@ def admin_masrwf():
             
             query += " ORDER BY masrwf_date DESC, id DESC;"
             cur.execute(query, params)
-            rows = cur.fetchall() or []
-            tot = sum(float(r.get('amount') or 0) for r in rows)
+            
+            raw_data = cur.fetchall() or []
+            for r in raw_data:
+                m_type = str(r.get('masrwf_type') or '').strip()
+                m_name = str(r.get('masrwf_name') or '').strip()
+                
+                # ئەگەر جۆری مەسرووف بەتاڵ بوو، با ناوی مەسرووف لە ستوونە کۆنەکەوە بخوێنێتەوە
+                final_type = m_type if m_type and m_type != 'None' else m_name
+                
+                rows.append({
+                    'id': r['id'],
+                    'm_date': r['m_date'],
+                    'm_date_raw': r['m_date_raw'],
+                    'masrwf_type': final_type,
+                    'spent_by': r.get('spent_by') or '',
+                    'amount': float(r.get('amount') or 0),
+                    'notes': r.get('notes') or ''
+                })
 
+            tot = sum(r['amount'] for r in rows)
+
+            # هێنانی جۆرەکان بۆ ناو کۆمبۆبۆکسەکان
             try:
                 cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type IS NOT NULL AND masrwf_type != '';")
                 for r in cur.fetchall():
                     val = str(r.get('masrwf_type') or '').strip()
+                    if val and val not in existing_types:
+                        existing_types.append(val)
+            except: pass
+
+            try:
+                cur.execute("SELECT DISTINCT masrwf_name FROM masrwf WHERE masrwf_name IS NOT NULL AND masrwf_name != '';")
+                for r in cur.fetchall():
+                    val = str(r.get('masrwf_name') or '').strip()
                     if val and val not in existing_types:
                         existing_types.append(val)
             except: pass
