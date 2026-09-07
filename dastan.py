@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 from werkzeug.utils import secure_filename
 import pymysql
 import os
+import re
 
 app = Flask(__name__)
 app.secret_key = 'shahoor_all_in_one_pos_2026'
@@ -82,7 +83,7 @@ def ensure_all_tables():
                     category VARCHAR(150),
                     table_cabin VARCHAR(150),
                     notes TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     status VARCHAR(50) DEFAULT 'Active',
                     is_printed TINYINT DEFAULT 0
                 );
@@ -163,8 +164,7 @@ ensure_all_tables()
 @app.before_request
 def enforce_security():
     endpoint = request.endpoint or ''
-    # پەڕە و ئەندرۆپۆینتە کراوەکان کە پێویستیان بە چوونەژوورەوە نییە
-    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static']
+    exempt_endpoints = ['login', 'customer_table_view', 'save_customer_order', 'static', 'index']
     if endpoint in exempt_endpoints:
         return
 
@@ -373,7 +373,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 """
 
 # ==========================================
-# پەڕەی ئامار و قازانج (چارەسەرکراو)
+# پەڕەی ئامار و قازانج
 # ==========================================
 WEB_AMAR_TEMPLATE = """
 <!DOCTYPE html>
@@ -2497,15 +2497,12 @@ CUSTOMER_MENU_TEMPLATE = """
 # ==========================================
 # ڕێڕەوەکانی سەرەکی و چوونەژوورەوە
 # ==========================================
+
+# چارەسەری کێشەی سکیوریتی و نەچوونەوە سەر Login لەکاتی ئینتەرکردن
 @app.route('/')
 def index():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    if session.get('role') == 'admin':
-        return redirect(url_for('admin_dashboard'))
-    elif session.get('role') == 'mobile_waiter':
-        return redirect(url_for('mobile_waiter_tables'))
-    return redirect(url_for('desktop_tables'))
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -2603,7 +2600,6 @@ def admin_dashboard():
             cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time >= NOW() - INTERVAL 1 DAY")
             today_sales = float(cur.fetchone()['s'])
             
-            # ئەگەر قاسە سفر بوو لە فڕۆشتنی ئەو ٢٤ کاتژمێرە وەریگرە
             if today_sales == 0:
                 cur.execute("SELECT IFNULL(SUM(quantity * price), 0) AS s FROM froshtn WHERE created_at >= NOW() - INTERVAL 1 DAY AND food_name NOT LIKE '%قاپی نوێ%'")
                 today_sales = float(cur.fetchone()['s'])
@@ -2629,6 +2625,7 @@ def admin_dashboard():
         total_workers=total_workers
     )
 
+# چارەسەری کۆتایی و یەکلاکەرەوەی بەشی ئامار بەپێی وێنەکەی MySQL
 @app.route('/admin/amar')
 def admin_amar():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -2641,9 +2638,6 @@ def admin_amar():
     start_date = request.args.get('start_date', first_day_of_month)
     end_date = request.args.get('end_date', today_str)
 
-    start_dt = f"{start_date} 00:00:00"
-    end_dt = f"{end_date} 23:59:59"
-
     report_rows = []
     total_sales = 0.0
     total_expenses = 0.0
@@ -2654,50 +2648,43 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # بەپێی وێنەکەت: created_at لە فۆرماتی TIMESTAMP دایە و خواردنەکان نیشانەی + یان پێوەیە
             query_sales = """
                 SELECT 
                     food_name,
-                    CAST(SUM(quantity) AS SIGNED) AS qty,
-                    ROUND(AVG(price), 0) AS price,
-                    CAST(SUM(quantity * price) AS DECIMAL(18, 0)) AS total
+                    quantity,
+                    price
                 FROM froshtn
-                WHERE created_at BETWEEN %s AND %s
-                  AND food_name NOT LIKE '%قاپی نوێ%'
+                WHERE DATE(created_at) >= %s AND DATE(created_at) <= %s
+                  AND food_name NOT LIKE '%%قاپی نوێ%%'
                   AND food_name != ''
-                  AND food_name IS NOT NULL
-                GROUP BY food_name
-                ORDER BY SUM(quantity) DESC;
+                  AND food_name IS NOT NULL;
             """
-            cur.execute(query_sales, (start_dt, end_dt))
-            raw_rows = cur.fetchall()
+            cur.execute(query_sales, (start_date, end_date))
+            raw_data = cur.fetchall()
 
-            for r in raw_rows:
-                f_name = r['food_name'] or ''
-                # پاککردنەوەی ناوی خواردن لە نیشانەی زیادکراو
-                clean_name = f_name.replace('+ ', '').strip()
-                report_rows.append({
-                    'food_name': clean_name,
-                    'qty': int(r['qty']),
-                    'price': float(r['price']),
-                    'total': float(r['total'])
-                })
+            # کۆکردنەوە و پاککردنەوەی ناوی خواردنەکان (لابردنی + و بۆشایی)
+            aggregated = {}
+            for item in raw_data:
+                raw_name = str(item.get('food_name') or '').strip()
+                clean_name = re.sub(r'^[+\s]+|[+\s]+$', '', raw_name)
+                clean_name = clean_name.replace('+', '').strip()
 
-            items_total_sum = sum(float(r['total']) for r in report_rows) if report_rows else 0.0
-            total_items_count = sum(int(r['qty']) for r in report_rows) if report_rows else 0
+                qty = int(item.get('quantity') or 1)
+                price = float(item.get('price') or 0)
 
-            try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS s FROM qasa WHERE transaction_time BETWEEN %s AND %s", (start_dt, end_dt))
-                qasa_row = cur.fetchone()
-                total_sales = float(qasa_row['s']) if qasa_row else 0.0
-            except:
-                total_sales = 0.0
+                if clean_name not in aggregated:
+                    aggregated[clean_name] = {'food_name': clean_name, 'qty': 0, 'price': price, 'total': 0.0}
+                
+                aggregated[clean_name]['qty'] += qty
+                aggregated[clean_name]['total'] += (qty * price)
 
-            # ئەگەر لە قاسە تۆمار نەکرابوو، کۆی فرۆش لە خشتەی فرۆشتن بە وردی وەردەگرێت
-            if total_sales == 0:
-                total_sales = items_total_sum
+            report_rows = sorted(list(aggregated.values()), key=lambda x: x['qty'], reverse=True)
+            total_sales = sum(r['total'] for r in report_rows)
+            total_items_count = sum(r['qty'] for r in report_rows)
 
             try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE masrwf_date BETWEEN %s AND %s", (start_dt, end_dt))
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s", (start_date, end_date))
                 exp_row = cur.fetchone()
                 total_expenses = float(exp_row['e']) if exp_row else 0.0
             except:
@@ -2708,7 +2695,7 @@ def admin_amar():
                     SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
                     FROM workers w
                     INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                    WHERE wa.date BETWEEN %s AND %s;
+                    WHERE wa.date >= %s AND wa.date <= %s;
                 """
                 cur.execute(query_workers, (start_date, end_date))
                 work_row = cur.fetchone()
