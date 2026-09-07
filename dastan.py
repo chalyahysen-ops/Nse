@@ -444,36 +444,109 @@ WEB_AMAR_TEMPLATE = """
         <div class="print-divider"></div>
     </div>
 
+   <!-- کارتی فلتەرکردنی بەروار و دوگمە خێراکان -->
     <div class="filter-card">
-        <form method="GET" action="/admin/amar" class="filter-form">
+        <form method="GET" action="/admin/amar" id="amarFilterForm" class="filter-form">
             <div class="filter-item">
                 <label>لە بەرواری:</label>
-                <input type="date" name="start_date" value="{{ start_date }}" required>
+                <input type="date" name="start_date" id="txt_start_date" value="{{ start_date }}" required>
             </div>
             <div class="filter-item">
                 <label>تا بەرواری:</label>
-                <input type="date" name="end_date" value="{{ end_date }}" required>
+                <input type="date" name="end_date" id="txt_end_date" value="{{ end_date }}" required>
             </div>
             <button type="submit" class="btn-search">🔍 گەڕان و حیسابکردن</button>
+
+            <!-- دوگمە خێراکانی دەستنیشانکردنی ئۆتۆماتیکیی بەروار -->
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-right: auto; align-items: center;">
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('today')">ئەمڕۆ</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('yesterday')">دوێنێ</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('this_week')">ئەم هەفتەیە</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('this_month')">ئەم مانگە</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('last_month')">مانگی پێشوو</button>
+                <button type="button" class="btn-quick-date" onclick="setFilterPreset('all_time')" style="background: #3b82f6;">هەموو کات</button>
+            </div>
         </form>
     </div>
 
+    <style>
+        .btn-quick-date {
+            background: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+        .btn-quick-date:hover {
+            background: #f59e0b;
+            color: #000;
+        }
+    </style>
+
+    <script>
+        function setFilterPreset(preset) {
+            const now = new Date();
+            let start = new Date();
+            let end = new Date();
+
+            const formatDate = (d) => {
+                let month = '' + (d.getMonth() + 1);
+                let day = '' + d.getDate();
+                let year = d.getFullYear();
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+                return [year, month, day].join('-');
+            };
+
+            if (preset === 'today') {
+                start = now;
+                end = now;
+            } else if (preset === 'yesterday') {
+                start.setDate(now.getDate() - 1);
+                end.setDate(now.getDate() - 1);
+            } else if (preset === 'this_week') {
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 6 ? 0 : -1); 
+                start.setDate(diff);
+                end = now;
+            } else if (preset === 'this_month') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = now;
+            } else if (preset === 'last_month') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+            } else if (preset === 'all_time') {
+                start = new Date(2025, 0, 1);
+                end = now;
+            }
+
+            document.getElementById('txt_start_date').value = formatDate(start);
+            document.getElementById('txt_end_date').value = formatDate(end);
+            document.getElementById('amarFilterForm').submit();
+        }
+    </script>
+
+    <!-- کارتەکانی ئەنجامی گشتی -->
     <div class="summary-grid">
         <div class="sum-card">
             <div class="sum-label">💰 کۆی فرۆشی ماوەکە</div>
             <div class="sum-val" style="color: #10b981;">{{ "{:,.0f}".format(total_sales) }} د.ع</div>
         </div>
         <div class="sum-card">
-            <div class="sum-label">💸 کۆی مەسرووفاتی ماوەکە</div>
+            <div class="sum-label">💸 کۆی مەسرووفات</div>
             <div class="sum-val" style="color: #ef4444;">{{ "{:,.0f}".format(total_expenses) }} د.ع</div>
         </div>
         <div class="sum-card">
             <div class="sum-label">👥 کرێی شاگرد لە ماوەکەدا</div>
-            <div class="sum-val" style="color: #f59e0b;">{{ "{:,.0f}".format(total_workers_wage) }} د.ع</div>
+            <div class="sum-val" style="color: #0284c7;">{{ "{:,.0f}".format(total_workers_wage) }} د.ع</div>
         </div>
         <div class="sum-card">
             <div class="sum-label">🧾 کۆی هەموو خەرجییەکان</div>
-            <div class="sum-val" style="color: #e2e8f0;">{{ "{:,.0f}".format(total_all_expenses) }} د.ع</div>
+            <div class="sum-val" style="color: #f59e0b;">{{ "{:,.0f}".format(total_all_expenses) }} د.ع</div>
         </div>
         <div class="sum-card">
             <div class="sum-label">✨ قازانجی سافی (بڕی ماوە)</div>
@@ -487,15 +560,17 @@ WEB_AMAR_TEMPLATE = """
         </div>
     </div>
 
+    <!-- خشتەی یەکەم: فرۆش -->
+    <div class="section-title" style="color:#f59e0b;">🍽️ لیستی خواردنە فرۆشراوەکانی ماوەکە</div>
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 70px;">ڕیزبەندی</th>
-                    <th style="text-align:right;">ناوی خواردن / خواردنەوە</th>
-                    <th>کۆی ژمارەی فرۆشراو</th>
-                    <th>نرخی تاک</th>
-                    <th>کۆی داهات (دینار)</th>
+                    <th class="th-sales" style="width: 70px;">ڕیزبەندی</th>
+                    <th class="th-sales" style="text-align:right;">ناوی خواردن / خواردنەوە</th>
+                    <th class="th-sales">کۆی ژمارەی فرۆشراو</th>
+                    <th class="th-sales">نرخی تاک</th>
+                    <th class="th-sales">کۆی داهات (دینار)</th>
                 </tr>
             </thead>
             <tbody>
@@ -516,6 +591,76 @@ WEB_AMAR_TEMPLATE = """
         </table>
     </div>
 
+    <!-- خشتەی دووەم: مەسرووفات -->
+    <div class="section-title" style="color:#ef4444;">🧾 لیستی مەسرووفات و خەرجییەکانی ماوەکە</div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-expense" style="width: 70px;">ڕیزبەندی</th>
+                    <th class="th-expense">بەروار</th>
+                    <th class="th-expense" style="text-align:right;">ناوی مەسرووف</th>
+                    <th class="th-expense">جۆری مەسرووف</th>
+                    <th class="th-expense">خەرجکەر</th>
+                    <th class="th-expense">بڕی پارە</th>
+                    <th class="th-expense">تێبینی</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in expense_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ e.m_date }}</td>
+                    <td style="text-align:right; font-weight:700;">{{ e.masrwf_name if e.masrwf_name else '—' }}</td>
+                    <td style="color:#f59e0b; font-weight:700;">{{ e.masrwf_type }}</td>
+                    <td style="color:#38bdf8;">{{ e.spent_by }}</td>
+                    <td style="color:#ef4444; font-weight:800;">{{ "{:,.0f}".format(e.amount) }} د.ع</td>
+                    <td style="color:#94a3b8; font-size:12px;">{{ e.notes }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="padding:20px; color:#94a3b8;">هیچ مەسرووفێک لەم ماوەیەدا تۆمار نەکراوە</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- خشتەی سێیەم: حیساب و کرێی شاگردەکان -->
+    <div class="section-title" style="color:#0284c7;">👥 لیستی حیساب و کرێی شاگردەکانی ماوەکە</div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-workers" style="width: 70px;">ڕیزبەندی</th>
+                    <th class="th-workers" style="text-align:right;">ناوی شاگرد</th>
+                    <th class="th-workers">ڕۆژانی دەوام</th>
+                    <th class="th-workers">مووچەی ڕۆژانە</th>
+                    <th class="th-workers">کۆی مووچە</th>
+                    <th class="th-workers">بەخشش (پاداشت)</th>
+                    <th class="th-workers">کۆی شایستە</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in worker_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="text-align:right; font-weight:700;">{{ w.name }}</td>
+                    <td style="color:#38bdf8; font-weight:800;">{{ w.work_days }} ڕۆژ</td>
+                    <td>{{ "{:,.0f}".format(w.salary) }} د.ع</td>
+                    <td>{{ "{:,.0f}".format(w.total_salary) }} د.ع</td>
+                    <td style="color:#10b981;">{{ "{:,.0f}".format(w.total_bonus) }} د.ع</td>
+                    <td style="color:#f59e0b; font-weight:800;">{{ "{:,.0f}".format(w.total_due) }} د.ع</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="padding:20px; color:#94a3b8;">هیچ دەوام و کرێیەکی شاگرد لەم ماوەیەدا تۆمار نەکراوە</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <div class="print-only-footer">
         <div class="print-footer-grid">
             <div>کۆی گشتی ژمارەی خواردن: {{ "{:,.0f}".format(total_items_count) }} دانە</div>
@@ -530,8 +675,6 @@ WEB_AMAR_TEMPLATE = """
     </div>
 </body>
 </html>
-"""
-
 # ==========================================
 # پەڕەی مەسرووفات
 # ==========================================
@@ -2425,9 +2568,10 @@ def admin_amar():
         return redirect(url_for('login'))
 
     today = datetime.now()
-    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
     today_str = today.strftime('%Y-%m-%d')
+    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
 
+    # وەرگرتنی بەروارەکان بەپێی فلتەر
     start_date = request.args.get('start_date', first_day_of_month)
     end_date = request.args.get('end_date', today_str)
 
@@ -2444,7 +2588,7 @@ def admin_amar():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # ١. وەرگرتن و کۆکردنەوەی فرۆش لەو ماوەیەدا
+            # ١. کۆکردنەوەی فرۆش لەو ماوەیەدا
             query_sales = """
                 SELECT food_name, quantity, price
                 FROM froshtn
@@ -2475,41 +2619,36 @@ def admin_amar():
             total_sales = sum(r['total'] for r in report_rows)
             total_items_count = sum(r['qty'] for r in report_rows)
 
-            # ٢. وەرگرتنی وردەکاریی مەسرووفات لەو ماوەیەدا
-            try:
-                query_exp = """
-                    SELECT DATE_FORMAT(masrwf_date, '%Y/%m/%d') AS m_date, 
-                           masrwf_name, masrwf_type, spent_by, amount, notes 
-                    FROM masrwf 
-                    WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s
-                    ORDER BY masrwf_date DESC, id DESC
-                """
-                cur.execute(query_exp, (start_date, end_date))
-                expense_rows = cur.fetchall()
-                total_expenses = sum(float(r['amount'] or 0) for r in expense_rows)
-            except Exception as ex:
-                print("Amar Expenses Fetch Error:", ex)
+            # ٢. هێنانی مەسرووفات بە سەلامەتی بەپێی بەرواری خەرجی یان دروستبوون
+            query_exp = """
+                SELECT DATE_FORMAT(COALESCE(masrwf_date, created_at), '%Y/%m/%d') AS m_date, 
+                       masrwf_name, masrwf_type, spent_by, amount, notes 
+                FROM masrwf 
+                WHERE DATE(COALESCE(masrwf_date, created_at)) >= %s 
+                  AND DATE(COALESCE(masrwf_date, created_at)) <= %s
+                ORDER BY COALESCE(masrwf_date, created_at) DESC, id DESC
+            """
+            cur.execute(query_exp, (start_date, end_date))
+            expense_rows = cur.fetchall()
+            total_expenses = sum(float(r['amount'] or 0) for r in expense_rows)
 
-            # ٣. وەرگرتنی وردەکاریی کرێ و شایستەی شاگردەکان لەو ماوەیەدا
-            try:
-                query_workers = """
-                    SELECT w.name, w.phone, w.salary,
-                           COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
-                           (COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) AS total_salary,
-                           IFNULL(SUM(wa.bonus), 0) AS total_bonus,
-                           ((COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) + IFNULL(SUM(wa.bonus), 0)) AS total_due
-                    FROM workers w
-                    INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                    WHERE wa.date >= %s AND wa.date <= %s
-                    GROUP BY w.id, w.name, w.phone, w.salary
-                    HAVING total_due > 0
-                    ORDER BY total_due DESC;
-                """
-                cur.execute(query_workers, (start_date, end_date))
-                worker_rows = cur.fetchall()
-                total_workers_wage = sum(float(w['total_due'] or 0) for w in worker_rows)
-            except Exception as ex:
-                print("Amar Workers Fetch Error:", ex)
+            # ٣. هێنانی شایستەی شاگردەکان لەو ماوەیەدا
+            query_workers = """
+                SELECT w.name, w.phone, w.salary,
+                       COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) AS work_days,
+                       (COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) AS total_salary,
+                       IFNULL(SUM(wa.bonus), 0) AS total_bonus,
+                       ((COUNT(CASE WHEN wa.status = 'هاتوو' THEN 1 END) * w.salary) + IFNULL(SUM(wa.bonus), 0)) AS total_due
+                FROM workers w
+                INNER JOIN worker_attendance wa ON w.id = wa.worker_id
+                WHERE wa.date >= %s AND wa.date <= %s
+                GROUP BY w.id, w.name, w.phone, w.salary
+                HAVING total_due > 0
+                ORDER BY total_due DESC;
+            """
+            cur.execute(query_workers, (start_date, end_date))
+            worker_rows = cur.fetchall()
+            total_workers_wage = sum(float(w['total_due'] or 0) for w in worker_rows)
 
     except Exception as ex:
         print("LoadAmarData error:", ex)
