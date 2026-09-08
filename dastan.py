@@ -1358,7 +1358,7 @@ WEB_CASHIER_TEMPLATE = """
                 </div>
             </div>
 
-            <button type="button" class="btn-confirm-pay" onclick="submitAndPrintPayment()">🖨️ واصڵکردن و چاپکردنی وەسڵ</button>
+         <button type="button" class="btn-confirm-pay" onclick="submitAndPrintPayment()">✅ واصڵکردن</button>
         </div>
     </div>
 
@@ -1433,7 +1433,7 @@ WEB_CASHIER_TEMPLATE = """
             }
         }
 
-        function submitAndPrintPayment() {
+      function submitAndPrintPayment() {
             let paid = parseFloat(document.getElementById('txtPaidAmount').value) || 0;
             if (paid <= 0) {
                 alert('تکایە بڕی پارەی دروست بنووسە!');
@@ -1450,7 +1450,7 @@ WEB_CASHIER_TEMPLATE = """
                 })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    printWebReceipt(paid);
+                    // فەرمانی پرێنتکردنەکەمان سڕییەوە، تەنها واصڵ دەکرێت
                     closeCheckout();
                     setTimeout(() => { location.reload(); }, 600);
                 } else {
