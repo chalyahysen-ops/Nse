@@ -2502,7 +2502,7 @@ CUSTOMER_MENU_TEMPLATE = """
         }
         function closeCartView(e) { if (e.target.id === 'cartModalShade') toggleCartModal(false); }
 
-        function sendFinalOrder() {
+       function sendFinalOrder() {
             if (myCart.length === 0) { showNotification("سەرەتا خواردن هەڵبژێرە!", true); return; }
             fetch('/save_customer_order', {
                 method: 'POST',
@@ -2517,7 +2517,11 @@ CUSTOMER_MENU_TEMPLATE = """
                     renderCartUI();
                     toggleCartModal(false);
                     showNotification("✅ داواکارییەکەت بۆ مەتبەخ نێردرا");
-                } else showNotification(data.message || 'هەڵە لە ناردن', true);
+                    // زیادکردنی ئەم هێڵە بۆ گەڕانەوە بۆ پەڕەی مێزەکانی مۆبایل دوای 800 میللی چرکە
+                    setTimeout(() => { window.location.href = '/mobile/tables'; }, 800);
+                } else {
+                    showNotification(data.message || 'هەڵە لە ناردن', true);
+                }
             });
         }
     </script>
