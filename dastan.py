@@ -1442,15 +1442,15 @@ WEB_CASHIER_TEMPLATE = """
                 })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    // بە سەرکەوتوویی واصڵ کرا. فەرمانی پرێنتەکە سڕایەوە بۆ ئەوەی تەنها C# چاپی بکات.
+                    // گەڕاندنەوەی فەرمانی چاپ بۆ وەسڵی کاشێر
+                    printWebReceipt(paid);
                     closeCheckout();
-                    setTimeout(() => { location.reload(); }, 600);
+                    setTimeout(() => { location.reload(); }, 1000);
                 } else {
                     alert('هەڵە لە واصڵکردن: ' + res.message);
                 }
             });
         }
-
         setInterval(() => {
             if (document.getElementById('checkoutModal').style.display !== 'flex' && document.getElementById('txtSearch').value.trim() === '') {
                 fetch(window.location.href)
