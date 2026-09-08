@@ -812,7 +812,6 @@ WEB_WORKERS_TEMPLATE = """
         .main-title { font-size: 24px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; }
         .btn-dash { background: #262730; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; border: 1px solid #31333F; }
         
-        /* شێوازی تابەکان (Tabs) هاوشێوەی Streamlit */
         .st-tabs { display: flex; gap: 30px; border-bottom: 1px solid #31333F; margin-bottom: 24px; }
         .st-tab-btn { background: none; border: none; color: #94a3b8; font-size: 15px; font-weight: 700; padding: 12px 0; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .st-tab-btn:hover { color: #ffffff; }
@@ -822,7 +821,6 @@ WEB_WORKERS_TEMPLATE = """
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* شێوازی فۆڕم و ئینپووتەکان */
         .section-title { font-size: 18px; font-weight: 800; color: #f59e0b; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
         .st-form-row { display: flex; flex-direction: column; gap: 16px; background: #161b22; padding: 24px; border-radius: 12px; border: 1px solid #31333F; max-width: 600px; margin: 0 auto; }
         
@@ -834,7 +832,6 @@ WEB_WORKERS_TEMPLATE = """
         .st-btn { background: #10b981; color: #0e1117; padding: 12px; border-radius: 8px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; transition: opacity 0.2s; }
         .st-btn:hover { opacity: 0.9; }
 
-        /* شێوازی خشتە (Table) */
         .st-table-wrap { overflow-x: auto; background: #161b22; border-radius: 12px; border: 1px solid #31333F; margin-top: 20px; }
         .st-table { width: 100%; border-collapse: collapse; text-align: center; }
         .st-table th { background: #012e22; color: #10b981; padding: 14px; font-size: 13.5px; font-weight: 800; border-bottom: 2px solid #047857; }
@@ -845,7 +842,6 @@ WEB_WORKERS_TEMPLATE = """
         .btn-edit { background: #3b82f6; color: #fff; }
         .btn-del { background: transparent; color: #ef4444; border: 1px solid #ef4444; }
 
-        /* مۆدێڵی دەستکاری (Modal) */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
         .modal-content { background: #161b22; border: 1px solid #31333F; border-radius: 14px; width: 100%; max-width: 420px; padding: 24px; }
         
@@ -871,7 +867,6 @@ WEB_WORKERS_TEMPLATE = """
         <a href="/admin" class="btn-dash">⬅️ گەڕانەوە بۆ داشبۆرد</a>
     </div>
 
-    <!-- تابەکان -->
     <div class="st-tabs">
         <button class="st-tab-btn" onclick="openTab(event, 'tab-calc')">💰 هەژمارکردنی مووچە و بەخشش</button>
         <button class="st-tab-btn active" onclick="openTab(event, 'tab-att')">🗓️ تۆمارکردنی دەوام (هاتن / نەهاتن)</button>
