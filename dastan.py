@@ -1481,6 +1481,81 @@ WEB_CASHIER_TEMPLATE = """
 </html>
 """
 # ==========================================
+# پەڕەی قاسە
+# ==========================================
+WEB_QASA_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قاسە - دیوانی سوڵتان</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background-color: #03261d; color: #ffffff; min-height: 100vh; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #064032; padding: 14px 20px; border-radius: 12px; border: 1px solid #0b5e4a; margin-bottom: 20px; }
+        .btn-dash { background: #334155; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 13px; }
+        
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .s-card { background: #064032; border: 1.5px solid #0b5e4a; border-radius: 14px; padding: 20px; text-align: center; }
+        .s-title { font-size: 14px; font-weight: 700; color: #a7f3d0; margin-bottom: 8px; }
+        .s-val { font-size: 22px; font-weight: 800; color: #10b981; }
+        
+        .table-responsive { overflow-x: auto; background: #064032; border: 1px solid #0b5e4a; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #085341; padding: 14px; color: #10b981; font-size: 13.5px; font-weight: 800; border-bottom: 1px solid #0b5e4a; }
+        td { padding: 12px; border-bottom: 1px solid #0b5e4a; font-size: 13.5px; font-weight: 600; color: #f8fafc; }
+        tr:hover { background: #085341; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h2 style="color:#10b981;">💵 قاسەی فرۆشتن (٢٤ کاتژمێری ڕابردوو)</h2>
+        <a href="/admin" class="btn-dash">⬅️ داشبۆرد</a>
+    </div>
+
+    <div class="summary-cards">
+        <div class="s-card">
+            <div class="s-title">کۆی پارەی وەرگیراو لە قاسە</div>
+            <div class="s-val">{{ "{:,.0f}".format(total_received) }} د.ع</div>
+        </div>
+        <div class="s-card" style="border-color:#ef4444;">
+            <div class="s-title" style="color:#fca5a5;">کۆی داشکاندن (خەسارەت)</div>
+            <div class="s-val" style="color:#ef4444;">{{ "{:,.0f}".format(total_discount) }} د.ع</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ڕیزبەندی</th>
+                    <th>کات و بەروار</th>
+                    <th>شوێن / مێز</th>
+                    <th>پارەی وەرگیراو</th>
+                    <th>داشکاندن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in qasa_rows %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td style="color:#38bdf8;">{{ r.transaction_time }}</td>
+                    <td style="font-weight:800;">{{ r.place_id }}</td>
+                    <td style="color:#10b981;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                    <td style="color:#ef4444;">{{ "{:,.0f}".format(r.discount) }} د.ع</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="padding:40px; color:#94a3b8;">هیچ فرۆشێک لە ٢٤ کاتژمێری ڕابردوودا نییە</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+# ==========================================
 # پەڕەی بەڕێوەبردنی خواردنەکان (Menu Manager)
 # ==========================================
 WEB_MENU_MANAGER_TEMPLATE = """
