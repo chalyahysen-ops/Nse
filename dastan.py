@@ -1433,7 +1433,7 @@ WEB_CASHIER_TEMPLATE = """
             }
         }
 
-      function submitAndPrintPayment() {
+    function submitAndPrintPayment() {
             let paid = parseFloat(document.getElementById('txtPaidAmount').value) || 0;
             if (paid <= 0) {
                 alert('تکایە بڕی پارەی دروست بنووسە!');
@@ -1450,9 +1450,11 @@ WEB_CASHIER_TEMPLATE = """
                 })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    // فەرمانی پرێنتکردنەکەمان سڕییەوە، تەنها واصڵ دەکرێت
+                    // ئەم کۆدە وەسڵەکە تەنها لە کاشێر پرێنت دەکات
+                    printWebReceipt(paid);
                     closeCheckout();
-                    setTimeout(() => { location.reload(); }, 600);
+                    // کاتی ڕیفرێشەکەمان کەمێک زیادکرد بۆ ئەوەی پرێنتەکە بەتەواوی بڕوات
+                    setTimeout(() => { location.reload(); }, 1000);
                 } else {
                     alert('هەڵە لە واصڵکردن: ' + res.message);
                 }
