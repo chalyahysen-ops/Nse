@@ -2369,7 +2369,8 @@ CUSTOMER_MENU_TEMPLATE = """
 
                     <div class="mini-stepper">
                         <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">-</button>
-                        <span class="qty-val-display" id="count_{{ item_id_safe }}">0</span>
+                        <!-- زۆر گرنگە ئەم data-name دانرابێت بۆ حیساباتی خۆکارانە -->
+                        <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item_id_safe }}">0</span>
                         <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">+</button>
                     </div>
                     {% endif %}
@@ -2404,7 +2405,9 @@ CUSTOMER_MENU_TEMPLATE = """
 
     <script>
         let myCart = [];
+        let originalTableOrders = [];
         const tableId = {{ table_num|tojson }};
+        const isWaiter = window.location.href.includes('/mobile/menu');
 
         function showNotification(text, isError = false) {
             const toast = document.getElementById('toastBox');
@@ -2422,6 +2425,43 @@ CUSTOMER_MENU_TEMPLATE = """
             });
         }
 
+        // هێنانی داواکارییە کۆنەکان لە داتابەیسەوە
+        function fetchTableOrders() {
+            fetch('/get_table_orders/' + encodeURIComponent(tableId))
+            .then(r => r.json())
+            .then(data => {
+                myCart = [];
+                originalTableOrders = [];
+                if (data && data.length > 0) {
+                    data.forEach((item, index) => {
+                        if (item.food_name.includes('قاپی نوێ')) return;
+                        let it = {
+                            base_name: item.food_name.split(' (')[0],
+                            full_name: item.food_name,
+                            food_name: item.food_name,
+                            qty: parseInt(item.quantity),
+                            price: parseFloat(item.price),
+                            cat: item.category || '',
+                            safe_id: 'db_' + index
+                        };
+                        myCart.push(it);
+                        originalTableOrders.push(JSON.parse(JSON.stringify(it)));
+                    });
+                }
+                refreshCounterDisplays();
+                renderCartUI();
+            });
+        }
+
+        window.onload = function() {
+            fetchTableOrders();
+        };
+
+        function getOrigQty(fullName) {
+            let orig = originalTableOrders.find(o => o.full_name === fullName);
+            return orig ? orig.qty : 0;
+        }
+
         function changeCustomerQty(baseName, delta, price, cat, safeId) {
             let riceVal = '', chickenVal = '';
             const rEl = document.getElementById('opt_rice_' + safeId);
@@ -2433,15 +2473,24 @@ CUSTOMER_MENU_TEMPLATE = """
             if (riceVal) finalName += ` (${riceVal})`;
             if (chickenVal) finalName += ` (${chickenVal})`;
 
+            let origQty = getOrigQty(finalName);
             let found = false;
+            
             for (let i = myCart.length - 1; i >= 0; i--) {
                 if (myCart[i].full_name === finalName) {
-                    myCart[i].qty += delta;
+                    let newQty = myCart[i].qty + delta;
+                    // ڕێگریکردن لە کەمکردنەوەی داواکاری ئەگەر موشتەری بێت
+                    if (!isWaiter && newQty < origQty) {
+                        showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
+                        return;
+                    }
+                    myCart[i].qty = newQty;
                     if (myCart[i].qty <= 0) myCart.splice(i, 1);
                     found = true;
                     break;
                 }
             }
+            
             if (!found && delta > 0) {
                 myCart.push({ base_name: baseName, full_name: finalName, price: price, qty: 1, cat: cat || '', safe_id: safeId, rice_type: riceVal, chicken_part: chickenVal });
             }
@@ -2450,10 +2499,15 @@ CUSTOMER_MENU_TEMPLATE = """
         }
 
         function refreshCounterDisplays() {
-            document.querySelectorAll('.qty-val-display').forEach(d => d.innerText = '0');
-            myCart.forEach(item => {
-                const el = document.getElementById('count_' + item.safe_id);
-                if (el) el.innerText = (parseInt(el.innerText) || 0) + item.qty;
+            document.querySelectorAll('.qty-val-display').forEach(el => {
+                let itemName = el.getAttribute('data-name');
+                let totalQty = 0;
+                myCart.forEach(cartItem => {
+                    if (cartItem.base_name === itemName || cartItem.full_name === itemName) {
+                        totalQty += cartItem.qty;
+                    }
+                });
+                el.innerText = totalQty;
             });
         }
 
@@ -2488,7 +2542,13 @@ CUSTOMER_MENU_TEMPLATE = """
 
         function modifyCustomerCart(index, delta) {
             if (myCart[index]) {
-                myCart[index].qty += delta;
+                let origQty = getOrigQty(myCart[index].full_name);
+                let newQty = myCart[index].qty + delta;
+                if (!isWaiter && newQty < origQty) {
+                    showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
+                    return;
+                }
+                myCart[index].qty = newQty;
                 if (myCart[index].qty <= 0) myCart.splice(index, 1);
                 refreshCounterDisplays();
                 renderCartUI();
@@ -2502,26 +2562,40 @@ CUSTOMER_MENU_TEMPLATE = """
         }
         function closeCartView(e) { if (e.target.id === 'cartModalShade') toggleCartModal(false); }
 
-       function sendFinalOrder() {
+        function sendFinalOrder() {
             if (myCart.length === 0) { showNotification("سەرەتا خواردن هەڵبژێرە!", true); return; }
-            fetch('/save_customer_order', {
+            
+            // گۆڕینی فۆرمات بۆ ئەوەی لەگەڵ سیستەمی نوێ بگونجێت
+            let formattedCart = myCart.map(it => ({
+                food_name: it.full_name || it.food_name,
+                qty: it.qty,
+                price: it.price,
+                cat: it.cat || 'گشتی'
+            }));
+
+            // لێرەدا کۆدی save_cart_order بەکاردێت بۆ هێشتنەوەی داواکاری کۆن
+            fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ table_number: tableId, cart_items: myCart })
+                body: JSON.stringify({ 
+                    table_number: tableId, 
+                    cart_items: formattedCart,
+                    original_items: originalTableOrders 
+                })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    myCart = [];
-                    refreshCounterDisplays();
-                    renderCartUI();
-                    toggleCartModal(false);
                     showNotification("✅ داواکارییەکەت بۆ مەتبەخ نێردرا");
-                    // زیادکردنی ئەم هێڵە بۆ گەڕانەوە بۆ پەڕەی مێزەکانی مۆبایل دوای 800 میللی چرکە
-                    setTimeout(() => { window.location.href = '/mobile/tables'; }, 800);
-                } else {
-                    showNotification(data.message || 'هەڵە لە ناردن', true);
-                }
+                    if (isWaiter) {
+                        // گارسۆن ئەگەڕێتەوە بۆ مێزەکان
+                        setTimeout(() => { window.location.href = '/mobile/tables'; }, 800);
+                    } else {
+                        // موشتەری دەمێنێتەوە، بەڵام داتای نوێ دەهێنرێتەوە تا داواکارییەکانی بۆی دەربکەون
+                        toggleCartModal(false);
+                        fetchTableOrders(); 
+                    }
+                } else showNotification(data.message || 'هەڵە لە ناردن', true);
             });
         }
     </script>
@@ -3652,6 +3726,13 @@ def save_cart_order():
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # پشکنینی ئاسایشی مێزەکان (بۆ ئەوەی مێزی داخراو ئۆردەری پێ نەکرێت لەلایەن موشتەریەوە)
+            if tbl.isdigit():
+                cur.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (int(tbl),))
+                p_row = cur.fetchone()
+                if p_row and not p_row['allow_ordering'] and session.get('role') not in ['mobile_waiter', 'admin']:
+                    return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە!'})
+
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
             for it in cart:
                 fname = "--- قاپی نوێ ---" if it.get('is_divider') else it['food_name']
