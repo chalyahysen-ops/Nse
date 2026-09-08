@@ -1425,12 +1425,17 @@ WEB_CASHIER_TEMPLATE = """
             }
         }
 
-        function submitPayment() {
+     function submitPayment() {
             let paid = parseFloat(document.getElementById('txtPaidAmount').value) || 0;
             if (paid <= 0) {
                 alert('تکایە بڕی پارەی دروست بنووسە!');
                 return;
             }
+
+            // گۆڕینی شێوەی دوگمەکە بۆ ئەوەی بزانیت کلیک بووە
+            let btn = document.querySelector('.btn-confirm-pay');
+            btn.disabled = true;
+            btn.innerText = '⏳ چاوەڕێبە...';
 
             fetch('/admin/complete_payment', {
                 method: 'POST',
@@ -1442,13 +1447,17 @@ WEB_CASHIER_TEMPLATE = """
                 })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    // گەڕاندنەوەی فەرمانی چاپ بۆ وەسڵی کاشێر
-                    printWebReceipt(paid);
                     closeCheckout();
-                    setTimeout(() => { location.reload(); }, 1000);
+                    setTimeout(() => { location.reload(); }, 600);
                 } else {
                     alert('هەڵە لە واصڵکردن: ' + res.message);
+                    btn.disabled = false;
+                    btn.innerText = '✅ واصڵکردن';
                 }
+            }).catch(err => {
+                alert('هەڵەیەک ڕوویدا لە کاتی ناردن.');
+                btn.disabled = false;
+                btn.innerText = '✅ واصڵکردن';
             });
         }
         setInterval(() => {
@@ -2634,7 +2643,120 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+def fix_kurdish_text(text):
+    if not text: return ""
+    reshaped_text = arabic_reshaper.reshape(str(text))
+    return get_display(reshaped_text)
 
+def get_text_width(draw, text, font):
+    try:
+        return draw.textlength(text, font=font)
+    except AttributeError:
+        try:
+            return draw.textsize(text, font=font)[0]
+        except:
+            bbox = draw.textbbox((0,0), text, font=font)
+            return bbox[2] - bbox[0]
+
+def print_cashier_receipt(table_num, items, total, paid, discount):
+    try:
+        # دۆزینەوەی ئەو پرێنتەرەی نیشانەی سەوزی لەسەرە بە شێوەیەکی ئۆتۆماتیکی
+        printer_name = win32print.GetDefaultPrinter()
+        
+        width = 576
+        estimated_height = 600 + (len(items) * 60)
+        img = Image.new('RGB', (width, estimated_height), color='white')
+        draw = ImageDraw.Draw(img)
+        
+        try:
+            font_title = ImageFont.truetype("tahoma.ttf", 40)
+            font_item = ImageFont.truetype("tahoma.ttf", 28)
+            font_sub = ImageFont.truetype("tahoma.ttf", 24)
+        except:
+            font_title = ImageFont.load_default()
+            font_item = font_title
+            font_sub = font_title
+
+        y = 20
+        t1 = fix_kurdish_text("دیوانی سوڵتان ڕێستۆرانت")
+        draw.text(((width - get_text_width(draw, t1, font_title)) / 2, y), t1, font=font_title, fill='black')
+        y += 60
+
+        t2 = fix_kurdish_text("وەسڵی فرۆشتن و قاسە")
+        draw.text(((width - get_text_width(draw, t2, font_item)) / 2, y), t2, font=font_item, fill='black')
+        y += 50
+
+        t3 = fix_kurdish_text(f"مێزی: {table_num}")
+        draw.text(((width - get_text_width(draw, t3, font_item)) / 2, y), t3, font=font_item, fill='black')
+        y += 50
+        
+        dt_txt = time.strftime("%Y/%m/%d   %I:%M %p")
+        draw.text(((width - get_text_width(draw, dt_txt, font_sub)) / 2, y), dt_txt, font=font_sub, fill='black')
+        y += 40
+
+        line = "-" * 45
+        draw.text((20, y), line, font=font_sub, fill='black')
+        y += 40
+
+        draw.text((width - 20 - get_text_width(draw, fix_kurdish_text("خواردن"), font_item), y), fix_kurdish_text("خواردن"), font=font_item, fill='black')
+        draw.text((220, y), fix_kurdish_text("بڕ"), font=font_item, fill='black')
+        draw.text((20, y), fix_kurdish_text("کۆی گشتی"), font=font_item, fill='black')
+        y += 50
+
+        draw.text((20, y), line, font=font_sub, fill='black')
+        y += 40
+
+        for it in items:
+            fname = fix_kurdish_text(str(it['food_name']))
+            qty = fix_kurdish_text(str(it['quantity']))
+            line_tot = fix_kurdish_text(f"{int(float(it['price']) * int(it['quantity'])):,}")
+            
+            draw.text((width - 20 - get_text_width(draw, fname, font_sub), y), fname, font=font_sub, fill='black')
+            draw.text((220, y), qty, font=font_sub, fill='black')
+            draw.text((20, y), line_tot, font=font_sub, fill='black')
+            y += 45
+
+        draw.text((20, y), line, font=font_sub, fill='black')
+        y += 40
+
+        t_tot = fix_kurdish_text(f"کۆی گشتی: {int(total):,} دینار")
+        draw.text((width - 20 - get_text_width(draw, t_tot, font_item), y), t_tot, font=font_item, fill='black')
+        y += 50
+
+        t_paid = fix_kurdish_text(f"پارەی وەرگیراو: {int(paid):,} دینار")
+        draw.text((width - 20 - get_text_width(draw, t_paid, font_sub), y), t_paid, font=font_sub, fill='black')
+        y += 40
+
+        change = paid - total
+        t_change = fix_kurdish_text(f"گێڕاوە (باقی): {int(change) if change > 0 else 0:,} دینار")
+        draw.text((width - 20 - get_text_width(draw, t_change, font_sub), y), t_change, font=font_sub, fill='black')
+        y += 50
+
+        draw.text((20, y), line, font=font_sub, fill='black')
+        y += 40
+
+        msg = fix_kurdish_text("بەخێر بێنەوە! سوپاس بۆ سەردانکردنتان")
+        draw.text(((width - get_text_width(draw, msg, font_sub)) / 2, y), msg, font=font_sub, fill='black')
+        y += 60
+
+        img = img.crop((0, 0, width, y))
+        hDC = win32ui.CreateDC()
+        hDC.CreatePrinterDC(printer_name)
+        hDC.StartDoc(f"Receipt - {table_num}")
+        hDC.StartPage()
+
+        dib = ImageWin.Dib(img)
+        printable_width = hDC.GetDeviceCaps(8)
+        if printable_width <= 0: printable_width = 576
+        scaled_height = int(printable_width * (img.height / img.width))
+
+        dib.draw(hDC.GetHandleOutput(), (0, 0, printable_width, scaled_height))
+
+        hDC.EndPage()
+        hDC.EndDoc()
+        del hDC
+    except Exception as ex:
+        print(f"Receipt Print Error: {ex}")
 # ==========================================
 # ڕێڕەوەکانی ئەدمین
 # ==========================================
@@ -2933,6 +3055,14 @@ def admin_complete_payment():
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            # هێنانی داتای خواردنەکان پێش سڕینەوەیان بۆ مەبەستی چاپکردن
+            cur.execute("SELECT food_name, quantity, price FROM froshtn WHERE table_cabin = %s", (t_num,))
+            items_to_print = cur.fetchall()
+            
+            # ناردنی فەرمانی چاپکردن
+            if items_to_print:
+                print_cashier_receipt(t_num, items_to_print, tot, paid, disc)
+
             p_id = t_num if ('سەفەری' in t_num or t_num.startswith('m')) else f"m{t_num}"
             cur.execute("INSERT INTO qasa (transaction_time, place_id, amount, discount) VALUES (NOW(), %s, %s, %s)", (p_id, paid, disc))
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s OR table_cabin LIKE %s", (t_num, f"{t_num} [%"))
@@ -2944,7 +3074,6 @@ def admin_complete_payment():
         if conn:
             try: conn.close()
             except: pass
-
 @app.route('/admin/qasa')
 def admin_qasa():
     if not session.get('authenticated') or session.get('role') != 'admin':
