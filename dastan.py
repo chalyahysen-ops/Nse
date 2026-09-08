@@ -1358,7 +1358,7 @@ WEB_CASHIER_TEMPLATE = """
                 </div>
             </div>
 
-         <button type="button" class="btn-confirm-pay" onclick="submitAndPrintPayment()">✅ واصڵکردن</button>
+         <button type="button" class="btn-confirm-pay" onclick="submitAndPrintPayment()">🖨️ واصڵکردن و چاپکردنی وەسڵ</button>
         </div>
     </div>
 
