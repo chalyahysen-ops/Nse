@@ -2859,6 +2859,7 @@ def admin_users():
 def admin_add_user():
     if not session.get('authenticated') or session.get('role') != 'admin':
         return redirect(url_for('login'))
+    
     uname = request.form.get('username', '').strip()
     pwd = request.form.get('password', '').strip()
     full_name = request.form.get('full_name', '').strip()
@@ -2869,9 +2870,10 @@ def admin_add_user():
         try:
             conn = get_db()
             with conn.cursor() as cur:
+                # سڕینەوەی ستوونە زیادەکانی کە کێشەیان دروست دەکرد و گەڕاندنەوەی بۆ باری ئاسایی
                 cur.execute("""
-                    INSERT INTO users (username, password, full_name, role, can_view_menu, can_view_tables, can_view_cashier, can_view_qsa, can_view_reports, can_view_settings, is_active)
-                    VALUES (%s, %s, %s, %s, 1, 1, 1, 1, 1, 1, 1)
+                    INSERT INTO users (username, password, full_name, role, is_active)
+                    VALUES (%s, %s, %s, %s, 1)
                 """, (uname, pwd, full_name, role))
                 conn.commit()
         except Exception as ex:
@@ -2880,6 +2882,7 @@ def admin_add_user():
             if conn:
                 try: conn.close()
                 except: pass
+                
     return redirect(url_for('admin_users'))
 
 @app.route('/admin/edit_user/<int:uid>', methods=['POST'])
