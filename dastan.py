@@ -1228,7 +1228,7 @@ WEB_CASHIER_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>کاشێر و واصڵکردن - شاهور</title>
+    <title>کاشێر و واصڵکردن - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -1276,17 +1276,11 @@ WEB_CASHIER_TEMPLATE = """
         .txt-paid:focus { border-color: #10b981; }
 
         .btn-confirm-pay { width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
-            #receiptPrintArea { position: absolute; left: 0; top: 0; width: 80mm; padding: 5px; color: #000; font-family: 'Noto Kufi Arabic', sans-serif; font-size: 12px; }
-        }
     </style>
 </head>
 <body>
     <header class="cashier-nav">
-        <div class="cashier-brand">✨ شاهور ڕێستۆرانت - کاشێر و واصڵکردن</div>
+        <div class="cashier-brand">✨ دیوانی سوڵتان ڕێستۆرانت - کاشێر و واصڵکردن</div>
         <div style="display:flex; align-items:center; gap:10px;">
             <a href="/admin" class="btn-dash-back">⬅️ گەڕانەوە بۆ داشبۆرد</a>
         </div>
@@ -1358,11 +1352,9 @@ WEB_CASHIER_TEMPLATE = """
                 </div>
             </div>
 
-         <button type="button" class="btn-confirm-pay" onclick="submitAndPrintPayment()">🖨️ واصڵکردن و چاپکردنی وەسڵ</button>
+            <button type="button" class="btn-confirm-pay" onclick="submitPayment()">✅ واصڵکردن</button>
         </div>
     </div>
-
-    <div id="receiptPrintArea" style="display:none;"></div>
 
     <script>
         let currentTable = '';
@@ -1433,7 +1425,7 @@ WEB_CASHIER_TEMPLATE = """
             }
         }
 
-    function submitAndPrintPayment() {
+        function submitPayment() {
             let paid = parseFloat(document.getElementById('txtPaidAmount').value) || 0;
             if (paid <= 0) {
                 alert('تکایە بڕی پارەی دروست بنووسە!');
@@ -1450,68 +1442,13 @@ WEB_CASHIER_TEMPLATE = """
                 })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    // ئەم کۆدە وەسڵەکە تەنها لە کاشێر پرێنت دەکات
-                    printWebReceipt(paid);
+                    // بە سەرکەوتوویی واصڵ کرا. فەرمانی پرێنتەکە سڕایەوە بۆ ئەوەی تەنها C# چاپی بکات.
                     closeCheckout();
-                    // کاتی ڕیفرێشەکەمان کەمێک زیادکرد بۆ ئەوەی پرێنتەکە بەتەواوی بڕوات
-                    setTimeout(() => { location.reload(); }, 1000);
+                    setTimeout(() => { location.reload(); }, 600);
                 } else {
                     alert('هەڵە لە واصڵکردن: ' + res.message);
                 }
             });
-        }
-
-        function printWebReceipt(paid) {
-            let area = document.getElementById('receiptPrintArea');
-            let diff = paid - totalSum;
-            let itemsRows = '';
-            currentItems.forEach(it => {
-                itemsRows += `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="flex:2; text-align:right;">${it.food_name}</span>
-                        <span style="flex:1; text-align:center;">${it.quantity}</span>
-                        <span style="flex:1; text-align:center;">${Number(it.price).toLocaleString()}</span>
-                        <span style="flex:1.5; text-align:left;">${(it.price * it.quantity).toLocaleString()}</span>
-                    </div>
-                `;
-            });
-
-            area.innerHTML = `
-                <div style="text-align:center; font-family:'Noto Kufi Arabic',sans-serif; width:75mm; margin:0 auto; padding:4px; direction:rtl;">
-                    <h2 style="font-size:16px; margin-bottom:4px;">شاهور ڕێستۆرانت</h2>
-                    <div style="font-size:12px; font-weight:bold;">وەسڵی فرۆشتن و قاسە</div>
-                    <div style="font-size:12px; font-weight:bold; margin-bottom:4px;">${currentTable}</div>
-                    <div style="font-size:10px; color:#555;">کاتی وەسڵ: ${new Date().toLocaleString()}</div>
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:11px; margin-bottom:4px;">
-                        <span style="flex:2; text-align:right;">خواردن</span>
-                        <span style="flex:1; text-align:center;">بڕ</span>
-                        <span style="flex:1; text-align:center;">نرخ</span>
-                        <span style="flex:1.5; text-align:left;">کۆی گشتی</span>
-                    </div>
-                    <div style="border-top:1px dashed #000; margin:4px 0;"></div>
-                    ${itemsRows}
-                    <div style="border-top:1px dashed #000; margin:6px 0;"></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px;">
-                        <span>کۆی گشتی:</span>
-                        <span>${totalSum.toLocaleString()} دینار</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px;">
-                        <span>پارەی وەرگیراو:</span>
-                        <span>${paid.toLocaleString()} دینار</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
-                        <span>گێڕاوە (باقی):</span>
-                        <span>${diff >= 0 ? diff.toLocaleString() : 0} دینار</span>
-                    </div>
-                    <div style="border-top:1px dashed #000; margin:8px 0;"></div>
-                    <div style="text-align:center; font-size:11px; font-weight:bold;">بەخێر بێنەوە! سوپاس بۆ سەردانکردنتان</div>
-                </div>
-            `;
-
-            area.style.display = 'block';
-            window.print();
-            area.style.display = 'none';
         }
 
         setInterval(() => {
@@ -1534,7 +1471,6 @@ WEB_CASHIER_TEMPLATE = """
 </body>
 </html>
 """
-
 # ==========================================
 # پەڕەی بەڕێوەبردنی خواردنەکان (Menu Manager)
 # ==========================================
