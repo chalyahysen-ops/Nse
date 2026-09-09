@@ -1454,8 +1454,7 @@ WEB_CASHIER_TEMPLATE = """
                 btn.innerText = '✅ واصڵکردن';
             });
         }
-
-        function printWebReceipt(data) {
+function printWebReceipt(data) {
             let printWin = window.open('', '_blank', 'width=400,height=600');
             let itemsHtml = '';
             data.items.forEach(it => {
@@ -1520,7 +1519,7 @@ WEB_CASHIER_TEMPLATE = """
                         window.print();
                         setTimeout(function() { window.close(); }, 500);
                     }
-                </script>
+                </scr` + `ipt>
             </body>
             </html>`;
             
@@ -1530,7 +1529,6 @@ WEB_CASHIER_TEMPLATE = """
             closeCheckout();
             setTimeout(() => { location.reload(); }, 1000);
         }
-
         setInterval(() => {
             if (document.getElementById('checkoutModal').style.display !== 'flex' && document.getElementById('txtSearch').value.trim() === '') {
                 fetch(window.location.href)
