@@ -1352,7 +1352,7 @@ WEB_CASHIER_TEMPLATE = """
                 </div>
             </div>
 
-            <button type="button" class="btn-confirm-pay" onclick="submitPayment()">✅ واصڵکردن</button>
+            <button type="button" class="btn-confirm-pay" onclick="submitPayment()">✅ واصڵکردن و چاپکردن</button>
         </div>
     </div>
 
@@ -1425,14 +1425,13 @@ WEB_CASHIER_TEMPLATE = """
             }
         }
 
-     function submitPayment() {
+        function submitPayment() {
             let paid = parseFloat(document.getElementById('txtPaidAmount').value) || 0;
             if (paid <= 0) {
                 alert('تکایە بڕی پارەی دروست بنووسە!');
                 return;
             }
 
-            // گۆڕینی شێوەی دوگمەکە بۆ ئەوەی بزانیت کلیک بووە
             let btn = document.querySelector('.btn-confirm-pay');
             btn.disabled = true;
             btn.innerText = '⏳ چاوەڕێبە...';
@@ -1440,15 +1439,10 @@ WEB_CASHIER_TEMPLATE = """
             fetch('/admin/complete_payment', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    table_number: currentTable,
-                    amount_paid: paid,
-                    total_amount: totalSum
-                })
+                body: JSON.stringify({ table_number: currentTable, amount_paid: paid, total_amount: totalSum })
             }).then(r => r.json()).then(res => {
                 if (res.status === 'success') {
-                    closeCheckout();
-                    setTimeout(() => { location.reload(); }, 600);
+                    printWebReceipt(res.receipt);
                 } else {
                     alert('هەڵە لە واصڵکردن: ' + res.message);
                     btn.disabled = false;
@@ -1460,6 +1454,83 @@ WEB_CASHIER_TEMPLATE = """
                 btn.innerText = '✅ واصڵکردن';
             });
         }
+
+        function printWebReceipt(data) {
+            let printWin = window.open('', '_blank', 'width=400,height=600');
+            let itemsHtml = '';
+            data.items.forEach(it => {
+                let p = it.price ? it.price : 0;
+                let q = it.quantity ? it.quantity : 0;
+                itemsHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                        <span style="flex:2; text-align:right;">${it.food_name || it[0]}</span>
+                        <span style="flex:1; text-align:center;">${q || it[1]}</span>
+                        <span style="flex:1; text-align:left;">${((p || it[2]) * (q || it[1])).toLocaleString()}</span>
+                    </div>`;
+            });
+
+            let html = `
+            <!DOCTYPE html>
+            <html lang="ckb" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>Receipt</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap');
+                    body { font-family: 'Noto Kufi Arabic', sans-serif; width: 75mm; margin: 0 auto; padding: 5px; color: #000; }
+                    .center { text-align: center; }
+                    .bold { font-weight: 800; }
+                    .line { border-top: 1px dashed #000; margin: 8px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="center bold" style="font-size:16px; margin-bottom:4px;">دیوانی سوڵتان ڕێستۆرانت</div>
+                <div class="center" style="font-size:12px; margin-bottom:4px;">وەسڵی فرۆشتن و قاسە</div>
+                <div class="center bold" style="font-size:13px; margin-bottom:8px;">مێزی: ${data.table}</div>
+                <div class="center" style="font-size:11px; margin-bottom:10px;">${data.time}</div>
+                
+                <div class="line"></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; margin-bottom:4px;">
+                    <span style="flex:2; text-align:right;">خواردن</span>
+                    <span style="flex:1; text-align:center;">بڕ</span>
+                    <span style="flex:1; text-align:left;">کۆی گشتی</span>
+                </div>
+                <div class="line"></div>
+                
+                ${itemsHtml}
+                
+                <div class="line"></div>
+                <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
+                    <span>کۆی گشتی:</span>
+                    <span>${data.total.toLocaleString()} دینار</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                    <span>پ. وەرگیراو:</span>
+                    <span>${data.paid.toLocaleString()} دینار</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                    <span>گێڕاوە:</span>
+                    <span>${Math.max(0, data.paid - data.total).toLocaleString()} دینار</span>
+                </div>
+                <div class="line"></div>
+                <div class="center" style="font-size:11px; margin-top:10px;">بەخێر بێنەوە! سوپاس بۆ سەردانکردنتان</div>
+                
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    }
+                </script>
+            </body>
+            </html>`;
+            
+            printWin.document.write(html);
+            printWin.document.close();
+            
+            closeCheckout();
+            setTimeout(() => { location.reload(); }, 1000);
+        }
+
         setInterval(() => {
             if (document.getElementById('checkoutModal').style.display !== 'flex' && document.getElementById('txtSearch').value.trim() === '') {
                 fetch(window.location.href)
@@ -3130,19 +3201,24 @@ def admin_complete_payment():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # هێنانی داتای خواردنەکان پێش سڕینەوەیان بۆ مەبەستی چاپکردن
             cur.execute("SELECT food_name, quantity, price FROM froshtn WHERE table_cabin = %s", (t_num,))
             items_to_print = cur.fetchall()
-            
-            # ناردنی فەرمانی چاپکردن
-            if items_to_print:
-                print_cashier_receipt(t_num, items_to_print, tot, paid, disc)
 
             p_id = t_num if ('سەفەری' in t_num or t_num.startswith('m')) else f"m{t_num}"
             cur.execute("INSERT INTO qasa (transaction_time, place_id, amount, discount) VALUES (NOW(), %s, %s, %s)", (p_id, paid, disc))
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s OR table_cabin LIKE %s", (t_num, f"{t_num} [%"))
             conn.commit()
-        return jsonify({'status': 'success'})
+            
+        return jsonify({
+            'status': 'success',
+            'receipt': {
+                'table': t_num,
+                'items': items_to_print,
+                'total': tot,
+                'paid': paid,
+                'time': datetime.now().strftime("%Y/%m/%d %I:%M %p")
+            }
+        })
     except Exception as ex:
         return jsonify({'status': 'error', 'message': str(ex)})
     finally:
