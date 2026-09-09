@@ -1461,10 +1461,10 @@ function printWebReceipt(data) {
                 let p = it.price ? it.price : 0;
                 let q = it.quantity ? it.quantity : 0;
                 itemsHtml += `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
-                        <span style="flex:2; text-align:right;">${it.food_name || it[0]}</span>
-                        <span style="flex:1; text-align:center;">${q || it[1]}</span>
-                        <span style="flex:1; text-align:left;">${((p || it[2]) * (q || it[1])).toLocaleString()}</span>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:11px; word-break:break-word;">
+                        <span style="flex:2; text-align:right; padding-left:2px;">${it.food_name || it[0]}</span>
+                        <span style="flex:0.8; text-align:center;">${q || it[1]}</span>
+                        <span style="flex:1.2; text-align:left;">${((p || it[2]) * (q || it[1])).toLocaleString()}</span>
                     </div>`;
             });
 
@@ -1476,43 +1476,52 @@ function printWebReceipt(data) {
                 <title>Receipt</title>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap');
-                    body { font-family: 'Noto Kufi Arabic', sans-serif; width: 75mm; margin: 0 auto; padding: 5px; color: #000; }
+                    @page { margin: 0; } /* ئەمە ڕێگری دەکات لە زیادکردنی پەراوێز لەلایەن وێبگەڕەوە */
+                    * { box-sizing: border-box; }
+                    body { 
+                        font-family: 'Noto Kufi Arabic', sans-serif; 
+                        width: 72mm; /* گونجاندن لەگەڵ کاغەزی 80 ملم */
+                        max-width: 100%;
+                        margin: 0 auto; 
+                        padding: 4mm; 
+                        color: #000; 
+                    }
                     .center { text-align: center; }
                     .bold { font-weight: 800; }
-                    .line { border-top: 1px dashed #000; margin: 8px 0; }
+                    .line { border-top: 1px dashed #000; margin: 6px 0; width: 100%; }
                 </style>
             </head>
             <body>
-                <div class="center bold" style="font-size:16px; margin-bottom:4px;">دیوانی سوڵتان ڕێستۆرانت</div>
-                <div class="center" style="font-size:12px; margin-bottom:4px;">وەسڵی فرۆشتن و قاسە</div>
-                <div class="center bold" style="font-size:13px; margin-bottom:8px;">مێزی: ${data.table}</div>
-                <div class="center" style="font-size:11px; margin-bottom:10px;">${data.time}</div>
+                <div class="center bold" style="font-size:14px; margin-bottom:2px;">دیوانی سوڵتان ڕێستۆرانت</div>
+                <div class="center" style="font-size:10px; margin-bottom:4px;">وەسڵی فرۆشتن و قاسە</div>
+                <div class="center bold" style="font-size:12px; margin-bottom:6px;">مێزی: ${data.table}</div>
+                <div class="center" style="font-size:10px; margin-bottom:8px;">${data.time}</div>
                 
                 <div class="line"></div>
-                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; margin-bottom:4px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold; margin-bottom:4px;">
                     <span style="flex:2; text-align:right;">خواردن</span>
-                    <span style="flex:1; text-align:center;">بڕ</span>
-                    <span style="flex:1; text-align:left;">کۆی گشتی</span>
+                    <span style="flex:0.8; text-align:center;">بڕ</span>
+                    <span style="flex:1.2; text-align:left;">کۆی گشتی</span>
                 </div>
                 <div class="line"></div>
                 
                 ${itemsHtml}
                 
                 <div class="line"></div>
-                <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
                     <span>کۆی گشتی:</span>
                     <span>${data.total.toLocaleString()} دینار</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px;">
                     <span>پ. وەرگیراو:</span>
                     <span>${data.paid.toLocaleString()} دینار</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px;">
                     <span>گێڕاوە:</span>
                     <span>${Math.max(0, data.paid - data.total).toLocaleString()} دینار</span>
                 </div>
                 <div class="line"></div>
-                <div class="center" style="font-size:11px; margin-top:10px;">بەخێر بێنەوە! سوپاس بۆ سەردانکردنتان</div>
+                <div class="center" style="font-size:10px; margin-top:8px;">بەخێر بێنەوە! سوپاس بۆ سەردانکردنتان</div>
                 
                 <script>
                     window.onload = function() {
