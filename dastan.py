@@ -1231,6 +1231,9 @@ WEB_CASHIER_TEMPLATE = """
     <title>کاشێر و واصڵکردن - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+    .takeaway-card { background-color: #0284c7 !important; border-color: #0369a1 !important; }
+.takeaway-card:hover { background-color: #0369a1 !important; transform: translateY(-3px); }
+.takeaway-card .card-badge { background: #0369a1 !important; color: #ffffff !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background-color: #fef3c7; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
         
@@ -1291,23 +1294,26 @@ WEB_CASHIER_TEMPLATE = """
             <div class="active-count-badge" id="lblActiveCount">مێزی داواکراو: {{ active_tables|length }}</div>
             <input type="text" id="txtSearch" class="search-box" placeholder="🔍 گەڕان بەپێی ژمارەی مێز..." oninput="filterTables()">
         </div>
-
-        <div class="tables-flow-grid" id="tablesGrid">
-            {% for t in active_tables %}
-            <div class="table-card" onclick="openCheckout('{{ t.table_cabin }}')" data-table="{{ t.table_cabin }}">
-                <div class="card-icon">🍽️</div>
-                <div class="card-title">{{ t.table_cabin if 'سەفەری' in t.table_cabin else 'مێزی ' ~ t.table_cabin }}</div>
-                <div class="card-badge">
-                    {{ '🔥 ' ~ t.rounds ~ ' جار داواکراوە' if t.rounds > 1 else '✓ ١ جار داواکراوە' }}
-                </div>
-            </div>
-            {% else %}
-            <div class="empty-container">
-                <div style="font-size: 45px; margin-bottom: 10px;">✨</div>
-                <div style="font-size: 18px; font-weight: 800;">لە ئێستادا سەرجەم مێزەکان بەتاڵن و هیچ داواکارییەکی کراوە نییە</div>
-            </div>
-            {% endfor %}
+<div class="tables-flow-grid" id="tablesGrid">
+    {% for t in active_tables %}
+    <div class="table-card {% if 'سەفەری' in t.table_cabin %}takeaway-card{% endif %}" onclick="openCheckout('{{ t.table_cabin | replace('\'', '\\\'') }}')" data-table="{{ t.table_cabin }}">
+        <div class="card-icon">
+            {% if 'سەفەری' in t.table_cabin %}🛵{% else %}🍽️{% endif %}
         </div>
+        <div class="card-title">
+            {{ t.table_cabin.replace('سەفەری (', '').replace(')', '') if 'سەفەری' in t.table_cabin else 'مێزی ' ~ t.table_cabin }}
+        </div>
+        <div class="card-badge">
+            {{ '🔥 ' ~ t.rounds ~ ' جار داواکراوە' if t.rounds > 1 else '✓ ١ جار داواکراوە' }}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-container">
+        <div style="font-size: 45px; margin-bottom: 10px;">✨</div>
+        <div style="font-size: 18px; font-weight: 800;">لە ئێستادا سەرجەم مێزەکان بەتاڵن و هیچ داواکارییەکی کراوە نییە</div>
+    </div>
+    {% endfor %}
+</div>
     </main>
 
     <div class="modal-overlay" id="checkoutModal">
