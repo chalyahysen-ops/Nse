@@ -1294,15 +1294,23 @@ WEB_CASHIER_TEMPLATE = """
         </div>
 <div class="tables-flow-grid" id="tablesGrid">
     {% for t in active_tables %}
-    <div class="table-card {% if 'سەفەری' in t.table_cabin %}takeaway-card{% endif %}" onclick="openCheckout('{{ t.table_cabin | replace('\'', '\\\'') }}')" data-table="{{ t.table_cabin }}">
+    <div class="table-card {% if 'سەفەری' in t.table_cabin %}takeaway-card{% endif %}" onclick="openCheckout(this.getAttribute('data-table'))" data-table="{{ t.table_cabin }}">
         <div class="card-icon">
             {% if 'سەفەری' in t.table_cabin %}🛵{% else %}🍽️{% endif %}
         </div>
         <div class="card-title">
-            {{ t.table_cabin.replace('سەفەری (', '').replace(')', '') if 'سەفەری' in t.table_cabin else 'مێزی ' ~ t.table_cabin }}
+            {% if 'سەفەری' in t.table_cabin %}
+                {{ t.table_cabin | replace('سەفەری (', '') | replace(')', '') }}
+            {% else %}
+                مێزی {{ t.table_cabin }}
+            {% endif %}
         </div>
         <div class="card-badge">
-            {{ '🔥 ' ~ t.rounds ~ ' جار داواکراوە' if t.rounds > 1 else '✓ ١ جار داواکراوە' }}
+            {% if t.rounds > 1 %}
+                🔥 {{ t.rounds }} جار داواکراوە
+            {% else %}
+                ✓ ١ جار داواکراوە
+            {% endif %}
         </div>
     </div>
     {% else %}
