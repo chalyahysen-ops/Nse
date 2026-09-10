@@ -1979,9 +1979,26 @@ DESKTOP_TABLES_TEMPLATE = """
                     if (newGrid) {
                         document.getElementById('tablesGrid').innerHTML = newGrid.innerHTML;
                     }
+                    
+                    // هێنانەوەی ڕەنگی سەوز بۆ مێزەکانی 1 تا 90
+                    fetch('/get_active_tables?t=' + new Date().getTime())
+                        .then(r => r.json())
+                        .then(activeTables => {
+                            for (let i = 1; i <= 90; i++) {
+                                const box = document.getElementById('tbl-box-' + i);
+                                if (box) {
+                                    if (activeTables.includes(i.toString())) {
+                                        box.classList.add('active-occupied');
+                                    } else {
+                                        box.classList.remove('active-occupied');
+                                    }
+                                }
+                            }
+                        }).catch(() => {});
                 }).catch(() => {});
         }
-        // بانگکردنی فەنکشنەکە هەر ٣ چرکە جارێک
+        
+        refreshTableStatus(); // بۆ دەرکەوتنی ڕەنگەکان لە سەرەتای کردنەوەی پەڕەکە
         setInterval(refreshTableStatus, 3000);
     </script>
 </body>
@@ -2355,9 +2372,23 @@ MOBILE_TABLES_TEMPLATE = """
                     if (newGrid) {
                         document.getElementById('tablesGridMobile').innerHTML = newGrid.innerHTML;
                     }
+                    
+                    // هێنانەوەی ڕەنگی سەوز بۆ مێزەکانی 1 تا 90 لە مۆبایل
+                    fetch('/get_active_tables?t=' + new Date().getTime())
+                        .then(r => r.json())
+                        .then(activeTables => {
+                            for(let i = 1; i <= 90; i++) {
+                                const el = document.getElementById('m-tbl-' + i);
+                                if(el) {
+                                    if(activeTables.includes(i.toString())) el.classList.add('active-occupied');
+                                    else el.classList.remove('active-occupied');
+                                }
+                            }
+                        }).catch(()=>{});
                 }).catch(()=>{});
         }
-        // بانگکردنی فەنکشنەکە هەر ٣ چرکە جارێک
+        
+        checkTables();
         setInterval(checkTables, 3000);
     </script>
 </body>
