@@ -1969,30 +1969,33 @@ DESKTOP_TABLES_TEMPLATE = """
             window.location.href = "/desktop?table=" + encodeURIComponent(idStr);
         }
 
-        function refreshTableStatus() {
-            fetch(window.location.href)
-                .then(res => res.text())
-                .then(html => {
-                    let parser = new DOMParser();
-                    let doc = parser.parseFromString(html, 'text/html');
-                    let newGrid = doc.getElementById('tablesGrid');
-                    if (newGrid) {
-                        document.getElementById('tablesGrid').innerHTML = newGrid.innerHTML;
-                    }
-                    
-                    // هێنانەوەی ڕەنگی سەوز بۆ مێزەکانی 1 تا 90
-                    fetch('/get_active_tables?t=' + new Date().getTime())
-                        .then(r => r.json())
-                        .then(activeTables => {
-                            for (let i = 1; i <= 90; i++) {
-                                const box = document.getElementById('tbl-box-' + i);
-                                if (box) {
-                                    if (activeTables.includes(i.toString())) {
-                                        box.classList.add('active-occupied');
-                                    } else {
-                                        box.classList.remove('active-occupied');
+function refreshTableStatus() {
+            // سەرەتا داتای مێزە پڕەکان دەهێنین
+            fetch('/get_active_tables?t=' + new Date().getTime())
+                .then(r => r.json())
+                .then(activeTables => {
+                    // پاشان پەڕەکە دەهێنین
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            let parser = new DOMParser();
+                            let doc = parser.parseFromString(html, 'text/html');
+                            let newGrid = doc.getElementById('tablesGrid');
+                            
+                            if (newGrid) {
+                                // پێش ئەوەی بیخەینە سەر شاشەکە، ڕەنگەکان جێبەجێ دەکەین
+                                for (let i = 1; i <= 90; i++) {
+                                    const box = newGrid.querySelector('#tbl-box-' + i);
+                                    if (box) {
+                                        if (activeTables.includes(i.toString())) {
+                                            box.classList.add('active-occupied');
+                                        } else {
+                                            box.classList.remove('active-occupied');
+                                        }
                                     }
                                 }
+                                // ئێستا دەیخەینە سەر شاشەکە بەبێ ئەوەی سپی ببێتەوە
+                                document.getElementById('tablesGrid').innerHTML = newGrid.innerHTML;
                             }
                         }).catch(() => {});
                 }).catch(() => {});
@@ -2362,27 +2365,29 @@ MOBILE_TABLES_TEMPLATE = """
             window.location.href = "/mobile/menu?table=" + encodeURIComponent(idStr);
         }
 
-        function checkTables() {
-            fetch(window.location.href)
-                .then(r => r.text())
-                .then(html => {
-                    let parser = new DOMParser();
-                    let doc = parser.parseFromString(html, 'text/html');
-                    let newGrid = doc.getElementById('tablesGridMobile');
-                    if (newGrid) {
-                        document.getElementById('tablesGridMobile').innerHTML = newGrid.innerHTML;
-                    }
-                    
-                    // هێنانەوەی ڕەنگی سەوز بۆ مێزەکانی 1 تا 90 لە مۆبایل
-                    fetch('/get_active_tables?t=' + new Date().getTime())
-                        .then(r => r.json())
-                        .then(activeTables => {
-                            for(let i = 1; i <= 90; i++) {
-                                const el = document.getElementById('m-tbl-' + i);
-                                if(el) {
-                                    if(activeTables.includes(i.toString())) el.classList.add('active-occupied');
-                                    else el.classList.remove('active-occupied');
+function checkTables() {
+            fetch('/get_active_tables?t=' + new Date().getTime())
+                .then(r => r.json())
+                .then(activeTables => {
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            let parser = new DOMParser();
+                            let doc = parser.parseFromString(html, 'text/html');
+                            let newGrid = doc.getElementById('tablesGridMobile');
+                            
+                            if (newGrid) {
+                                for(let i = 1; i <= 90; i++) {
+                                    const el = newGrid.querySelector('#m-tbl-' + i);
+                                    if(el) {
+                                        if(activeTables.includes(i.toString())) {
+                                            el.classList.add('active-occupied');
+                                        } else {
+                                            el.classList.remove('active-occupied');
+                                        }
+                                    }
                                 }
+                                document.getElementById('tablesGridMobile').innerHTML = newGrid.innerHTML;
                             }
                         }).catch(()=>{});
                 }).catch(()=>{});
