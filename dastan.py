@@ -1231,9 +1231,7 @@ WEB_CASHIER_TEMPLATE = """
     <title>کاشێر و واصڵکردن - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-    .takeaway-card { background-color: #0284c7 !important; border-color: #0369a1 !important; }
-.takeaway-card:hover { background-color: #0369a1 !important; transform: translateY(-3px); }
-.takeaway-card .card-badge { background: #0369a1 !important; color: #ffffff !important; }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
         body { background-color: #fef3c7; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
         
