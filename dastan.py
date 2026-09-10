@@ -1943,7 +1943,7 @@ DESKTOP_TABLES_TEMPLATE = """
         </div>
     </div>
 
-    <script>
+<script>
         function startTakeawayOrder() {
             let name = document.getElementById('custName').value.trim() || 'کڕیار';
             let phone = document.getElementById('custPhone').value.trim();
@@ -1956,23 +1956,19 @@ DESKTOP_TABLES_TEMPLATE = """
         }
 
         function refreshTableStatus() {
-            fetch('/get_active_tables?t=' + new Date().getTime())
-                .then(res => res.json())
-                .then(activeTables => {
-                    for (let i = 1; i <= 90; i++) {
-                        const box = document.getElementById('tbl-box-' + i);
-                        if (box) {
-                            if (activeTables.includes(i.toString())) {
-                                box.classList.add('active-occupied');
-                            } else {
-                                box.classList.remove('active-occupied');
-                            }
-                        }
+            fetch(window.location.href)
+                .then(res => res.text())
+                .then(html => {
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(html, 'text/html');
+                    let newGrid = doc.getElementById('tablesGrid');
+                    if (newGrid) {
+                        document.getElementById('tablesGrid').innerHTML = newGrid.innerHTML;
                     }
                 }).catch(() => {});
         }
-        refreshTableStatus();
-        setInterval(refreshTableStatus, 2500);
+        // بانگکردنی فەنکشنەکە هەر ٣ چرکە جارێک
+        setInterval(refreshTableStatus, 3000);
     </script>
 </body>
 </html>
@@ -2297,8 +2293,8 @@ MOBILE_TABLES_TEMPLATE = """
         <span>ئۆردەری نوێی سەفەری / دلیڤەری</span>
     </button>
 
-    <div class="tables-grid-mobile">
-        {% for num in range(1, 91) %}
+<div class="tables-grid-mobile" id="tablesGridMobile">
+{% for num in range(1, 91) %}
             <a href="/mobile/menu?table={{ num }}" class="m-table-btn" id="m-tbl-{{ num }}">
                 <span>{{ num }}</span>
                 <span class="t-sub">مێز</span>
@@ -2323,7 +2319,7 @@ MOBILE_TABLES_TEMPLATE = """
         </div>
     </div>
 
-    <script>
+<script>
         function startMobileTakeaway() {
             let name = document.getElementById('mCustName').value.trim() || 'کڕیار';
             let phone = document.getElementById('mCustPhone').value.trim();
@@ -2336,19 +2332,18 @@ MOBILE_TABLES_TEMPLATE = """
         }
 
         function checkTables() {
-            fetch('/get_active_tables?t=' + new Date().getTime())
-                .then(r => r.json())
-                .then(activeTables => {
-                    for(let i = 1; i <= 90; i++) {
-                        const el = document.getElementById('m-tbl-' + i);
-                        if(el) {
-                            if(activeTables.includes(i.toString())) el.classList.add('active-occupied');
-                            else el.classList.remove('active-occupied');
-                        }
+            fetch(window.location.href)
+                .then(r => r.text())
+                .then(html => {
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(html, 'text/html');
+                    let newGrid = doc.getElementById('tablesGridMobile');
+                    if (newGrid) {
+                        document.getElementById('tablesGridMobile').innerHTML = newGrid.innerHTML;
                     }
                 }).catch(()=>{});
         }
-        checkTables();
+        // بانگکردنی فەنکشنەکە هەر ٣ چرکە جارێک
         setInterval(checkTables, 3000);
     </script>
 </body>
