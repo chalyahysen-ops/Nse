@@ -2169,16 +2169,24 @@ DESKTOP_TEMPLATE = """
             renderCart();
             checkHasGrill();
         }
-        function addFromDesktopCard(baseName, price, cat, safeId) {
-            let rEl = document.getElementById('d_rice_' + safeId);
-            let cEl = document.getElementById('d_chick_' + safeId);
-            let fullName = baseName;
-            let rVal = rEl ? rEl.value : '';
-            let cVal = cEl ? cEl.value : '';
-            if (rVal) fullName += ` (${rVal})`;
-            if (cVal) fullName += ` (${cVal})`;
-            updateQty(fullName, 1, price, cat);
-        }
+       function addFromDesktopCard(baseName, price, cat, safeId) {
+    let rEl = document.getElementById('d_rice_' + safeId);
+    let cEl = document.getElementById('d_chick_' + safeId);
+    let pEl = document.getElementById('d_plate_' + safeId);
+    
+    let fullName = baseName;
+    let parts = [];
+    
+    if (rEl && rEl.value) parts.push(rEl.value);
+    if (cEl && cEl.value) parts.push(cEl.value);
+    if (pEl && pEl.value) parts.push(pEl.value);
+    
+    if (parts.length > 0) {
+        fullName += ` (${parts.join(' - ')})`;
+    }
+    
+    updateQty(fullName, 1, price, cat);
+}
         function updateQty(foodName, change, price, cat) {
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
@@ -2487,43 +2495,47 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
 
-                    {% if allow_ordering %}
-                    {% set c_name = item.category | replace('ي', 'ی') | trim %}
-                    {% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
-                    {% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
+{% if allow_ordering %}
+{% set c_name = item.category | replace('ي', 'ی') | trim %}
+{% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
+{% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
+{% set show_plate = ('برژاو' in c_name or 'کەباب' in item.food_name or 'تکە' in item.food_name) %}
 
-                    {% if show_rice or show_chicken %}
-                    <div class="options-group">
-                        {% if show_rice %}
-                        <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
-                            <option value="">ج. برنج</option>
-                            <option value="برنجی درێژ">برنجی درێژ</option>
-                            <option value="برنجی خڕ">برنجی خڕ</option>
-                            <option value="برنجی کوردی">برنجی کوردی</option>
-                            <option value="برنج بە سرکە">برنج بە سرکە</option>
-                        </select>
-                        {% endif %}
-                        {% if show_chicken %}
-                        <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
-                            <option value="">ب. مریشک</option>
-                            <option value="سینگ">سینگ</option>
-                            <option value="ڕان">ڕان</option>
-                        </select>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <div class="mini-stepper">
-                        <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
-                        <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
-                        <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+{% if show_rice or show_chicken or show_plate %}
+<div class="options-group">
+    {% if show_rice %}
+    <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
+        <option value="">ج. برنج</option>
+        <option value="برنجی درێژ">برنجی درێژ</option>
+        <option value="برنجی خڕ">برنجی خڕ</option>
+        <option value="برنجی کوردی">برنجی کوردی</option>
+        <option value="برنج بە سرکە">برنج بە سرکە</option>
+    </select>
+    {% endif %}
+    {% if show_chicken %}
+    <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
+        <option value="">ب. مریشک</option>
+        <option value="سینگ">سینگ</option>
+        <option value="ڕان">ڕان</option>
+    </select>
+    {% endif %}
+    {% if show_plate %}
+    <select class="select-sub-opt" id="opt_plate_{{ item.id }}" style="border-color: #f59e0b; color: #b45309;">
+        <option value="">قاپی ...</option>
+        {% for p_num in range(1, 10) %}
+        <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
         {% endfor %}
+    </select>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="mini-stepper">
+    <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
+    <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
+    <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
+</div>
+{% endif %}
     </div>
 
     {% if allow_ordering %}
@@ -2607,53 +2619,56 @@ CUSTOMER_MENU_TEMPLATE = """
         }
 
         function changeCustomerQty(baseName, delta, price, cat, foodId) {
-            let riceVal = '', chickenVal = '';
-            const rEl = document.getElementById('opt_rice_' + foodId);
-            const cEl = document.getElementById('opt_chicken_' + foodId);
-            
-            if (rEl && rEl.value) riceVal = rEl.value.trim();
-            if (cEl && cEl.value) chickenVal = cEl.value.trim();
+    let riceVal = '', chickenVal = '', plateVal = '';
+    const rEl = document.getElementById('opt_rice_' + foodId);
+    const cEl = document.getElementById('opt_chicken_' + foodId);
+    const pEl = document.getElementById('opt_plate_' + foodId);
 
-            let finalName = baseName;
-            let parts = [];
-            if (riceVal) parts.push(riceVal);
-            if (chickenVal) parts.push(chickenVal);
+    if (rEl && rEl.value) riceVal = rEl.value.trim();
+    if (cEl && cEl.value) chickenVal = cEl.value.trim();
+    if (pEl && pEl.value) plateVal = pEl.value.trim();
 
-            if (parts.length > 0) {
-                finalName += ` (${parts.join(' - ')})`;
-            }
+    let finalName = baseName;
+    let parts = [];
+    if (riceVal) parts.push(riceVal);
+    if (chickenVal) parts.push(chickenVal);
+    if (plateVal) parts.push(plateVal);
 
-            let origQty = getOrigQty(finalName);
-            let found = false;
-            
-            for (let i = myCart.length - 1; i >= 0; i--) {
-                if (myCart[i].full_name === finalName) {
-                    let newQty = myCart[i].qty + delta;
-                    if (!isWaiter && newQty < origQty) {
-                        showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
-                        return;
-                    }
-                    myCart[i].qty = newQty;
-                    if (myCart[i].qty <= 0) myCart.splice(i, 1);
-                    found = true;
-                    break;
-                }
+    if (parts.length > 0) {
+        finalName += ` (${parts.join(' - ')})`;
+    }
+
+    let origQty = getOrigQty(finalName);
+    let found = false;
+    
+    for (let i = myCart.length - 1; i >= 0; i--) {
+        if (myCart[i].full_name === finalName) {
+            let newQty = myCart[i].qty + delta;
+            if (!isWaiter && newQty < origQty) {
+                showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
+                return;
             }
-            
-            if (!found && delta > 0) {
-                myCart.push({
-                    base_name: baseName,
-                    full_name: finalName,
-                    food_name: finalName,
-                    price: price,
-                    qty: 1,
-                    cat: cat || '',
-                    safe_id: foodId
-                });
-            }
-            refreshCounterDisplays();
-            renderCartUI();
+            myCart[i].qty = newQty;
+            if (myCart[i].qty <= 0) myCart.splice(i, 1);
+            found = true;
+            break;
         }
+    }
+    
+    if (!found && delta > 0) {
+        myCart.push({
+            base_name: baseName,
+            full_name: finalName,
+            food_name: finalName,
+            price: price,
+            qty: 1,
+            cat: cat || '',
+            safe_id: foodId
+        });
+    }
+    refreshCounterDisplays();
+    renderCartUI();
+}
 
         function refreshCounterDisplays() {
             document.querySelectorAll('.qty-val-display').forEach(el => {
