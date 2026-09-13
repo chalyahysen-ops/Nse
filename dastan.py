@@ -2074,15 +2074,21 @@ DESKTOP_TEMPLATE = """
                         {% for item in items %}
                         {% set d_safe = item.id %}
                         <div class="desktop-food-card">
-                            <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="desktop-food-img" onclick="addFromDesktopCard('{{ item.food_name }}', {{ item.price }}, '{{ item.category }}', '{{ d_safe }}')" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
+                            <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="desktop-food-img" onclick="addFromDesktopCard('{{ item.food_name | replace("'", "\\'") }}', {{ item.price }}, '{{ (item.category or '') | replace("'", "\\'") }}', '{{ d_safe }}')" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
                             <div class="desktop-food-info">
                                 <div class="desktop-food-name">{{ item.food_name }}</div>
                                 <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
                             </div>
                             
-                            {% set show_r = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
-                            {% set show_c = (item.category == 'پەلەوەر') %}
-                            {% if show_r or show_c %}
+                            {% set cat_str = item.category or '' %}
+                            {% set c_name = cat_str | replace('ي', 'ی') | trim %}
+                            {% set food_str = item.food_name or '' %}
+
+                            {% set show_r = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
+                            {% set show_c = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
+                            {% set show_p = ('برژاو' in c_name or 'کەباب' in food_str or 'تکە' in food_str) %}
+
+                            {% if show_r or show_c or show_p %}
                             <div style="display:flex; flex-direction:row; gap:4px; width:100%;">
                                 {% if show_r %}
                                 <select class="opt-select" id="d_rice_{{ d_safe }}" style="flex:1; min-width:0;">
@@ -2098,6 +2104,14 @@ DESKTOP_TEMPLATE = """
                                     <option value="">ب. مریشک</option>
                                     <option value="سینگ">سینگ</option>
                                     <option value="ڕان">ڕان</option>
+                                </select>
+                                {% endif %}
+                                {% if show_p %}
+                                <select class="opt-select" id="d_plate_{{ d_safe }}" style="flex:1; min-width:0; border-color: #f59e0b; color: #f59e0b;">
+                                    <option value="">قاپی ...</option>
+                                    {% for p_num in range(1, 10) %}
+                                    <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
+                                    {% endfor %}
                                 </select>
                                 {% endif %}
                             </div>
@@ -2127,7 +2141,6 @@ DESKTOP_TEMPLATE = """
                     <span id="cartTotalTxt" style="color:var(--success); font-size:18px;">0 دینار</span>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
                 </div>
             </div>
@@ -2159,38 +2172,29 @@ DESKTOP_TEMPLATE = """
             toast.style.display = 'block';
             setTimeout(() => { toast.style.display = 'none'; }, 2200);
         }
-        function checkHasGrill() {
-            let hasGrill = cartItems.some(i => !i.is_divider && (i.cat === 'برژاو' || i.food_name.includes('کەباب') || i.food_name.includes('تکە')));
-            document.getElementById('btnAddPlateDesktop').style.display = hasGrill ? 'block' : 'none';
+
+        function addFromDesktopCard(baseName, price, cat, safeId) {
+            let rEl = document.getElementById('d_rice_' + safeId);
+            let cEl = document.getElementById('d_chick_' + safeId);
+            let pEl = document.getElementById('d_plate_' + safeId);
+            
+            let fullName = baseName;
+            let parts = [];
+            
+            if (rEl && rEl.value) parts.push(rEl.value.trim());
+            if (cEl && cEl.value) parts.push(cEl.value.trim());
+            if (pEl && pEl.value) parts.push(pEl.value.trim());
+            
+            if (parts.length > 0) {
+                fullName += ` (${parts.join(' - ')})`;
+            }
+            
+            updateQty(fullName, 1, price, cat);
         }
-        function addNewPlateDivider() {
-            if (cartItems.length === 0 || cartItems[cartItems.length - 1].is_divider) return;
-            cartItems.push({ is_divider: true, food_name: '--- قاپی نوێ ---', price: 0, qty: 1, cat: 'مەتبەخ' });
-            renderCart();
-            checkHasGrill();
-        }
-       function addFromDesktopCard(baseName, price, cat, safeId) {
-    let rEl = document.getElementById('d_rice_' + safeId);
-    let cEl = document.getElementById('d_chick_' + safeId);
-    let pEl = document.getElementById('d_plate_' + safeId);
-    
-    let fullName = baseName;
-    let parts = [];
-    
-    if (rEl && rEl.value) parts.push(rEl.value);
-    if (cEl && cEl.value) parts.push(cEl.value);
-    if (pEl && pEl.value) parts.push(pEl.value);
-    
-    if (parts.length > 0) {
-        fullName += ` (${parts.join(' - ')})`;
-    }
-    
-    updateQty(fullName, 1, price, cat);
-}
+
         function updateQty(foodName, change, price, cat) {
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
-                if (cartItems[i].is_divider) break;
                 if (cartItems[i].food_name === foodName) {
                     cartItems[i].qty += change;
                     if (cartItems[i].qty <= 0) cartItems.splice(i, 1);
@@ -2198,10 +2202,10 @@ DESKTOP_TEMPLATE = """
                     break;
                 }
             }
-            if (!found && change > 0) cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '' });
-            checkHasGrill();
+            if (!found && change > 0) cartItems.push({ food_name: foodName, price: price, qty: 1, cat: cat || '' });
             renderCart();
         }
+
         function renderCart() {
             const list = document.getElementById('cartItemsList');
             list.innerHTML = '';
@@ -2210,18 +2214,14 @@ DESKTOP_TEMPLATE = """
                 document.getElementById('cartTotalTxt').innerText = '0 دینار';
                 return;
             }
-            let total = 0, plateNum = 1;
+            let total = 0;
             cartItems.forEach((item, index) => {
-                if (item.is_divider) {
-                    plateNum++;
-                    list.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between;"><span>🍽 قاپی ${plateNum}</span><button onclick="cartItems.splice(${index},1); renderCart();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
-                } else {
-                    total += item.qty * item.price;
-                    list.innerHTML += `<div class="desktop-cart-row"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name}', -1, ${item.price}, '${item.cat}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name}', 1, ${item.price}, '${item.cat}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
-                }
+                total += item.qty * item.price;
+                list.innerHTML += `<div class="desktop-cart-row"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', -1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', 1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
             });
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
         }
+
         function filterCat(catId, btn) {
             document.querySelectorAll('.cat-visual-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -2229,19 +2229,20 @@ DESKTOP_TEMPLATE = """
                 g.style.display = (catId === 'all' || g.id === catId) ? 'block' : 'none';
             });
         }
+
         function fetchTableOrders() {
             fetch('/get_table_orders/' + encodeURIComponent(tableNum)).then(r => r.json()).then(data => {
                 cartItems = []; originalTableOrders = [];
                 if (data && data.length > 0) {
                     data.forEach(item => {
-                        let isDiv = item.food_name.includes('قاپی نوێ');
-                        let it = { is_divider: isDiv, food_name: item.food_name, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '' };
+                        let it = { food_name: item.food_name, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '' };
                         cartItems.push(it); originalTableOrders.push(JSON.parse(JSON.stringify(it)));
                     });
                 }
-                checkHasGrill(); renderCart();
+                renderCart();
             });
         }
+
         function submitFinalOrder() {
             if (cartItems.length === 0) { showToast("تکایە سەرەتا خواردن دیاری بکە!", true); return; }
             fetch('/save_cart_order', {
@@ -2255,6 +2256,7 @@ DESKTOP_TEMPLATE = """
                 }
             });
         }
+
         function clearCurrentTableOrders() {
             if (confirm("ئایا دڵنیایت لە سڕینەوە؟")) {
                 fetch('/clear_table_orders', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ table_number: tableNum }) })
@@ -2262,18 +2264,11 @@ DESKTOP_TEMPLATE = """
             }
         }
 
-        function openTransferModal() {
-            document.getElementById('transferModal').style.display = 'flex';
-        }
-        function closeTransferModal() {
-            document.getElementById('transferModal').style.display = 'none';
-        }
+        function openTransferModal() { document.getElementById('transferModal').style.display = 'flex'; }
+        function closeTransferModal() { document.getElementById('transferModal').style.display = 'none'; }
         function confirmTransferTable() {
             let target = document.getElementById('newTableSelect').value;
-            if (target === tableNum) {
-                alert("مێزی مەبەست ناتوانێت هەمان مێز بێت!");
-                return;
-            }
+            if (target === tableNum) { alert("مێزی مەبەست ناتوانێت هەمان مێز بێت!"); return; }
             fetch('/transfer_table_orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -2282,9 +2277,7 @@ DESKTOP_TEMPLATE = """
                 if(res.status === 'success') {
                     showToast("مێزەکە بەسەرکەوتوویی گوازرایەوە");
                     setTimeout(() => { window.location.href = '/desktop?table=' + target; }, 800);
-                } else {
-                    alert("هەڵە: " + res.message);
-                }
+                } else { alert("هەڵە: " + res.message); }
             });
         }
 
@@ -2293,7 +2286,6 @@ DESKTOP_TEMPLATE = """
 </body>
 </html>
 """
-
 # ==========================================
 # تێمپلێتەکانی مۆبایل و موشتەری
 # ==========================================
@@ -2495,47 +2487,55 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
 
-{% if allow_ordering %}
-{% set c_name = item.category | replace('ي', 'ی') | trim %}
-{% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
-{% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
-{% set show_plate = ('برژاو' in c_name or 'کەباب' in item.food_name or 'تکە' in item.food_name) %}
+                    {% if allow_ordering %}
+                    {% set cat_str = item.category or '' %}
+                    {% set c_name = cat_str | replace('ي', 'ی') | trim %}
+                    {% set food_str = item.food_name or '' %}
 
-{% if show_rice or show_chicken or show_plate %}
-<div class="options-group">
-    {% if show_rice %}
-    <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
-        <option value="">ج. برنج</option>
-        <option value="برنجی درێژ">برنجی درێژ</option>
-        <option value="برنجی خڕ">برنجی خڕ</option>
-        <option value="برنجی کوردی">برنجی کوردی</option>
-        <option value="برنج بە سرکە">برنج بە سرکە</option>
-    </select>
-    {% endif %}
-    {% if show_chicken %}
-    <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
-        <option value="">ب. مریشک</option>
-        <option value="سینگ">سینگ</option>
-        <option value="ڕان">ڕان</option>
-    </select>
-    {% endif %}
-    {% if show_plate %}
-    <select class="select-sub-opt" id="opt_plate_{{ item.id }}" style="border-color: #f59e0b; color: #b45309;">
-        <option value="">قاپی ...</option>
-        {% for p_num in range(1, 10) %}
-        <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
+                    {% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
+                    {% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
+                    {% set show_plate = ('برژاو' in c_name or 'کەباب' in food_str or 'تکە' in food_str) %}
+
+                    {% if show_rice or show_chicken or show_plate %}
+                    <div class="options-group">
+                        {% if show_rice %}
+                        <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
+                            <option value="">ج. برنج</option>
+                            <option value="برنجی درێژ">برنجی درێژ</option>
+                            <option value="برنجی خڕ">برنجی خڕ</option>
+                            <option value="برنجی کوردی">برنجی کوردی</option>
+                            <option value="برنج بە سرکە">برنج بە سرکە</option>
+                        </select>
+                        {% endif %}
+                        {% if show_chicken %}
+                        <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
+                            <option value="">ب. مریشک</option>
+                            <option value="سینگ">سینگ</option>
+                            <option value="ڕان">ڕان</option>
+                        </select>
+                        {% endif %}
+                        {% if show_plate %}
+                        <select class="select-sub-opt" id="opt_plate_{{ item.id }}" style="border-color: #f59e0b; color: #b45309;">
+                            <option value="">قاپی ...</option>
+                            {% for p_num in range(1, 10) %}
+                            <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mini-stepper">
+                        <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name | replace("'", "\\'") }}', -1, {{ item.price }}, '{{ (item.category or '') | replace("'", "\\'") }}', {{ item.id }})">-</button>
+                        <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
+                        <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name | replace("'", "\\'") }}', 1, {{ item.price }}, '{{ (item.category or '') | replace("'", "\\'") }}', {{ item.id }})">+</button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         {% endfor %}
-    </select>
-    {% endif %}
-</div>
-{% endif %}
-
-<div class="mini-stepper">
-    <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
-    <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
-    <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
-</div>
-{% endif %}
     </div>
 
     {% if allow_ordering %}
@@ -2590,7 +2590,6 @@ CUSTOMER_MENU_TEMPLATE = """
                 originalTableOrders = [];
                 if (data && data.length > 0) {
                     data.forEach((item, index) => {
-                        if (item.food_name.includes('قاپی نوێ')) return;
                         let it = {
                             base_name: item.food_name.split(' (')[0],
                             full_name: item.food_name,
@@ -2619,56 +2618,56 @@ CUSTOMER_MENU_TEMPLATE = """
         }
 
         function changeCustomerQty(baseName, delta, price, cat, foodId) {
-    let riceVal = '', chickenVal = '', plateVal = '';
-    const rEl = document.getElementById('opt_rice_' + foodId);
-    const cEl = document.getElementById('opt_chicken_' + foodId);
-    const pEl = document.getElementById('opt_plate_' + foodId);
+            let riceVal = '', chickenVal = '', plateVal = '';
+            const rEl = document.getElementById('opt_rice_' + foodId);
+            const cEl = document.getElementById('opt_chicken_' + foodId);
+            const pEl = document.getElementById('opt_plate_' + foodId);
 
-    if (rEl && rEl.value) riceVal = rEl.value.trim();
-    if (cEl && cEl.value) chickenVal = cEl.value.trim();
-    if (pEl && pEl.value) plateVal = pEl.value.trim();
+            if (rEl && rEl.value) riceVal = rEl.value.trim();
+            if (cEl && cEl.value) chickenVal = cEl.value.trim();
+            if (pEl && pEl.value) plateVal = pEl.value.trim();
 
-    let finalName = baseName;
-    let parts = [];
-    if (riceVal) parts.push(riceVal);
-    if (chickenVal) parts.push(chickenVal);
-    if (plateVal) parts.push(plateVal);
+            let finalName = baseName;
+            let parts = [];
+            if (riceVal) parts.push(riceVal);
+            if (chickenVal) parts.push(chickenVal);
+            if (plateVal) parts.push(plateVal);
 
-    if (parts.length > 0) {
-        finalName += ` (${parts.join(' - ')})`;
-    }
-
-    let origQty = getOrigQty(finalName);
-    let found = false;
-    
-    for (let i = myCart.length - 1; i >= 0; i--) {
-        if (myCart[i].full_name === finalName) {
-            let newQty = myCart[i].qty + delta;
-            if (!isWaiter && newQty < origQty) {
-                showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
-                return;
+            if (parts.length > 0) {
+                finalName += ` (${parts.join(' - ')})`;
             }
-            myCart[i].qty = newQty;
-            if (myCart[i].qty <= 0) myCart.splice(i, 1);
-            found = true;
-            break;
+
+            let origQty = getOrigQty(finalName);
+            let found = false;
+            
+            for (let i = myCart.length - 1; i >= 0; i--) {
+                if (myCart[i].full_name === finalName) {
+                    let newQty = myCart[i].qty + delta;
+                    if (!isWaiter && newQty < origQty) {
+                        showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
+                        return;
+                    }
+                    myCart[i].qty = newQty;
+                    if (myCart[i].qty <= 0) myCart.splice(i, 1);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found && delta > 0) {
+                myCart.push({
+                    base_name: baseName,
+                    full_name: finalName,
+                    food_name: finalName,
+                    price: price,
+                    qty: 1,
+                    cat: cat || '',
+                    safe_id: foodId
+                });
+            }
+            refreshCounterDisplays();
+            renderCartUI();
         }
-    }
-    
-    if (!found && delta > 0) {
-        myCart.push({
-            base_name: baseName,
-            full_name: finalName,
-            food_name: finalName,
-            price: price,
-            qty: 1,
-            cat: cat || '',
-            safe_id: foodId
-        });
-    }
-    refreshCounterDisplays();
-    renderCartUI();
-}
 
         function refreshCounterDisplays() {
             document.querySelectorAll('.qty-val-display').forEach(el => {
@@ -3787,7 +3786,8 @@ def desktop_menu():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name != ''")
+            # لێرەدا دەبێت ستوونی id هەبێت
+            cur.execute("SELECT id, food_name, price, category, image_path FROM nse WHERE food_name != ''")
             for f in cur.fetchall():
                 c = f['category'].strip() if f.get('category') else 'گشتی'
                 categories.setdefault(c, []).append(f)
