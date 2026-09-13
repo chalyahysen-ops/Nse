@@ -2082,13 +2082,11 @@ DESKTOP_TEMPLATE = """
                             
                             {% set cat_str = item.category or '' %}
                             {% set c_name = cat_str | replace('ي', 'ی') | trim %}
-                            {% set food_str = item.food_name or '' %}
 
                             {% set show_r = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
                             {% set show_c = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
-                            {% set show_p = ('برژاو' in c_name or 'کەباب' in food_str or 'تکە' in food_str) %}
 
-                            {% if show_r or show_c or show_p %}
+                            {% if show_r or show_c %}
                             <div style="display:flex; flex-direction:row; gap:4px; width:100%;">
                                 {% if show_r %}
                                 <select class="opt-select" id="d_rice_{{ d_safe }}" style="flex:1; min-width:0;">
@@ -2104,14 +2102,6 @@ DESKTOP_TEMPLATE = """
                                     <option value="">ب. مریشک</option>
                                     <option value="سینگ">سینگ</option>
                                     <option value="ڕان">ڕان</option>
-                                </select>
-                                {% endif %}
-                                {% if show_p %}
-                                <select class="opt-select" id="d_plate_{{ d_safe }}" style="flex:1; min-width:0; border-color: #f59e0b; color: #f59e0b;">
-                                    <option value="">قاپی ...</option>
-                                    {% for p_num in range(1, 10) %}
-                                    <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
-                                    {% endfor %}
                                 </select>
                                 {% endif %}
                             </div>
@@ -2141,6 +2131,7 @@ DESKTOP_TEMPLATE = """
                     <span id="cartTotalTxt" style="color:var(--success); font-size:18px;">0 دینار</span>
                 </div>
                 <div style="display:flex; gap:8px;">
+                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
                 </div>
             </div>
@@ -2173,17 +2164,27 @@ DESKTOP_TEMPLATE = """
             setTimeout(() => { toast.style.display = 'none'; }, 2200);
         }
 
+        function checkHasGrill() {
+            let hasGrill = cartItems.some(i => !i.is_divider && (i.cat === 'برژاو' || i.food_name.includes('کەباب') || i.food_name.includes('تکە')));
+            document.getElementById('btnAddPlateDesktop').style.display = hasGrill ? 'block' : 'none';
+        }
+
+        function addNewPlateDivider() {
+            if (cartItems.length === 0 || (cartItems[cartItems.length - 1] && cartItems[cartItems.length - 1].is_divider)) return;
+            cartItems.push({ is_divider: true, food_name: '─── قاپی نوێ ───', price: 0, qty: 1, cat: 'برژاو' });
+            renderCart();
+            checkHasGrill();
+        }
+
         function addFromDesktopCard(baseName, price, cat, safeId) {
             let rEl = document.getElementById('d_rice_' + safeId);
             let cEl = document.getElementById('d_chick_' + safeId);
-            let pEl = document.getElementById('d_plate_' + safeId);
             
             let fullName = baseName;
             let parts = [];
             
             if (rEl && rEl.value) parts.push(rEl.value.trim());
             if (cEl && cEl.value) parts.push(cEl.value.trim());
-            if (pEl && pEl.value) parts.push(pEl.value.trim());
             
             if (parts.length > 0) {
                 fullName += ` (${parts.join(' - ')})`;
@@ -2195,6 +2196,7 @@ DESKTOP_TEMPLATE = """
         function updateQty(foodName, change, price, cat) {
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
+                if (cartItems[i].is_divider) break; // تەنها لەم قاپەدا دەگەڕێت
                 if (cartItems[i].food_name === foodName) {
                     cartItems[i].qty += change;
                     if (cartItems[i].qty <= 0) cartItems.splice(i, 1);
@@ -2202,7 +2204,8 @@ DESKTOP_TEMPLATE = """
                     break;
                 }
             }
-            if (!found && change > 0) cartItems.push({ food_name: foodName, price: price, qty: 1, cat: cat || '' });
+            if (!found && change > 0) cartItems.push({ is_divider: false, food_name: foodName, price: price, qty: 1, cat: cat || '' });
+            checkHasGrill();
             renderCart();
         }
 
@@ -2214,10 +2217,15 @@ DESKTOP_TEMPLATE = """
                 document.getElementById('cartTotalTxt').innerText = '0 دینار';
                 return;
             }
-            let total = 0;
+            let total = 0, plateNum = 1;
             cartItems.forEach((item, index) => {
-                total += item.qty * item.price;
-                list.innerHTML += `<div class="desktop-cart-row"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', -1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', 1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
+                if (item.is_divider || item.food_name.includes('قاپی نوێ')) {
+                    plateNum++;
+                    list.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; margin-bottom:8px;"><span>🍽 هێڵی جیاکەرەوە (قاپی ${plateNum})</span><button onclick="cartItems.splice(${index},1); renderCart();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
+                } else {
+                    total += item.qty * item.price;
+                    list.innerHTML += `<div class="desktop-cart-row" style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', -1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', 1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
+                }
             });
             document.getElementById('cartTotalTxt').innerText = total.toLocaleString() + ' دینار';
         }
@@ -2235,10 +2243,12 @@ DESKTOP_TEMPLATE = """
                 cartItems = []; originalTableOrders = [];
                 if (data && data.length > 0) {
                     data.forEach(item => {
-                        let it = { food_name: item.food_name, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '' };
+                        let isDiv = item.food_name.includes('قاپی نوێ') || item.food_name.includes('───');
+                        let it = { is_divider: isDiv, food_name: item.food_name, qty: parseInt(item.quantity), price: parseFloat(item.price), cat: item.category || '' };
                         cartItems.push(it); originalTableOrders.push(JSON.parse(JSON.stringify(it)));
                     });
                 }
+                checkHasGrill();
                 renderCart();
             });
         }
@@ -2399,7 +2409,6 @@ function checkTables() {
 </body>
 </html>
 """
-
 CUSTOMER_MENU_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -2490,13 +2499,11 @@ CUSTOMER_MENU_TEMPLATE = """
                     {% if allow_ordering %}
                     {% set cat_str = item.category or '' %}
                     {% set c_name = cat_str | replace('ي', 'ی') | trim %}
-                    {% set food_str = item.food_name or '' %}
 
                     {% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
                     {% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
-                    {% set show_plate = ('برژاو' in c_name or 'کەباب' in food_str or 'تکە' in food_str) %}
 
-                    {% if show_rice or show_chicken or show_plate %}
+                    {% if show_rice or show_chicken %}
                     <div class="options-group">
                         {% if show_rice %}
                         <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
@@ -2512,14 +2519,6 @@ CUSTOMER_MENU_TEMPLATE = """
                             <option value="">ب. مریشک</option>
                             <option value="سینگ">سینگ</option>
                             <option value="ڕان">ڕان</option>
-                        </select>
-                        {% endif %}
-                        {% if show_plate %}
-                        <select class="select-sub-opt" id="opt_plate_{{ item.id }}" style="border-color: #f59e0b; color: #b45309;">
-                            <option value="">قاپی ...</option>
-                            {% for p_num in range(1, 10) %}
-                            <option value="قاپی {{ p_num }}">قاپی {{ p_num }}</option>
-                            {% endfor %}
                         </select>
                         {% endif %}
                     </div>
@@ -2545,7 +2544,7 @@ CUSTOMER_MENU_TEMPLATE = """
             <span class="cart-counter-pill" id="cartBadgeCount">0</span>
             <span class="cart-sum-txt" id="cartTotalDisplay">0 د.ع</span>
         </div>
-        <button type="button" class="btn-submit-order" onclick="sendFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
+        <button type="button" class="btn-submit-order" onclick="sendFinalOrder()">سەیرکردنی سەبەتە ➔</button>
     </div>
 
     <div class="modal-shade" id="cartModalShade" onclick="closeCartView(event)">
@@ -2555,7 +2554,12 @@ CUSTOMER_MENU_TEMPLATE = """
                 <button type="button" style="background:none; border:none; color:#ef4444; font-size:18px; font-weight:800;" onclick="toggleCartModal(false)">✕</button>
             </div>
             <div class="modal-items-scroller" id="cartScrollerList"></div>
-            <button type="button" class="btn-submit-order" style="width: 100%; padding: 13px; font-size: 15px;" onclick="sendFinalOrder()">پشتڕاستکردنەوە و ناردن</button>
+            
+            <div style="display:flex; gap:8px;">
+                <!-- دوگمەی زیادکردنی هێڵ لەناو مۆبایلیش دانراوە گەر کارمەندێک مۆبایل بەکاربهێنێت -->
+                <button type="button" id="btnMobileAddDivider" class="btn-submit-order" style="background:#8b5cf6; display:none; flex:1;" onclick="addNewPlateDividerMobile()">➕ قاپی نوێ</button>
+                <button type="button" class="btn-submit-order" style="flex:2;" onclick="sendFinalOrderToKitchen()">پشتڕاستکردنەوە و ناردن</button>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -2574,6 +2578,19 @@ CUSTOMER_MENU_TEMPLATE = """
             setTimeout(() => { toast.style.display = 'none'; }, 2500);
         }
 
+        function checkHasGrillMobile() {
+            let hasGrill = myCart.some(i => !i.is_divider && (i.cat === 'برژاو' || i.food_name.includes('کەباب') || i.food_name.includes('تکە')));
+            let btn = document.getElementById('btnMobileAddDivider');
+            if (btn) btn.style.display = hasGrill ? 'block' : 'none';
+        }
+
+        function addNewPlateDividerMobile() {
+            if (myCart.length === 0 || (myCart[myCart.length - 1] && myCart[myCart.length - 1].is_divider)) return;
+            myCart.push({ is_divider: true, food_name: '─── قاپی نوێ ───', full_name: '─── قاپی نوێ ───', price: 0, qty: 1, cat: 'برژاو' });
+            renderCartUI();
+            checkHasGrillMobile();
+        }
+
         function filterMenu(groupId, el) {
             document.querySelectorAll('.cat-card-item').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
@@ -2590,7 +2607,9 @@ CUSTOMER_MENU_TEMPLATE = """
                 originalTableOrders = [];
                 if (data && data.length > 0) {
                     data.forEach((item, index) => {
+                        let isDiv = item.food_name.includes('قاپی نوێ') || item.food_name.includes('───');
                         let it = {
+                            is_divider: isDiv,
                             base_name: item.food_name.split(' (')[0],
                             full_name: item.food_name,
                             food_name: item.food_name,
@@ -2604,6 +2623,7 @@ CUSTOMER_MENU_TEMPLATE = """
                     });
                 }
                 refreshCounterDisplays();
+                checkHasGrillMobile();
                 renderCartUI();
             });
         }
@@ -2613,25 +2633,22 @@ CUSTOMER_MENU_TEMPLATE = """
         };
 
         function getOrigQty(fullName) {
-            let orig = originalTableOrders.find(o => o.full_name === fullName);
+            let orig = originalTableOrders.find(o => o.full_name === fullName && !o.is_divider);
             return orig ? orig.qty : 0;
         }
 
         function changeCustomerQty(baseName, delta, price, cat, foodId) {
-            let riceVal = '', chickenVal = '', plateVal = '';
+            let riceVal = '', chickenVal = '';
             const rEl = document.getElementById('opt_rice_' + foodId);
             const cEl = document.getElementById('opt_chicken_' + foodId);
-            const pEl = document.getElementById('opt_plate_' + foodId);
 
             if (rEl && rEl.value) riceVal = rEl.value.trim();
             if (cEl && cEl.value) chickenVal = cEl.value.trim();
-            if (pEl && pEl.value) plateVal = pEl.value.trim();
 
             let finalName = baseName;
             let parts = [];
             if (riceVal) parts.push(riceVal);
             if (chickenVal) parts.push(chickenVal);
-            if (plateVal) parts.push(plateVal);
 
             if (parts.length > 0) {
                 finalName += ` (${parts.join(' - ')})`;
@@ -2641,6 +2658,7 @@ CUSTOMER_MENU_TEMPLATE = """
             let found = false;
             
             for (let i = myCart.length - 1; i >= 0; i--) {
+                if (myCart[i].is_divider) break; // تەنها لە هەمان قاپدا
                 if (myCart[i].full_name === finalName) {
                     let newQty = myCart[i].qty + delta;
                     if (!isWaiter && newQty < origQty) {
@@ -2656,6 +2674,7 @@ CUSTOMER_MENU_TEMPLATE = """
             
             if (!found && delta > 0) {
                 myCart.push({
+                    is_divider: false,
                     base_name: baseName,
                     full_name: finalName,
                     food_name: finalName,
@@ -2666,6 +2685,7 @@ CUSTOMER_MENU_TEMPLATE = """
                 });
             }
             refreshCounterDisplays();
+            checkHasGrillMobile();
             renderCartUI();
         }
 
@@ -2674,7 +2694,7 @@ CUSTOMER_MENU_TEMPLATE = """
                 let itemName = el.getAttribute('data-name');
                 let totalQty = 0;
                 myCart.forEach(cartItem => {
-                    if (cartItem.base_name === itemName || cartItem.full_name === itemName) {
+                    if (!cartItem.is_divider && (cartItem.base_name === itemName || cartItem.full_name === itemName)) {
                         totalQty += cartItem.qty;
                     }
                 });
@@ -2683,26 +2703,33 @@ CUSTOMER_MENU_TEMPLATE = """
         }
 
         function renderCartUI() {
-            let total = 0, count = 0;
+            let total = 0, count = 0, plateNum = 1;
             const scroller = document.getElementById('cartScrollerList');
             if (scroller) scroller.innerHTML = '';
 
             myCart.forEach((item, index) => {
-                total += item.qty * item.price;
-                count += item.qty;
-                if (scroller) {
-                    scroller.innerHTML += `
-                        <div class="cart-row-item">
-                            <div style="text-align: right;">
-                                <div style="font-weight:700; font-size:13.5px; color:#fff;">${item.full_name}</div>
-                                <div style="color:#10b981; font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, -1)">-</button>
-                                <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
-                                <button type="button" style="background:#10b981; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, 1)">+</button>
-                            </div>
-                        </div>`;
+                if (item.is_divider || item.food_name.includes('قاپی نوێ')) {
+                    plateNum++;
+                    if (scroller) {
+                        scroller.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; margin-bottom:8px;"><span>🍽 هێڵی جیاکەرەوە (قاپی ${plateNum})</span><button onclick="myCart.splice(${index},1); renderCartUI(); checkHasGrillMobile();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
+                    }
+                } else {
+                    total += item.qty * item.price;
+                    count += item.qty;
+                    if (scroller) {
+                        scroller.innerHTML += `
+                            <div class="cart-row-item">
+                                <div style="text-align: right;">
+                                    <div style="font-weight:700; font-size:13.5px; color:#fff;">${item.full_name}</div>
+                                    <div style="color:#10b981; font-size:12px; font-weight:700;">${(item.qty * item.price).toLocaleString()} د.ع</div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button type="button" style="background:#ef4444; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, -1)">-</button>
+                                    <span style="background:#064032; border:1px solid #10b981; padding:3px 10px; border-radius:6px; font-weight:800;">${item.qty}</span>
+                                    <button type="button" style="background:#10b981; color:#fff; border:none; width:26px; height:26px; border-radius:4px; font-weight:800; cursor:pointer;" onclick="modifyCustomerCart(${index}, 1)">+</button>
+                                </div>
+                            </div>`;
+                    }
                 }
             });
             if (document.getElementById('cartBadgeCount')) {
@@ -2722,6 +2749,7 @@ CUSTOMER_MENU_TEMPLATE = """
                 myCart[index].qty = newQty;
                 if (myCart[index].qty <= 0) myCart.splice(index, 1);
                 refreshCounterDisplays();
+                checkHasGrillMobile();
                 renderCartUI();
             }
         }
@@ -2734,9 +2762,14 @@ CUSTOMER_MENU_TEMPLATE = """
         function closeCartView(e) { if (e.target.id === 'cartModalShade') toggleCartModal(false); }
 
         function sendFinalOrder() {
+            toggleCartModal(true);
+        }
+
+        function sendFinalOrderToKitchen() {
             if (myCart.length === 0) { showNotification("سەرەتا خواردن هەڵبژێرە!", true); return; }
             
             let formattedCart = myCart.map(it => ({
+                is_divider: it.is_divider,
                 food_name: it.full_name || it.food_name,
                 qty: it.qty,
                 price: it.price,
@@ -4011,8 +4044,15 @@ def save_cart_order():
     cart = data.get('cart_items', [])
     orig = data.get('original_items', [])
 
+    # ژماردنی هێڵە جیاکەرەوەکانی پێشوو و نوێ، بۆ ئەوەی بزانین چەند هێڵی نوێ زیاد کراوە
+    old_divs = sum(1 for x in orig if x.get('is_divider') or 'قاپی نوێ' in str(x.get('food_name', '')))
+    new_divs = sum(1 for x in cart if x.get('is_divider') or 'قاپی نوێ' in str(x.get('food_name', '')))
+    added_divs = new_divs - old_divs
+
     def make_map(its):
-        return {it['food_name']: {'qty': int(it['qty']), 'price': float(it['price']), 'cat': it.get('cat', 'گشتی')} for it in its if not it.get('is_divider')}
+        # هێڵە جیاکەرەوەکان لادەبەین لە بەراوردکردنەکە بۆ ئەوەی تێکەڵ نەبن
+        return {it['food_name']: {'qty': int(it['qty']), 'price': float(it['price']), 'cat': it.get('cat', 'گشتی')} 
+                for it in its if not (it.get('is_divider') or 'قاپی نوێ' in str(it.get('food_name', '')))}
 
     old_map = make_map(orig)
     new_map = make_map(cart)
@@ -4020,21 +4060,32 @@ def save_cart_order():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # پشکنینی ئاسایشی مێزەکان (بۆ ئەوەی مێزی داخراو ئۆردەری پێ نەکرێت لەلایەن موشتەریەوە)
+            # پشکنینی ئاسایشی مێزەکان
             if tbl.isdigit():
                 cur.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (int(tbl),))
                 p_row = cur.fetchone()
                 if p_row and not p_row['allow_ordering'] and session.get('role') not in ['mobile_waiter', 'admin']:
                     return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە!'})
 
+            # سڕینەوە و خستنەناوەوەی سەرلەنوێی داتاکان بە حاڵەتی چاپکراو
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
             for it in cart:
-                fname = "--- قاپی نوێ ---" if it.get('is_divider') else it['food_name']
+                is_div = it.get('is_divider', False) or ('قاپی نوێ' in str(it.get('food_name', '')))
+                fname = "─── قاپی نوێ ───" if is_div else it['food_name']
                 cur.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
-                """, (tbl, fname, it['qty'], it['price'], it.get('cat', 'گشتی')))
+                """, (tbl, fname, it.get('qty', 1), it.get('price', 0), it.get('cat', 'گشتی')))
 
+            # ناردنی هێڵە جیاکەرەوە نوێیەکان بۆ پرێنتەری مەتبەخ (is_printed = 0)
+            if added_divs > 0:
+                for _ in range(added_divs):
+                    cur.execute("""
+                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
+                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                    """, (tbl + " [زیادکراو]", "─── قاپی نوێ ───", 1, 0, "برژاو"))
+
+            # ناردنی خواردنە زیادکراو یان سڕاوەکان
             for k in set(old_map.keys()).union(set(new_map.keys())):
                 diff = new_map.get(k, {}).get('qty', 0) - old_map.get(k, {}).get('qty', 0)
                 if diff > 0:
@@ -4055,7 +4106,6 @@ def save_cart_order():
         if conn:
             try: conn.close()
             except: pass
-
 @app.route('/get_table_orders/<path:table_num>')
 def get_table_orders(table_num):
     conn = None
