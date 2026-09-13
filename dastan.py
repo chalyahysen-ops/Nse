@@ -2072,7 +2072,7 @@ DESKTOP_TEMPLATE = """
                 <div class="category-desktop-group category-group-item" id="cat-group-{{ loop.index }}">
                     <div class="food-grid">
                         {% for item in items %}
-                        {% set d_safe = loop.index ~ '_' ~ cat ~ '_' ~ item.food_name|replace(' ', '_') %}
+                        {% set d_safe = item.id %}
                         <div class="desktop-food-card">
                             <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="desktop-food-img" onclick="addFromDesktopCard('{{ item.food_name }}', {{ item.price }}, '{{ item.category }}', '{{ d_safe }}')" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
                             <div class="desktop-food-info">
@@ -2482,7 +2482,7 @@ CUSTOMER_MENU_TEMPLATE = """
         <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
             <div class="food-grid-2col">
                 {% for item in items %}
-                {% set item_id_safe = loop.index ~ '_' ~ cat ~ '_' ~ item.food_name|replace(' ', '_') %}
+                {% set item_id_safe = item.id %}
                 <div class="food-card-white">
                     <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="food-img-hero" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
                     <div class="food-title-main">{{ item.food_name }}</div>
