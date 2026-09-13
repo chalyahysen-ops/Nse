@@ -2131,7 +2131,8 @@ DESKTOP_TEMPLATE = """
                     <span id="cartTotalTxt" style="color:var(--success); font-size:18px;">0 دینار</span>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ قاپی نوێ</button>
+                    <!-- دوگمەی هێڵی جیاکەرەوە گەڕێندرایەوە -->
+                    <button type="button" id="btnAddPlateDesktop" class="btn-add-plate-desktop" onclick="addNewPlateDivider()">➕ هێڵی جیاکەرەوە</button>
                     <button type="button" id="btnSubmitDesktop" class="btn-send-desktop" onclick="submitFinalOrder()">ناردن بۆ مەتبەخ ➔</button>
                 </div>
             </div>
@@ -2196,7 +2197,7 @@ DESKTOP_TEMPLATE = """
         function updateQty(foodName, change, price, cat) {
             let found = false;
             for (let i = cartItems.length - 1; i >= 0; i--) {
-                if (cartItems[i].is_divider) break; // تەنها لەم قاپەدا دەگەڕێت
+                if (cartItems[i].is_divider) break; // تەنها لە هەمان قاپ دەگەڕێت و تێکەڵی ناکات
                 if (cartItems[i].food_name === foodName) {
                     cartItems[i].qty += change;
                     if (cartItems[i].qty <= 0) cartItems.splice(i, 1);
@@ -2221,7 +2222,7 @@ DESKTOP_TEMPLATE = """
             cartItems.forEach((item, index) => {
                 if (item.is_divider || item.food_name.includes('قاپی نوێ')) {
                     plateNum++;
-                    list.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; margin-bottom:8px;"><span>🍽 هێڵی جیاکەرەوە (قاپی ${plateNum})</span><button onclick="cartItems.splice(${index},1); renderCart();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
+                    list.innerHTML += `<div style="background:#8b5cf6; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:800; display:flex; justify-content:space-between; margin-bottom:8px;"><span>🍽 هێڵی جیاکەرەوە (قاپی ${plateNum})</span><button onclick="cartItems.splice(${index},1); renderCart(); checkHasGrill();" style="background:#ef4444; border:none; color:#fff; border-radius:4px; padding:2px 6px;">✕</button></div>`;
                 } else {
                     total += item.qty * item.price;
                     list.innerHTML += `<div class="desktop-cart-row" style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="desktop-counter-group"><button class="desktop-btn-count" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', -1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">-</button><span style="padding:0 8px; font-weight:800;">${item.qty}</span><button class="desktop-btn-count" style="background:var(--gold); color:#000;" onclick="updateQty('${item.food_name.replace(/'/g, "\\'")}', 1, ${item.price}, '${item.cat.replace(/'/g, "\\'")}')">+</button></div><div style="text-align:left;"><div style="font-weight:800; font-size:13px;">${item.food_name}</div><div style="color:var(--success); font-size:11px;">${(item.qty * item.price).toLocaleString()} دینار</div></div></div></div>`;
@@ -2556,8 +2557,7 @@ CUSTOMER_MENU_TEMPLATE = """
             <div class="modal-items-scroller" id="cartScrollerList"></div>
             
             <div style="display:flex; gap:8px;">
-                <!-- دوگمەی زیادکردنی هێڵ لەناو مۆبایلیش دانراوە گەر کارمەندێک مۆبایل بەکاربهێنێت -->
-                <button type="button" id="btnMobileAddDivider" class="btn-submit-order" style="background:#8b5cf6; display:none; flex:1;" onclick="addNewPlateDividerMobile()">➕ قاپی نوێ</button>
+                <button type="button" id="btnMobileAddDivider" class="btn-submit-order" style="background:#8b5cf6; display:none; flex:1;" onclick="addNewPlateDividerMobile()">➕ هێڵی جیاکەرەوە</button>
                 <button type="button" class="btn-submit-order" style="flex:2;" onclick="sendFinalOrderToKitchen()">پشتڕاستکردنەوە و ناردن</button>
             </div>
         </div>
@@ -2586,7 +2586,7 @@ CUSTOMER_MENU_TEMPLATE = """
 
         function addNewPlateDividerMobile() {
             if (myCart.length === 0 || (myCart[myCart.length - 1] && myCart[myCart.length - 1].is_divider)) return;
-            myCart.push({ is_divider: true, food_name: '─── قاپی نوێ ───', full_name: '─── قاپی نوێ ───', price: 0, qty: 1, cat: 'برژاو' });
+            myCart.push({ is_divider: true, food_name: '─── قاپی نوێ ───', full_name: '─── قاپی نوێ ───', price: 0, qty: 1, cat: 'برژاو', safe_id: 'div' });
             renderCartUI();
             checkHasGrillMobile();
         }
@@ -2658,7 +2658,7 @@ CUSTOMER_MENU_TEMPLATE = """
             let found = false;
             
             for (let i = myCart.length - 1; i >= 0; i--) {
-                if (myCart[i].is_divider) break; // تەنها لە هەمان قاپدا
+                if (myCart[i].is_divider) break; // تەنها لە هەمان قاپ دەگەڕێت و تێکەڵی ناکات
                 if (myCart[i].full_name === finalName) {
                     let newQty = myCart[i].qty + delta;
                     if (!isWaiter && newQty < origQty) {
@@ -4044,18 +4044,26 @@ def save_cart_order():
     cart = data.get('cart_items', [])
     orig = data.get('original_items', [])
 
-    # ژماردنی هێڵە جیاکەرەوەکانی پێشوو و نوێ، بۆ ئەوەی بزانین چەند هێڵی نوێ زیاد کراوە
-    old_divs = sum(1 for x in orig if x.get('is_divider') or 'قاپی نوێ' in str(x.get('food_name', '')))
-    new_divs = sum(1 for x in cart if x.get('is_divider') or 'قاپی نوێ' in str(x.get('food_name', '')))
-    added_divs = new_divs - old_divs
+    # جیاکردنەوەی زیرەکانەی خواردنەکان بەپێی ئەوەی دەکەونە پێش هێڵ یان پاش هێڵ (قاپ)
+    def parse_items(items_list):
+        parsed = {}
+        plate_idx = 1
+        for it in items_list:
+            fname = str(it.get('full_name') or it.get('food_name') or '')
+            is_div = it.get('is_divider') or 'قاپی نوێ' in fname or '───' in fname
+            if is_div:
+                plate_idx += 1
+            else:
+                # لێرەدا ژمارەی قاپەکە دەخرێتە پاڵ ناوەکە تا تێکەڵ نەبن
+                key = f"{fname}__P{plate_idx}"
+                if key not in parsed:
+                    parsed[key] = {'real_name': fname, 'qty': 0, 'price': float(it.get('price', 0)), 'cat': it.get('cat', 'گشتی'), 'plate': plate_idx}
+                parsed[key]['qty'] += int(it.get('qty', 1))
+        return parsed, plate_idx
 
-    def make_map(its):
-        # هێڵە جیاکەرەوەکان لادەبەین لە بەراوردکردنەکە بۆ ئەوەی تێکەڵ نەبن
-        return {it['food_name']: {'qty': int(it['qty']), 'price': float(it['price']), 'cat': it.get('cat', 'گشتی')} 
-                for it in its if not (it.get('is_divider') or 'قاپی نوێ' in str(it.get('food_name', '')))}
+    old_map, old_plates = parse_items(orig)
+    new_map, new_plates = parse_items(cart)
 
-    old_map = make_map(orig)
-    new_map = make_map(cart)
     conn = None
     try:
         conn = get_db()
@@ -4067,37 +4075,45 @@ def save_cart_order():
                 if p_row and not p_row['allow_ordering'] and session.get('role') not in ['mobile_waiter', 'admin']:
                     return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە!'})
 
-            # سڕینەوە و خستنەناوەوەی سەرلەنوێی داتاکان بە حاڵەتی چاپکراو
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
             for it in cart:
-                is_div = it.get('is_divider', False) or ('قاپی نوێ' in str(it.get('food_name', '')))
-                fname = "─── قاپی نوێ ───" if is_div else it['food_name']
+                fname = str(it.get('full_name') or it.get('food_name') or '')
+                is_div = it.get('is_divider') or 'قاپی نوێ' in fname or '───' in fname
+                final_name = "─── قاپی نوێ ───" if is_div else fname
                 cur.execute("""
                     INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
-                """, (tbl, fname, it.get('qty', 1), it.get('price', 0), it.get('cat', 'گشتی')))
+                """, (tbl, final_name, it.get('qty', 1), it.get('price', 0), it.get('cat', 'گشتی')))
 
-            # ناردنی هێڵە جیاکەرەوە نوێیەکان بۆ پرێنتەری مەتبەخ (is_printed = 0)
-            if added_divs > 0:
-                for _ in range(added_divs):
+            # ناردنی هێڵی نوێ بۆ مەتبەخ ئەگەر زیاد کرابوو
+            diff_plates = new_plates - old_plates
+            if diff_plates > 0:
+                for _ in range(diff_plates):
                     cur.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
                     """, (tbl + " [زیادکراو]", "─── قاپی نوێ ───", 1, 0, "برژاو"))
 
-            # ناردنی خواردنە زیادکراو یان سڕاوەکان
-            for k in set(old_map.keys()).union(set(new_map.keys())):
-                diff = new_map.get(k, {}).get('qty', 0) - old_map.get(k, {}).get('qty', 0)
+            # ناردنی داواکارییە تازەکان یان سڕاوەکان بۆ مەتبەخ بە وردی
+            all_keys = set(old_map.keys()).union(set(new_map.keys()))
+            for k in all_keys:
+                old_qty = old_map.get(k, {}).get('qty', 0)
+                new_qty = new_map.get(k, {}).get('qty', 0)
+                diff = new_qty - old_qty
+                
                 if diff > 0:
+                    item_info = new_map[k]
                     cur.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [زیادکراو]", f"+ {k}", diff, new_map[k]['price'], new_map[k]['cat']))
+                    """, (tbl + " [زیادکراو]", f"+ {item_info['real_name']}", diff, item_info['price'], item_info['cat']))
                 elif diff < 0:
+                    item_info = old_map[k]
                     cur.execute("""
                         INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
                         VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [سڕاوەتەوە]", f"سڕاوەتەوە: {k}", abs(diff), old_map[k]['price'], old_map[k]['cat']))
+                    """, (tbl + " [سڕاوەتەوە]", f"سڕاوەتەوە: {item_info['real_name']}", abs(diff), item_info['price'], item_info['cat']))
+
             conn.commit()
         return jsonify({'status': 'success'})
     except Exception as ex:
