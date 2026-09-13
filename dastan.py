@@ -129,9 +129,8 @@ def ensure_all_tables():
                 );
             """)
 
-            try:
-                cursor.execute("ALTER TABLE masrwf ADD COLUMN IF NOT EXISTS masrwf_name VARCHAR(150) DEFAULT '' AFTER masrwf_date;")
-                cursor.execute("ALTER TABLE masrwf ADD COLUMN IF NOT EXISTS spent_by VARCHAR(100) DEFAULT '' AFTER masrwf_type;")
+           try:
+                cursor.execute("ALTER TABLE masrwf ADD COLUMN payment_type VARCHAR(50) DEFAULT 'نەغدی' AFTER notes;")
             except:
                 pass
 
@@ -567,12 +566,11 @@ WEB_MASRWF_TEMPLATE = """
         .filter-item label { font-size: 13px; font-weight: 700; color: #38bdf8; }
         
         .date-input-wrap { position: relative; display: flex; align-items: center; }
-        .date-input-wrap input[type="date"] { background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; padding: 10px 14px; color: #fff; font-size: 14px; font-weight: 700; outline: none; cursor: pointer; color-scheme: dark; }
-        .date-input-wrap input[type="date"]:focus { border-color: #10b981; }
+        .c-input, .date-input-wrap input[type="date"], .date-input-wrap input[type="text"] { background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; padding: 10px 14px; color: #fff; font-size: 14px; font-weight: 700; outline: none; }
+        .c-input:focus, .date-input-wrap input:focus { border-color: #10b981; }
 
         .btn-filter { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
-        .btn-reset { background: #334155; color: #f8fafc; border: 1.5px solid #475569; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; }
-
+        
         .table-wrap { flex: 1; overflow-y: auto; background: #1e293b; border: 1.5px solid #334155; border-radius: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; }
         th { background: #334155; color: #f8fafc; padding: 14px; font-size: 13.5px; font-weight: 800; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #475569; }
@@ -585,9 +583,7 @@ WEB_MASRWF_TEMPLATE = """
         .input-sidebar { background: #1e293b; border-left: 2px solid #334155; padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; box-shadow: -4px 0 15px rgba(0,0,0,0.2); }
         .field-group { display: flex; flex-direction: column; gap: 5px; text-align: right; }
         .field-group label { font-size: 13px; font-weight: 800; color: #cbd5e1; }
-        .c-input { width: 100%; padding: 11px 14px; background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; font-size: 14px; font-weight: 700; color: #fff; outline: none; }
-        .c-input:focus { border-color: #10b981; }
-
+        
         .c-amount { font-size: 18px; font-weight: 900; color: #10b981; background: #0f172a; text-align: center; }
 
         .btn-grid-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
@@ -600,6 +596,10 @@ WEB_MASRWF_TEMPLATE = """
         .card-total-box { background: #0f172a; border: 2px solid #f59e0b; border-radius: 12px; padding: 14px 16px; text-align: right; margin-top: 10px; }
         .card-total-label { font-size: 12px; font-weight: 800; color: #f59e0b; margin-bottom: 4px; }
         .card-total-val { font-size: 22px; font-weight: 900; color: #f59e0b; }
+        
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; color: #fff; }
+        .badge-cash { background: #10b981; }
+        .badge-debt { background: #f59e0b; }
 
         @media (max-width: 1000px) {
             .masrwf-layout { grid-template-columns: 1fr; }
@@ -620,17 +620,33 @@ WEB_MASRWF_TEMPLATE = """
                     <div class="filter-item">
                         <label>📅 لە بەرواری:</label>
                         <div class="date-input-wrap">
-                            <input type="date" name="from_date" value="{{ from_date }}" class="filter-input">
+                            <input type="date" name="from_date" value="{{ from_date }}">
                         </div>
                     </div>
                     <div class="filter-item">
                         <label>📅 تا بەرواری:</label>
                         <div class="date-input-wrap">
-                            <input type="date" name="to_date" value="{{ to_date }}" class="filter-input">
+                            <input type="date" name="to_date" value="{{ to_date }}">
                         </div>
                     </div>
-                    <button type="submit" class="btn-filter">🔍 فلتەری خەرجی</button>
-                    <a href="/admin/masrwf" class="btn-reset">🔄 هەمووی</a>
+                    <div class="filter-item">
+                        <label>🏢 شوێنی خەرجی:</label>
+                        <div class="date-input-wrap">
+                            <input list="spentFilterOptions" name="filter_spent" value="{{ filter_spent }}" placeholder="هەموو شوێنەکان...">
+                            <datalist id="spentFilterOptions">
+                                {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>💳 جۆری پارەدان:</label>
+                        <div style="display:flex; gap:12px; align-items:center; background: #0f172a; padding: 10px 14px; border-radius:10px; border: 1.5px solid #475569; height: 41px;">
+                            <label style="cursor:pointer; color:#94a3b8; font-weight:800;"><input type="radio" name="filter_payment" value="هەمووی" {{ 'checked' if filter_payment == 'هەمووی' }}> هەمووی</label>
+                            <label style="cursor:pointer; color:#10b981; font-weight:800;"><input type="radio" name="filter_payment" value="نەغدی" {{ 'checked' if filter_payment == 'نەغدی' }}> نەغدی</label>
+                            <label style="cursor:pointer; color:#f59e0b; font-weight:800;"><input type="radio" name="filter_payment" value="قەرز" {{ 'checked' if filter_payment == 'قەرز' }}> قەرز</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-filter">🔍 فلتەرکردن</button>
                 </form>
             </div>
 
@@ -641,19 +657,23 @@ WEB_MASRWF_TEMPLATE = """
                             <th style="width: 60px;">#</th>
                             <th>بەروار</th>
                             <th>جۆری مەسرووف</th>
-                            <th>کۆمپانیا / خەرجکەر</th>
+                            <th>شوێنی خەرجی</th>
                             <th>بڕی پارە</th>
                             <th>تێبینی</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in rows %}
-                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
+                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}', '{{ r.payment_type }}')">
                             <td>{{ loop.index }}</td>
                             <td style="color: #38bdf8;">{{ r.m_date }}</td>
                             <td style="font-weight:700; color:#f59e0b;">{{ r.masrwf_type }}</td>
                             <td style="color:#10b981; font-weight:700;">{{ r.spent_by }}</td>
-                            <td style="color:#ef4444; font-weight:900; font-size:14.5px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                            <td style="color:#ef4444; font-weight:900; font-size:14.5px;">
+                                {{ "{:,.0f}".format(r.amount) }} د.ع
+                                <br>
+                                <span class="badge {{ 'badge-cash' if r.payment_type == 'نەغدی' else 'badge-debt' }}">{{ r.payment_type }}</span>
+                            </td>
                             <td style="color:#94a3b8; text-align:right;">{{ r.notes }}</td>
                         </tr>
                         {% else %}
@@ -684,11 +704,23 @@ WEB_MASRWF_TEMPLATE = """
                 </div>
 
                 <div class="field-group">
-                    <label>🏢 کۆمپانیا / خەرجکەر:</label>
+                    <label>🏢 شوێنی خەرجی:</label>
                     <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" autocomplete="off">
                     <datalist id="spentOptions">
                         {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
                     </datalist>
+                </div>
+
+                <div class="field-group">
+                    <label>💳 جۆری پارەدان:</label>
+                    <div style="display: flex; gap: 15px; background: #0f172a; padding: 10px 14px; border: 1.5px solid #475569; border-radius: 10px; justify-content: center;">
+                        <label style="color:#10b981; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                            <input type="radio" id="rad_cash" name="payment_type" value="نەغدی" checked style="transform: scale(1.3);"> نەغدی
+                        </label>
+                        <label style="color:#f59e0b; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                            <input type="radio" id="rad_debt" name="payment_type" value="قەرز" style="transform: scale(1.3);"> قەرز
+                        </label>
+                    </div>
                 </div>
 
                 <div class="field-group">
@@ -711,7 +743,7 @@ WEB_MASRWF_TEMPLATE = """
             </form>
 
             <div class="card-total-box">
-                <div class="card-total-label">🧾 کۆی گشتی مەسرووفاتی فلتەرکراو:</div>
+                <div class="card-total-label">🧾 کۆی مەسرووفی فلتەرکراو (بێ قەرز):</div>
                 <div class="card-total-val" id="lblTotal">{{ "{:,.0f}".format(total_m) }} دینار</div>
             </div>
         </aside>
@@ -732,7 +764,7 @@ WEB_MASRWF_TEMPLATE = """
             }
         }
 
-        function selectMasrwfRow(row, id, date, type, spentBy, amount, notes) {
+        function selectMasrwfRow(row, id, date, type, spentBy, amount, notes, paymentType) {
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
 
@@ -746,6 +778,12 @@ WEB_MASRWF_TEMPLATE = """
             document.getElementById('txt_amount').value = Number(amount).toLocaleString('en-US');
             
             document.getElementById('txt_notes').value = (notes === 'None' || !notes) ? '' : notes;
+
+            if (paymentType === 'قەرز') {
+                document.getElementById('rad_debt').checked = true;
+            } else {
+                document.getElementById('rad_cash').checked = true;
+            }
         }
 
         function clearInputs() {
@@ -757,6 +795,7 @@ WEB_MASRWF_TEMPLATE = """
             document.getElementById('real_amount').value = '0';
             document.getElementById('txt_notes').value = '';
             document.getElementById('txt_date').value = '{{ today_date }}';
+            document.getElementById('rad_cash').checked = true;
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
         }
 
@@ -792,7 +831,6 @@ WEB_MASRWF_TEMPLATE = """
 </body>
 </html>
 """
-
 # ==========================================
 # پەڕەی شاگردەکان (دیزاینی نوێ و شیکاری تەواو)
 # ==========================================
@@ -3010,7 +3048,7 @@ def print_cashier_receipt(table_num, items, total, paid, discount):
     except Exception as ex:
         print(f"Receipt Print Error: {ex}")
 # ==========================================
-# ڕێڕەوەکانی ئەدمین
+# نوێکردنەوەی مەسرووف لە داشبۆرد بۆ ئەوەی قەرز حیساب نەکات
 # ==========================================
 @app.route('/admin')
 def admin_dashboard():
@@ -3030,8 +3068,14 @@ def admin_dashboard():
                 cur.execute("SELECT IFNULL(SUM(quantity * price), 0) AS s FROM froshtn WHERE created_at >= NOW() - INTERVAL 1 DAY AND food_name NOT LIKE '%قاپی نوێ%'")
                 today_sales = float(cur.fetchone()['s'])
 
-            cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) = CURDATE()")
-            today_expense = float(cur.fetchone()['e'])
+            # فلتەرکردنی قەرز
+            try:
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) = CURDATE() AND IFNULL(payment_type, 'نەغدی') != 'قەرز'")
+                today_expense = float(cur.fetchone()['e'])
+            except:
+                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) = CURDATE()")
+                today_expense = float(cur.fetchone()['e'])
+
             cur.execute("SELECT COUNT(DISTINCT table_cabin) AS c FROM froshtn WHERE table_cabin NOT LIKE '%[%' AND table_cabin != ''")
             active_tables = int(cur.fetchone()['c'])
             cur.execute("SELECT COUNT(*) AS w FROM workers")
@@ -3051,311 +3095,8 @@ def admin_dashboard():
         total_workers=total_workers
     )
 
-@app.route('/admin/amar')
-def admin_amar():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        session.clear()
-        return redirect(url_for('login'))
-
-    today = datetime.now()
-    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
-    today_str = today.strftime('%Y-%m-%d')
-
-    start_date = request.args.get('start_date', first_day_of_month)
-    end_date = request.args.get('end_date', today_str)
-
-    report_rows = []
-    total_sales = 0.0
-    total_expenses = 0.0
-    total_workers_wage = 0.0
-    total_items_count = 0
-
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            query_sales = """
-                SELECT food_name, quantity, price
-                FROM froshtn
-                WHERE DATE(created_at) >= %s AND DATE(created_at) <= %s
-                  AND food_name NOT LIKE '%%قاپی نوێ%%'
-                  AND food_name != ''
-                  AND food_name IS NOT NULL;
-            """
-            cur.execute(query_sales, (start_date, end_date))
-            raw_data = cur.fetchall()
-
-            aggregated = {}
-            for item in raw_data:
-                raw_name = str(item.get('food_name') or '').strip()
-                clean_name = re.sub(r'^[+\s]+|[+\s]+$', '', raw_name)
-                clean_name = clean_name.replace('+', '').strip()
-
-                qty = int(item.get('quantity') or 1)
-                price = float(item.get('price') or 0)
-
-                if clean_name not in aggregated:
-                    aggregated[clean_name] = {'food_name': clean_name, 'qty': 0, 'price': price, 'total': 0.0}
-                
-                aggregated[clean_name]['qty'] += qty
-                aggregated[clean_name]['total'] += (qty * price)
-
-            report_rows = sorted(list(aggregated.values()), key=lambda x: x['qty'], reverse=True)
-            total_sales = sum(r['total'] for r in report_rows)
-            total_items_count = sum(r['qty'] for r in report_rows)
-
-            try:
-                cur.execute("SELECT IFNULL(SUM(amount), 0) AS e FROM masrwf WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s", (start_date, end_date))
-                exp_row = cur.fetchone()
-                total_expenses = float(exp_row['e']) if exp_row else 0.0
-            except:
-                total_expenses = 0.0
-
-            try:
-                query_workers = """
-                    SELECT IFNULL(SUM((CASE WHEN wa.status = 'هاتوو' THEN w.salary ELSE 0 END) + IFNULL(wa.bonus, 0)), 0) AS w_due
-                    FROM workers w
-                    INNER JOIN worker_attendance wa ON w.id = wa.worker_id
-                    WHERE wa.date >= %s AND wa.date <= %s;
-                """
-                cur.execute(query_workers, (start_date, end_date))
-                work_row = cur.fetchone()
-                total_workers_wage = float(work_row['w_due']) if work_row else 0.0
-            except:
-                total_workers_wage = 0.0
-
-    except Exception as ex:
-        print("LoadAmarData error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-
-    total_all_expenses = total_expenses + total_workers_wage
-    net_profit = total_sales - total_all_expenses
-
-    return render_template_string(
-        WEB_AMAR_TEMPLATE,
-        start_date=start_date,
-        end_date=end_date,
-        report_rows=report_rows,
-        total_sales=total_sales,
-        total_expenses=total_expenses,
-        total_workers_wage=total_workers_wage,
-        total_all_expenses=total_all_expenses,
-        net_profit=net_profit,
-        total_items_count=total_items_count
-    )
-
-@app.route('/admin/users')
-def admin_users():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        session.clear()
-        return redirect(url_for('login'))
-    users = []
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users ORDER BY id DESC")
-            users = cur.fetchall()
-    except Exception as ex:
-        print("Fetch users error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return render_template_string(WEB_USERS_TEMPLATE, users=users)
-
-@app.route('/admin/add_user', methods=['POST'])
-def admin_add_user():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    
-    uname = request.form.get('username', '').strip()
-    pwd = request.form.get('password', '').strip()
-    full_name = request.form.get('full_name', '').strip()
-    role = request.form.get('role', 'Waiter')
-
-    if uname and pwd:
-        conn = None
-        try:
-            conn = get_db()
-            with conn.cursor() as cur:
-                # سڕینەوەی ستوونە زیادەکانی کە کێشەیان دروست دەکرد و گەڕاندنەوەی بۆ باری ئاسایی
-                cur.execute("""
-                    INSERT INTO users (username, password, full_name, role, is_active)
-                    VALUES (%s, %s, %s, %s, 1)
-                """, (uname, pwd, full_name, role))
-                conn.commit()
-        except Exception as ex:
-            print("Insert user error:", ex)
-        finally:
-            if conn:
-                try: conn.close()
-                except: pass
-                
-    return redirect(url_for('admin_users'))
-
-@app.route('/admin/edit_user/<int:uid>', methods=['POST'])
-def admin_edit_user(uid):
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    uname = request.form.get('username', '').strip()
-    pwd = request.form.get('password', '').strip()
-    full_name = request.form.get('full_name', '').strip()
-    role = request.form.get('role', 'Waiter')
-
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE users SET username = %s, password = %s, full_name = %s, role = %s WHERE id = %s
-            """, (uname, pwd, full_name, role, uid))
-            conn.commit()
-    except Exception as ex:
-        print("Update user error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return redirect(url_for('admin_users'))
-
-@app.route('/admin/toggle_user/<int:uid>')
-def admin_toggle_user(uid):
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT is_active FROM users WHERE id = %s", (uid,))
-            row = cur.fetchone()
-            if row:
-                new_state = 0 if row.get('is_active', 1) else 1
-                cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_state, uid))
-                conn.commit()
-    except Exception as ex:
-        print("Toggle user error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return redirect(url_for('admin_users'))
-
-@app.route('/admin/delete_user/<int:uid>')
-def admin_delete_user(uid):
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM users WHERE id = %s AND username != 'admin'", (uid,))
-            conn.commit()
-    except Exception as ex:
-        print("Delete user error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return redirect(url_for('admin_users'))
-
-@app.route('/admin/cashier')
-def admin_cashier():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        session.clear()
-        return redirect(url_for('login'))
-    active_tables = []
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            query = """
-                SELECT table_cabin, COUNT(DISTINCT created_at) AS rounds 
-                FROM froshtn 
-                WHERE table_cabin IS NOT NULL AND table_cabin != '' AND table_cabin NOT LIKE '%[%'
-                GROUP BY table_cabin
-            """
-            cur.execute(query)
-            rows = cur.fetchall()
-
-            def sort_key(x):
-                val = str(x['table_cabin'])
-                if val.isdigit():
-                    return (0, int(val))
-                return (1, val)
-
-            active_tables = sorted(rows, key=sort_key)
-    except Exception as ex:
-        print("Cashier tables error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return render_template_string(WEB_CASHIER_TEMPLATE, active_tables=active_tables)
-
-@app.route('/admin/complete_payment', methods=['POST'])
-def admin_complete_payment():
-    data = request.get_json() or {}
-    t_num = str(data.get('table_number', '')).strip()
-    tot = float(data.get('total_amount', 0))
-    paid = float(data.get('amount_paid', 0))
-    disc = max(0, tot - paid)
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT food_name, quantity, price FROM froshtn WHERE table_cabin = %s", (t_num,))
-            items_to_print = cur.fetchall()
-
-            p_id = t_num if ('سەفەری' in t_num or t_num.startswith('m')) else f"m{t_num}"
-            cur.execute("INSERT INTO qasa (transaction_time, place_id, amount, discount) VALUES (NOW(), %s, %s, %s)", (p_id, paid, disc))
-            cur.execute("DELETE FROM froshtn WHERE table_cabin = %s OR table_cabin LIKE %s", (t_num, f"{t_num} [%"))
-            conn.commit()
-            
-        return jsonify({
-            'status': 'success',
-            'receipt': {
-                'table': t_num,
-                'items': items_to_print,
-                'total': tot,
-                'paid': paid,
-                'time': datetime.now().strftime("%Y/%m/%d %I:%M %p")
-            }
-        })
-    except Exception as ex:
-        return jsonify({'status': 'error', 'message': str(ex)})
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-@app.route('/admin/qasa')
-def admin_qasa():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        session.clear()
-        return redirect(url_for('login'))
-    rows = []
-    tot_rec, tot_disc = 0, 0
-    conn = None
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            cur.execute("SELECT DATE_FORMAT(transaction_time, '%Y-%m-%d %H:%i') AS transaction_time, place_id, amount, discount FROM qasa ORDER BY transaction_time DESC")
-            rows = cur.fetchall()
-            tot_rec = sum(float(r['amount']) for r in rows)
-            tot_disc = sum(float(r['discount']) for r in rows)
-    except Exception as ex:
-        print("Qasa error:", ex)
-    finally:
-        if conn:
-            try: conn.close()
-            except: pass
-    return render_template_string(WEB_QASA_TEMPLATE, qasa_rows=rows, total_received=tot_rec, total_discount=tot_disc)
-
 # ==========================================
-# مەسرووفات (دەستکاریکراو و بەستراو بە تەواوی ستوونەکان)
+# نوێکردنەوەی مەسرووفات بۆ زیادکردنی فلتەرەکان و قەرز
 # ==========================================
 @app.route('/admin/masrwf')
 def admin_masrwf():
@@ -3368,6 +3109,8 @@ def admin_masrwf():
 
     from_date = request.args.get('from_date', '').strip()
     to_date = request.args.get('to_date', '').strip()
+    filter_spent = request.args.get('filter_spent', '').strip()
+    filter_payment = request.args.get('filter_payment', 'هەمووی').strip()
 
     rows = []
     tot = 0
@@ -3378,7 +3121,6 @@ def admin_masrwf():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # کێشەکە لێرە چارەسەر کرا: بەکارهێنانی %% لەبری % بۆ ڕێگریکردن لە کێشەی PyMySQL
             query = """
                 SELECT 
                     id, 
@@ -3388,14 +3130,21 @@ def admin_masrwf():
                     masrwf_name, 
                     spent_by, 
                     amount, 
-                    notes 
+                    notes,
+                    IFNULL(payment_type, 'نەغدی') AS payment_type
                 FROM masrwf 
+                WHERE 1=1
             """
             params = []
             if from_date and to_date:
-                query += " WHERE DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s "
-                params.append(from_date)
-                params.append(to_date)
+                query += " AND DATE(masrwf_date) >= %s AND DATE(masrwf_date) <= %s "
+                params.extend([from_date, to_date])
+            if filter_spent:
+                query += " AND spent_by = %s "
+                params.append(filter_spent)
+            if filter_payment and filter_payment != 'هەمووی':
+                query += " AND IFNULL(payment_type, 'نەغدی') = %s "
+                params.append(filter_payment)
             
             query += " ORDER BY masrwf_date DESC, id DESC;"
             cur.execute(query, params)
@@ -3404,8 +3153,6 @@ def admin_masrwf():
             for r in raw_data:
                 m_type = str(r.get('masrwf_type') or '').strip()
                 m_name = str(r.get('masrwf_name') or '').strip()
-                
-                # ئەگەر جۆری مەسرووف بەتاڵ بوو، با ناوی مەسرووف لە ستوونە کۆنەکەوە بخوێنێتەوە
                 final_type = m_type if m_type and m_type != 'None' else m_name
                 
                 rows.append({
@@ -3415,34 +3162,25 @@ def admin_masrwf():
                     'masrwf_type': final_type,
                     'spent_by': r.get('spent_by') or '',
                     'amount': float(r.get('amount') or 0),
-                    'notes': r.get('notes') or ''
+                    'notes': r.get('notes') or '',
+                    'payment_type': r.get('payment_type', 'نەغدی')
                 })
 
-            tot = sum(r['amount'] for r in rows)
+            # تەنها ئەوانە حیساب دەکات کە قەرز نین
+            tot = sum(r['amount'] for r in rows if r['payment_type'] != 'قەرز')
 
-            # هێنانی جۆرەکان بۆ ناو کۆمبۆبۆکسەکان
             try:
                 cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type IS NOT NULL AND masrwf_type != '';")
                 for r in cur.fetchall():
                     val = str(r.get('masrwf_type') or '').strip()
-                    if val and val not in existing_types:
-                        existing_types.append(val)
-            except: pass
-
-            try:
-                cur.execute("SELECT DISTINCT masrwf_name FROM masrwf WHERE masrwf_name IS NOT NULL AND masrwf_name != '';")
-                for r in cur.fetchall():
-                    val = str(r.get('masrwf_name') or '').strip()
-                    if val and val not in existing_types:
-                        existing_types.append(val)
+                    if val and val not in existing_types: existing_types.append(val)
             except: pass
 
             try:
                 cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by IS NOT NULL AND spent_by != '';")
                 for r in cur.fetchall():
                     val = str(r.get('spent_by') or '').strip()
-                    if val and val not in existing_spenders:
-                        existing_spenders.append(val)
+                    if val and val not in existing_spenders: existing_spenders.append(val)
             except: pass
 
     except Exception as ex:
@@ -3459,18 +3197,21 @@ def admin_masrwf():
         today_date=today_str,
         from_date=from_date,
         to_date=to_date,
+        filter_spent=filter_spent,
+        filter_payment=filter_payment,
         existing_types=existing_types,
         existing_spenders=existing_spenders
     )
+
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
     m_date = request.form.get('masrwf_date')
     m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
     notes = request.form.get('notes', '').strip()
+    p_type = request.form.get('payment_type', 'نەغدی').strip()
     
     if amt > 0:
         conn = None
@@ -3478,9 +3219,9 @@ def admin_save_masrwf():
             conn = get_db()
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
-                    VALUES (%s, '', %s, %s, %s, %s)
-                """, (m_date, m_type, spent_by, amt, notes))
+                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes, payment_type) 
+                    VALUES (%s, '', %s, %s, %s, %s, %s)
+                """, (m_date, m_type, spent_by, amt, notes, p_type))
                 conn.commit()
         except Exception as ex:
             print("Save masrwf error:", ex)
@@ -3492,14 +3233,14 @@ def admin_save_masrwf():
 
 @app.route('/admin/update_masrwf', methods=['POST'])
 def admin_update_masrwf():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if not session.get('authenticated') or session.get('role') != 'admin': return redirect(url_for('login'))
     m_id = int(request.form.get('id', 0))
     m_date = request.form.get('masrwf_date')
     m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
     notes = request.form.get('notes', '').strip()
+    p_type = request.form.get('payment_type', 'نەغدی').strip()
     
     if m_id > 0 and amt > 0:
         conn = None
@@ -3508,9 +3249,9 @@ def admin_update_masrwf():
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE masrwf 
-                    SET masrwf_date = %s, masrwf_name = '', masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
+                    SET masrwf_date = %s, masrwf_name = '', masrwf_type = %s, spent_by = %s, amount = %s, notes = %s, payment_type = %s 
                     WHERE id = %s
-                """, (m_date, m_type, spent_by, amt, notes, m_id))
+                """, (m_date, m_type, spent_by, amt, notes, p_type, m_id))
                 conn.commit()
         except Exception as ex:
             print("Update masrwf error:", ex)
@@ -3519,9 +3260,6 @@ def admin_update_masrwf():
                 try: conn.close()
                 except: pass
     return redirect(url_for('admin_masrwf'))
-
-@app.route('/admin/delete_masrwf/<int:mid>')
-def admin_delete_masrwf(mid):
     if not session.get('authenticated') or session.get('role') != 'admin':
         return redirect(url_for('login'))
     conn = None
