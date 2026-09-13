@@ -802,7 +802,7 @@ WEB_WORKERS_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حیساباتی شاگردەکان - شاهور</title>
+    <title>حیساباتی شاگردەکان - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -1059,7 +1059,7 @@ WEB_USERS_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی بەکارهێنەران - شاهور</title>
+    <title>بەڕێوەبردنی بەکارهێنەران - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -1656,7 +1656,7 @@ WEB_MENU_MANAGER_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی مێنۆ - شاهور</title>
+    <title>بەڕێوەبردنی مێنۆ - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -1793,7 +1793,7 @@ QR_MANAGER_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بەڕێوەبردنی QR - شاهور</title>
+    <title>بەڕێوەبردنی QR - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -1889,7 +1889,7 @@ DESKTOP_TABLES_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>هەڵبژاردنی مێز - شاهور</title>
+    <title>هەڵبژاردنی مێز - دیوانی سوڵتان</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -2014,7 +2014,7 @@ DESKTOP_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مێنیوی شاهور - {{ selected_table }}</title>
+    <title>مێنیوی دیوانی سوڵتان - {{ selected_table }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -2406,7 +2406,7 @@ CUSTOMER_MENU_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مێنیوی شاهور - {{ table_num }}</title>
+    <title>مێنیوی دیوانی سوڵتان - {{ table_num }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Kufi Arabic', sans-serif; }
@@ -2454,7 +2454,7 @@ CUSTOMER_MENU_TEMPLATE = """
     <div id="toastBox">✅ داواکارییەکەت بۆ مەتبەخ نێردرا</div>
 
     <header class="top-header-bar">
-        <div class="header-brand"><span>✨ شاهور ڕێستۆرانت</span></div>
+        <div class="header-brand"><span>✨ دیوانی سوڵتان ڕێستۆرانت</span></div>
         <div class="table-pill">{{ table_num }}</div>
     </header>
 
