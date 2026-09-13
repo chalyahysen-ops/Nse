@@ -4044,7 +4044,7 @@ def save_cart_order():
     cart = data.get('cart_items', [])
     orig = data.get('original_items', [])
 
-    # جیاکردنەوەی زیرەکانەی خواردنەکان بەپێی ئەوەی دەکەونە پێش هێڵ یان پاش هێڵ (قاپ)
+    # فەنکشنێک بۆ جیاکردنەوەی خواردنەکان بەپێی ئەوەی دەکەونە کام قاپەوە
     def parse_items(items_list):
         parsed = {}
         plate_idx = 1
@@ -4054,21 +4054,21 @@ def save_cart_order():
             if is_div:
                 plate_idx += 1
             else:
-                # لێرەدا ژمارەی قاپەکە دەخرێتە پاڵ ناوەکە تا تێکەڵ نەبن
+                # پاشگری قاپەکە دەدەینە پاڵ ناوەکە بۆ ئەوەی تێکەڵ نەبن (بۆ نموونە: کەباب__P1, کەباب__P2)
                 key = f"{fname}__P{plate_idx}"
                 if key not in parsed:
-                    parsed[key] = {'real_name': fname, 'qty': 0, 'price': float(it.get('price', 0)), 'cat': it.get('cat', 'گشتی'), 'plate': plate_idx}
+                    parsed[key] = {'real_name': fname, 'qty': 0, 'price': float(it.get('price', 0)), 'cat': it.get('cat', 'گشتی')}
                 parsed[key]['qty'] += int(it.get('qty', 1))
-        return parsed, plate_idx
+        return parsed
 
-    old_map, old_plates = parse_items(orig)
-    new_map, new_plates = parse_items(cart)
+    old_map = parse_items(orig)
+    new_map = parse_items(cart)
 
     conn = None
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # پشکنینی ئاسایشی مێزەکان
+            # 1. پشکنینی ئاسایشی مێزەکان
             if tbl.isdigit():
                 cur.execute("SELECT allow_ordering FROM table_permissions WHERE table_number = %s", (int(tbl),))
                 p_row = cur.fetchone()
@@ -4076,6 +4076,8 @@ def save_cart_order():
                     return jsonify({'status': 'error', 'message': 'ئەم مێزە تەنها بۆ بینینە!'})
 
             cur.execute("DELETE FROM froshtn WHERE table_cabin = %s", (tbl,))
+            
+            # 2. هەڵگرتنی تێکڕای داواکارییەکان بۆ کاشێر و وەسڵ (is_printed = 1)
             for it in cart:
                 fname = str(it.get('full_name') or it.get('food_name') or '')
                 is_div = it.get('is_divider') or 'قاپی نوێ' in fname or '───' in fname
@@ -4085,34 +4087,53 @@ def save_cart_order():
                     VALUES (%s, %s, %s, %s, %s, NOW(), 1)
                 """, (tbl, final_name, it.get('qty', 1), it.get('price', 0), it.get('cat', 'گشتی')))
 
-            # ناردنی هێڵی نوێ بۆ مەتبەخ ئەگەر زیاد کرابوو
-            diff_plates = new_plates - old_plates
-            if diff_plates > 0:
-                for _ in range(diff_plates):
-                    cur.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [زیادکراو]", "─── قاپی نوێ ───", 1, 0, "برژاو"))
+            # 3. دروستکردنی لیستی مەتبەخ بە ڕیزبەندی دروست تا هێڵەکان نەچنە سەرەوە
+            kitchen_inserts = []
+            plate_idx = 1
+            current_plate_printed = False
 
-            # ناردنی داواکارییە تازەکان یان سڕاوەکان بۆ مەتبەخ بە وردی
-            all_keys = set(old_map.keys()).union(set(new_map.keys()))
-            for k in all_keys:
-                old_qty = old_map.get(k, {}).get('qty', 0)
-                new_qty = new_map.get(k, {}).get('qty', 0)
-                diff = new_qty - old_qty
+            for it in cart:
+                fname = str(it.get('full_name') or it.get('food_name') or '')
+                is_div = it.get('is_divider') or 'قاپی نوێ' in fname or '───' in fname
                 
-                if diff > 0:
-                    item_info = new_map[k]
-                    cur.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [زیادکراو]", f"+ {item_info['real_name']}", diff, item_info['price'], item_info['cat']))
-                elif diff < 0:
-                    item_info = old_map[k]
-                    cur.execute("""
-                        INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
-                        VALUES (%s, %s, %s, %s, %s, NOW(), 0)
-                    """, (tbl + " [سڕاوەتەوە]", f"سڕاوەتەوە: {item_info['real_name']}", abs(diff), item_info['price'], item_info['cat']))
+                if is_div:
+                    plate_idx += 1
+                    current_plate_printed = False # وا دەکات بۆ ئەم قاپە نوێیە ئامادە بێت هێڵ دابنێت
+                else:
+                    key = f"{fname}__P{plate_idx}"
+                    new_qty = int(it.get('qty', 1))
+                    old_qty = old_map.get(key, {}).get('qty', 0)
+                    diff = new_qty - old_qty
+                    
+                    if diff > 0:
+                        # ئەگەر قاپی نوێیە و هێشتا هێڵەکەمان بۆ پرێنتەر نەناردووە، یەکەمجار هێڵەکە دەنێرین
+                        if plate_idx > 1 and not current_plate_printed:
+                            kitchen_inserts.append({
+                                'name': '─── قاپی نوێ ───', 'qty': 1, 'price': 0, 'cat': 'برژاو', 'action': 'add'
+                            })
+                            current_plate_printed = True
+                        
+                        # پاشان خودی خواردنەکە بەدوای هێڵەکەدا دەنێرین
+                        kitchen_inserts.append({
+                            'name': f"+ {fname}", 'qty': diff, 'price': float(it.get('price', 0)), 'cat': it.get('cat', 'گشتی'), 'action': 'add'
+                        })
+
+            # سڕاوەکان لە کۆتایی وەسڵەکەی مەتبەخ دەردەکەون
+            for k, old_data in old_map.items():
+                new_qty = new_map.get(k, {}).get('qty', 0)
+                diff = new_qty - old_data['qty']
+                if diff < 0:
+                    kitchen_inserts.append({
+                        'name': f"سڕاوەتەوە: {old_data['real_name']}", 'qty': abs(diff), 'price': old_data['price'], 'cat': old_data['cat'], 'action': 'delete'
+                    })
+
+            # 4. ناردن بۆ داتابەیس بە هەمان ئەو ڕیزبەندییەی دروستمان کرد (is_printed = 0)
+            for ki in kitchen_inserts:
+                tbl_suffix = " [زیادکراو]" if ki['action'] == 'add' else " [سڕاوەتەوە]"
+                cur.execute("""
+                    INSERT INTO froshtn (table_cabin, food_name, quantity, price, category, created_at, is_printed) 
+                    VALUES (%s, %s, %s, %s, %s, NOW(), 0)
+                """, (tbl + tbl_suffix, ki['name'], ki['qty'], ki['price'], ki['cat']))
 
             conn.commit()
         return jsonify({'status': 'success'})
