@@ -2430,7 +2430,7 @@ CUSTOMER_MENU_TEMPLATE = """
         .food-price-red { font-size: 14px; font-weight: 800; color: #e11d48; margin-bottom: 6px; }
 
         .options-group { width: 100%; display: flex; flex-direction: row; gap: 4px; margin-bottom: 6px; }
-        .select-sub-opt { flex: 1; min-width: 0; padding: 4px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 11px; font-weight: 700; color: #03261d; outline: none; }
+        .select-sub-opt { flex: 1; min-width: 0; padding: 5px 3px; border-radius: 6px; border: 1.5px solid #059669; background: #f8fafc; font-size: 11px; font-weight: 700; color: #03261d; outline: none; }
 
         .mini-stepper { display: flex; align-items: center; background: #f1f5f9; border-radius: 8px; padding: 2px; gap: 4px; width: 100%; justify-content: space-between; }
         .btn-step { width: 32px; height: 32px; border-radius: 6px; border: none; background: #e2e8f0; color: #0f172a; font-size: 16px; font-weight: 800; cursor: pointer; }
@@ -2482,43 +2482,45 @@ CUSTOMER_MENU_TEMPLATE = """
         <div class="category-block-wrapper" id="group-{{ loop.index }}" style="margin-bottom: 16px;">
             <div class="food-grid-2col">
                 {% for item in items %}
-                {% set item_id_safe = item.id %}
                 <div class="food-card-white">
                     <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="food-img-hero" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
-{% if allow_ordering %}
-{% set cat_clean = item.category | replace('ي', 'ی') | trim %}
-{% set show_rice = ('کوڵاو' in cat_clean or 'پەلەوەر' in cat_clean or 'کورد' in cat_clean) %}
-{% set show_chicken = ('پەلەوەر' in cat_clean or 'مریشک' in cat_clean) %}
 
-{% if show_rice or show_chicken %}
-<div class="options-group">
-    {% if show_rice %}
-    <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
-        <option value="">ج. برنج</option>
-        <option value="برنجی درێژ">برنجی درێژ</option>
-        <option value="برنجی خڕ">برنجی خڕ</option>
-        <option value="برنجی کوردی">برنجی کوردی</option>
-        <option value="برنج بە سرکە">برنج بە سرکە</option>
-    </select>
-    {% endif %}
-    {% if show_chicken %}
-    <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
-        <option value="">ب. مریشک</option>
-        <option value="سینگ">سینگ</option>
-        <option value="ڕان">ڕان</option>
-    </select>
-    {% endif %}
-</div>
-{% endif %}
+                    {% if allow_ordering %}
+                    {% set c_name = item.category | replace('ي', 'ی') | trim %}
+                    {% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
+                    {% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
 
-<div class="mini-stepper">
-    <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
-    <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
-    <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
-</div>
-{% endif %}
+                    {% if show_rice or show_chicken %}
+                    <div class="options-group">
+                        {% if show_rice %}
+                        <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
+                            <option value="">ج. برنج</option>
+                            <option value="برنجی درێژ">برنجی درێژ</option>
+                            <option value="برنجی خڕ">برنجی خڕ</option>
+                            <option value="برنجی کوردی">برنجی کوردی</option>
+                            <option value="برنج بە سرکە">برنج بە سرکە</option>
+                        </select>
+                        {% endif %}
+                        {% if show_chicken %}
+                        <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
+                            <option value="">ب. مریشک</option>
+                            <option value="سینگ">سینگ</option>
+                            <option value="ڕان">ڕان</option>
+                        </select>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mini-stepper">
+                        <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
+                        <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
+                        <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </div>
         {% endfor %}
@@ -2568,7 +2570,6 @@ CUSTOMER_MENU_TEMPLATE = """
             });
         }
 
-        // هێنانی داواکارییە کۆنەکان لە داتابەیسەوە
         function fetchTableOrders() {
             fetch('/get_table_orders/' + encodeURIComponent(tableId))
             .then(r => r.json())
@@ -2585,7 +2586,7 @@ CUSTOMER_MENU_TEMPLATE = """
                             qty: parseInt(item.quantity),
                             price: parseFloat(item.price),
                             cat: item.category || '',
-                            safe_id: 'db_' + index
+                            safe_id: index
                         };
                         myCart.push(it);
                         originalTableOrders.push(JSON.parse(JSON.stringify(it)));
@@ -2605,16 +2606,22 @@ CUSTOMER_MENU_TEMPLATE = """
             return orig ? orig.qty : 0;
         }
 
-        function changeCustomerQty(baseName, delta, price, cat, safeId) {
+        function changeCustomerQty(baseName, delta, price, cat, foodId) {
             let riceVal = '', chickenVal = '';
-            const rEl = document.getElementById('opt_rice_' + safeId);
-            const cEl = document.getElementById('opt_chicken_' + safeId);
-            if (rEl) riceVal = rEl.value;
-            if (cEl) chickenVal = cEl.value;
+            const rEl = document.getElementById('opt_rice_' + foodId);
+            const cEl = document.getElementById('opt_chicken_' + foodId);
+            
+            if (rEl && rEl.value) riceVal = rEl.value.trim();
+            if (cEl && cEl.value) chickenVal = cEl.value.trim();
 
             let finalName = baseName;
-            if (riceVal) finalName += ` (${riceVal})`;
-            if (chickenVal) finalName += ` (${chickenVal})`;
+            let parts = [];
+            if (riceVal) parts.push(riceVal);
+            if (chickenVal) parts.push(chickenVal);
+
+            if (parts.length > 0) {
+                finalName += ` (${parts.join(' - ')})`;
+            }
 
             let origQty = getOrigQty(finalName);
             let found = false;
@@ -2622,7 +2629,6 @@ CUSTOMER_MENU_TEMPLATE = """
             for (let i = myCart.length - 1; i >= 0; i--) {
                 if (myCart[i].full_name === finalName) {
                     let newQty = myCart[i].qty + delta;
-                    // ڕێگریکردن لە کەمکردنەوەی داواکاری ئەگەر موشتەری بێت
                     if (!isWaiter && newQty < origQty) {
                         showNotification("ناتوانیت داواکاری پێشوو کەم بکەیتەوە!", true);
                         return;
@@ -2635,7 +2641,15 @@ CUSTOMER_MENU_TEMPLATE = """
             }
             
             if (!found && delta > 0) {
-                myCart.push({ base_name: baseName, full_name: finalName, price: price, qty: 1, cat: cat || '', safe_id: safeId, rice_type: riceVal, chicken_part: chickenVal });
+                myCart.push({
+                    base_name: baseName,
+                    full_name: finalName,
+                    food_name: finalName,
+                    price: price,
+                    qty: 1,
+                    cat: cat || '',
+                    safe_id: foodId
+                });
             }
             refreshCounterDisplays();
             renderCartUI();
@@ -2708,7 +2722,6 @@ CUSTOMER_MENU_TEMPLATE = """
         function sendFinalOrder() {
             if (myCart.length === 0) { showNotification("سەرەتا خواردن هەڵبژێرە!", true); return; }
             
-            // گۆڕینی فۆرمات بۆ ئەوەی لەگەڵ سیستەمی نوێ بگونجێت
             let formattedCart = myCart.map(it => ({
                 food_name: it.full_name || it.food_name,
                 qty: it.qty,
@@ -2716,13 +2729,12 @@ CUSTOMER_MENU_TEMPLATE = """
                 cat: it.cat || 'گشتی'
             }));
 
-            // لێرەدا کۆدی save_cart_order بەکاردێت بۆ هێشتنەوەی داواکاری کۆن
             fetch('/save_cart_order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     table_number: tableId, 
-                    cart_items: formattedCart,
+                    cart_items: formattedCart, 
                     original_items: originalTableOrders 
                 })
             })
@@ -2731,10 +2743,8 @@ CUSTOMER_MENU_TEMPLATE = """
                 if (data.status === 'success') {
                     showNotification("✅ داواکارییەکەت بۆ مەتبەخ نێردرا");
                     if (isWaiter) {
-                        // گارسۆن ئەگەڕێتەوە بۆ مێزەکان
                         setTimeout(() => { window.location.href = '/mobile/tables'; }, 800);
                     } else {
-                        // موشتەری دەمێنێتەوە، بەڵام داتای نوێ دەهێنرێتەوە تا داواکارییەکانی بۆی دەربکەون
                         toggleCartModal(false);
                         fetchTableOrders(); 
                     }
@@ -2745,7 +2755,6 @@ CUSTOMER_MENU_TEMPLATE = """
 </body>
 </html>
 """
-
 # ==========================================
 # ڕێڕەوەکانی سەرەکی و چوونەژوورەوە
 # ==========================================
@@ -3830,7 +3839,7 @@ def mobile_waiter_menu():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name != ''")
+            cur.execute("SELECT id, food_name, price, category, image_path FROM nse WHERE food_name != ''")
             for f in cur.fetchall():
                 c = f['category'].strip() if f.get('category') else 'گشتی'
                 categories.setdefault(c, []).append(f)
@@ -3856,7 +3865,7 @@ def customer_table_view(table_num):
                 if row:
                     allow_ordering = bool(row['allow_ordering'])
 
-            cur.execute("SELECT food_name, price, category, image_path FROM nse WHERE food_name != ''")
+            cur.execute("SELECT id, food_name, price, category, image_path FROM nse WHERE food_name != ''")
             foods = cur.fetchall()
             for f in foods:
                 c = f['category'].strip() if f.get('category') else 'گشتی'
@@ -3869,7 +3878,6 @@ def customer_table_view(table_num):
             except: pass
 
     return render_template_string(CUSTOMER_MENU_TEMPLATE, table_num=table_num, categories=categories, allow_ordering=allow_ordering)
-
 @app.route('/qr_manager')
 def qr_manager():
     if not session.get('authenticated'): return redirect(url_for('login'))
