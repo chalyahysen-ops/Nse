@@ -2487,40 +2487,38 @@ CUSTOMER_MENU_TEMPLATE = """
                     <img src="{{ item.image_path if item.image_path else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300' }}" class="food-img-hero" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'">
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
+{% if allow_ordering %}
+{% set cat_clean = item.category | replace('ي', 'ی') | trim %}
+{% set show_rice = ('کوڵاو' in cat_clean or 'پەلەوەر' in cat_clean or 'کورد' in cat_clean) %}
+{% set show_chicken = ('پەلەوەر' in cat_clean or 'مریشک' in cat_clean) %}
 
-                    {% if allow_ordering %}
-                    {% set show_rice = item.category in ['کوڵاو', 'پەلەوەر', 'کوردیەکان'] %}
-                    {% set show_chicken = (item.category == 'پەلەوەر') %}
-                    {% if show_rice or show_chicken %}
-                    <div class="options-group">
-                        {% if show_rice %}
-                        <select class="select-sub-opt" id="opt_rice_{{ item_id_safe }}">
-                            <option value="">ج. برنج</option>
-                            <option value="برنجی درێژ">برنجی درێژ</option>
-                            <option value="برنجی خڕ">برنجی خڕ</option>
-                            <option value="برنجی کوردی">برنجی کوردی</option>
-                            <option value="برنج بە سرکە">برنج بە سرکە</option>
-                        </select>
-                        {% endif %}
-                        {% if show_chicken %}
-                        <select class="select-sub-opt" id="opt_chicken_{{ item_id_safe }}">
-                            <option value="">ب. مریشک</option>
-                            <option value="سینگ">سینگ</option>
-                            <option value="ڕان">ڕان</option>
-                        </select>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+{% if show_rice or show_chicken %}
+<div class="options-group">
+    {% if show_rice %}
+    <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
+        <option value="">ج. برنج</option>
+        <option value="برنجی درێژ">برنجی درێژ</option>
+        <option value="برنجی خڕ">برنجی خڕ</option>
+        <option value="برنجی کوردی">برنجی کوردی</option>
+        <option value="برنج بە سرکە">برنج بە سرکە</option>
+    </select>
+    {% endif %}
+    {% if show_chicken %}
+    <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
+        <option value="">ب. مریشک</option>
+        <option value="سینگ">سینگ</option>
+        <option value="ڕان">ڕان</option>
+    </select>
+    {% endif %}
+</div>
+{% endif %}
 
-                    <div class="mini-stepper">
-                        <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">-</button>
-                        <!-- زۆر گرنگە ئەم data-name دانرابێت بۆ حیساباتی خۆکارانە -->
-                        <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item_id_safe }}">0</span>
-                        <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', '{{ item_id_safe }}')">+</button>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+<div class="mini-stepper">
+    <button type="button" class="btn-step" onclick="changeCustomerQty('{{ item.food_name }}', -1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">-</button>
+    <span class="qty-val-display" data-name="{{ item.food_name }}" id="count_{{ item.id }}">0</span>
+    <button type="button" class="btn-step add" onclick="changeCustomerQty('{{ item.food_name }}', 1, {{ item.price }}, '{{ item.category }}', {{ item.id }})">+</button>
+</div>
+{% endif %}
             </div>
         </div>
         {% endfor %}
