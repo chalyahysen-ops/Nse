@@ -3559,36 +3559,6 @@ def admin_update_masrwf():
                 except: pass
     return redirect(url_for('admin_masrwf'))
 
-@app.route('/admin/update_masrwf', methods=['POST'])
-def admin_update_masrwf():
-    if not session.get('authenticated') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    m_id = int(request.form.get('id', 0))
-    m_date = request.form.get('masrwf_date')
-    m_type = request.form.get('masrwf_type', '').strip()
-    spent_by = request.form.get('spent_by', '').strip()
-    amt = float(request.form.get('amount', 0))
-    notes = request.form.get('notes', '').strip()
-    
-    if m_id > 0 and amt > 0:
-        conn = None
-        try:
-            conn = get_db()
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE masrwf 
-                    SET masrwf_date = %s, masrwf_name = '', masrwf_type = %s, spent_by = %s, amount = %s, notes = %s 
-                    WHERE id = %s
-                """, (m_date, m_type, spent_by, amt, notes, m_id))
-                conn.commit()
-        except Exception as ex:
-            print("Update masrwf error:", ex)
-        finally:
-            if conn:
-                try: conn.close()
-                except: pass
-    return redirect(url_for('admin_masrwf'))
-
 @app.route('/admin/delete_masrwf/<int:mid>')
 def admin_delete_masrwf(mid):
     if not session.get('authenticated') or session.get('role') != 'admin':
