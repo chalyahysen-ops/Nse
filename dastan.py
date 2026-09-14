@@ -684,7 +684,7 @@ WEB_MASRWF_TEMPLATE = """
                 </div>
 
                 <div class="field-group">
-                    <label>🏢 کۆمپانیا / خەرجکەر:</label>
+                    <label>🏢 کۆمپانیا / شوێنی مەسروف کردن:</label>
                     <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" autocomplete="off">
                     <datalist id="spentOptions">
                         {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
