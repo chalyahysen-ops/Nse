@@ -539,9 +539,6 @@ WEB_AMAR_TEMPLATE = """
 </html>
 """
 
-# ==========================================
-# پەڕەی مەسرووفات (دیزاینی مۆدێرن لەگەڵ ئایکۆنی بەروار و بێ ناوی مەسرووف)
-# ==========================================
 WEB_MASRWF_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
@@ -562,16 +559,21 @@ WEB_MASRWF_TEMPLATE = """
 
         .grid-area { padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
         
-        .filter-bar { background: #1e293b; border: 1.5px solid #334155; border-radius: 14px; padding: 16px 20px; display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .filter-bar { background: #1e293b; border: 1.5px solid #334155; border-radius: 14px; padding: 12px 20px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .filter-item { display: flex; flex-direction: column; gap: 6px; }
-        .filter-item label { font-size: 13px; font-weight: 700; color: #38bdf8; }
+        .filter-item label { font-size: 12px; font-weight: 700; color: #38bdf8; }
         
         .date-input-wrap { position: relative; display: flex; align-items: center; }
-        .date-input-wrap input[type="date"] { background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; padding: 10px 14px; color: #fff; font-size: 14px; font-weight: 700; outline: none; cursor: pointer; color-scheme: dark; }
+        .date-input-wrap input[type="date"] { background: #0f172a; border: 1.5px solid #475569; border-radius: 8px; padding: 6px 10px; color: #fff; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; color-scheme: dark; width: 140px; }
         .date-input-wrap input[type="date"]:focus { border-color: #10b981; }
 
-        .btn-filter { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; padding: 11px 22px; border-radius: 10px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
-        .btn-reset { background: #334155; color: #f8fafc; border: 1.5px solid #475569; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-icon-only { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 20px; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-decoration: none; transition: 0.2s; }
+        .btn-icon-only:hover { opacity: 0.8; transform: scale(1.05); }
+        
+        .summary-badges { display: flex; gap: 12px; }
+        .summary-box { background: #0f172a; border-radius: 10px; padding: 8px 16px; text-align: center; border: 1.5px solid; min-width: 120px; }
+        .summary-box-title { font-size: 11px; font-weight: 800; margin-bottom: 2px; }
+        .summary-box-val { font-size: 16px; font-weight: 900; }
 
         .table-wrap { flex: 1; overflow-y: auto; background: #1e293b; border: 1.5px solid #334155; border-radius: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; }
@@ -587,7 +589,6 @@ WEB_MASRWF_TEMPLATE = """
         .field-group label { font-size: 13px; font-weight: 800; color: #cbd5e1; }
         .c-input { width: 100%; padding: 11px 14px; background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; font-size: 14px; font-weight: 700; color: #fff; outline: none; }
         .c-input:focus { border-color: #10b981; }
-
         .c-amount { font-size: 18px; font-weight: 900; color: #10b981; background: #0f172a; text-align: center; }
 
         .btn-grid-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
@@ -596,10 +597,6 @@ WEB_MASRWF_TEMPLATE = """
         .btn-update { background: #f59e0b; color: #0f172a; }
         .btn-delete { background: #ef4444; color: #ffffff; }
         .btn-clear { background: #64748b; color: #ffffff; }
-
-        .card-total-box { background: #0f172a; border: 2px solid #f59e0b; border-radius: 12px; padding: 14px 16px; text-align: right; margin-top: 10px; }
-        .card-total-label { font-size: 12px; font-weight: 800; color: #f59e0b; margin-bottom: 4px; }
-        .card-total-val { font-size: 22px; font-weight: 900; color: #f59e0b; }
 
         @media (max-width: 1000px) {
             .masrwf-layout { grid-template-columns: 1fr; }
@@ -616,22 +613,33 @@ WEB_MASRWF_TEMPLATE = """
     <div class="masrwf-layout">
         <main class="grid-area">
             <div class="filter-bar">
-                <form method="GET" action="/admin/masrwf" style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; width:100%;">
+                <form method="GET" action="/admin/masrwf" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
                     <div class="filter-item">
                         <label>📅 لە بەرواری:</label>
                         <div class="date-input-wrap">
-                            <input type="date" name="from_date" value="{{ from_date }}" class="filter-input">
+                            <input type="date" name="from_date" value="{{ from_date }}">
                         </div>
                     </div>
                     <div class="filter-item">
                         <label>📅 تا بەرواری:</label>
                         <div class="date-input-wrap">
-                            <input type="date" name="to_date" value="{{ to_date }}" class="filter-input">
+                            <input type="date" name="to_date" value="{{ to_date }}">
                         </div>
                     </div>
-                    <button type="submit" class="btn-filter">🔍 فلتەری خەرجی</button>
-                    <a href="/admin/masrwf" class="btn-reset">🔄 هەمووی</a>
+                    <button type="submit" class="btn-icon-only" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;" title="گەڕان و فلتەرکردن">🔍</button>
+                    <a href="/admin/masrwf" class="btn-icon-only" style="background: #334155; color: #f8fafc;" title="گەڕانەوە بۆ سەرەتا">🔄</a>
                 </form>
+
+                <div class="summary-badges">
+                    <div class="summary-box" style="border-color: #10b981;">
+                        <div class="summary-box-title" style="color: #a7f3d0;">کۆی مەسرووف</div>
+                        <div class="summary-box-val" id="lblTotalExp" style="color: #10b981;">{{ "{:,.0f}".format(total_m) }} د.ع</div>
+                    </div>
+                    <div class="summary-box" style="border-color: #ef4444;">
+                        <div class="summary-box-title" style="color: #fca5a5;">کۆی قەرز</div>
+                        <div class="summary-box-val" id="lblTotalDebt" style="color: #ef4444;">{{ "{:,.0f}".format(total_qarz) }} د.ع</div>
+                    </div>
+                </div>
             </div>
 
             <div class="table-wrap">
@@ -675,7 +683,7 @@ WEB_MASRWF_TEMPLATE = """
                 <div class="field-group">
                     <label>📅 بەرواری خەرجی:</label>
                     <div class="date-input-wrap">
-                        <input type="date" id="txt_date" name="masrwf_date" class="c-input" value="{{ today_date }}" required>
+                        <input type="date" id="txt_date" name="masrwf_date" class="c-input" value="{{ today_date }}" required style="width:100%;">
                     </div>
                 </div>
 
@@ -719,11 +727,6 @@ WEB_MASRWF_TEMPLATE = """
                     <button type="button" class="action-btn btn-clear" onclick="clearInputs()">🧹 پاککردنەوە</button>
                 </div>
             </form>
-
-            <div class="card-total-box">
-                <div class="card-total-label">🧾 کۆی گشتی مەسرووفاتی فلتەرکراو:</div>
-                <div class="card-total-val" id="lblTotal">{{ "{:,.0f}".format(total_m) }} دینار</div>
-            </div>
         </aside>
     </div>
 
@@ -772,29 +775,37 @@ WEB_MASRWF_TEMPLATE = """
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
         }
 
-        // فلتەرکردنی خشتەکە بەپێی ناوی کۆمپانیا یان خەرجکەر بە شێوەی ڕاستەوخۆ
+        // فلتەرکردنی خشتەکە و گۆڕینی کۆی مەسروف و قەرز بە شێوەی ڕاستەوخۆ
         function filterTableBySpender() {
             let filterValue = document.getElementById('txt_spent_by').value.trim().toLowerCase();
             let rows = document.querySelectorAll('#tblMasrwf tbody tr');
-            let total = 0;
+            let totalExp = 0;
+            let totalDebt = 0;
             
-            if (rows.length === 1 && rows[0].cells.length === 1) return; // ئەگەر خشتەکە بەتاڵ بوو
+            if (rows.length === 1 && rows[0].cells.length === 1) return;
 
             rows.forEach(row => {
-                let cell = row.cells[3]; // ستوونی کۆمپانیا/خەرجکەر
+                let cell = row.cells[3]; // کۆمپانیا/خەرجکەر
                 if (cell) {
                     let text = cell.textContent || cell.innerText;
                     if (text.toLowerCase().indexOf(filterValue) > -1) {
                         row.style.display = "";
+                        
                         let amountText = row.cells[4].textContent.replace(/,/g, '').replace('د.ع', '').trim();
-                        total += parseFloat(amountText) || 0;
+                        let amt = parseFloat(amountText) || 0;
+                        totalExp += amt; // هەژمارکردنی هەموو مەسرووفات
+                        
+                        let typeText = row.cells[5].textContent.trim();
+                        if (typeText === 'قەرز') {
+                            totalDebt += amt; // هەژمارکردنی تەنها قەرزەکان
+                        }
                     } else {
                         row.style.display = "none";
                     }
                 }
             });
-            // گۆڕینی کۆی گشتی بەپێی فلتەرەکە
-            document.getElementById('lblTotal').innerText = total.toLocaleString('en-US') + ' دینار';
+            document.getElementById('lblTotalExp').innerText = totalExp.toLocaleString('en-US') + ' د.ع';
+            document.getElementById('lblTotalDebt').innerText = totalDebt.toLocaleString('en-US') + ' د.ع';
         }
 
         function submitForm(actionUrl) {
@@ -3402,12 +3413,15 @@ def admin_masrwf():
     
     today = datetime.now()
     today_str = today.strftime('%Y-%m-%d')
+    first_day_of_month = today.replace(day=1).strftime('%Y-%m-%d')
 
-    from_date = request.args.get('from_date', '').strip()
-    to_date = request.args.get('to_date', '').strip()
+    # دانانی بەرواری دیفۆڵت بۆ ئەوەی خشتەکە بەتاڵ نەبێت و کێشەی MM/DD/YYYY دروست نەبێت
+    from_date = request.args.get('from_date', first_day_of_month).strip()
+    to_date = request.args.get('to_date', today_str).strip()
 
     rows = []
     tot = 0
+    total_qarz = 0
     existing_types = ['کڕینی گۆشت', 'کڕینی سەوزە', 'کڕینی برنج', 'خەرجی گشتی', 'خزمەتگوزاری', 'کرێ و پسولە', 'کەلوپەل', 'گاز و نەوت']
     existing_spenders = ['ئادەم', 'کاک شاهۆ', 'ئازاد', 'بەڕێوەبەر', 'کاشێر', 'مەتبەخ']
     
@@ -3441,7 +3455,6 @@ def admin_masrwf():
             for r in raw_data:
                 m_type = str(r.get('masrwf_type') or '').strip()
                 m_name = str(r.get('masrwf_name') or '').strip()
-                
                 final_type = m_type if m_type and m_type != 'None' else m_name
                 
                 rows.append({
@@ -3456,29 +3469,27 @@ def admin_masrwf():
                 })
 
             tot = sum(r['amount'] for r in rows)
+            total_qarz = sum(r['amount'] for r in rows if r['payment_type'] == 'قەرز')
 
             try:
                 cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type IS NOT NULL AND masrwf_type != '';")
                 for r in cur.fetchall():
                     val = str(r.get('masrwf_type') or '').strip()
-                    if val and val not in existing_types:
-                        existing_types.append(val)
+                    if val and val not in existing_types: existing_types.append(val)
             except: pass
 
             try:
                 cur.execute("SELECT DISTINCT masrwf_name FROM masrwf WHERE masrwf_name IS NOT NULL AND masrwf_name != '';")
                 for r in cur.fetchall():
                     val = str(r.get('masrwf_name') or '').strip()
-                    if val and val not in existing_types:
-                        existing_types.append(val)
+                    if val and val not in existing_types: existing_types.append(val)
             except: pass
 
             try:
                 cur.execute("SELECT DISTINCT spent_by FROM masrwf WHERE spent_by IS NOT NULL AND spent_by != '';")
                 for r in cur.fetchall():
                     val = str(r.get('spent_by') or '').strip()
-                    if val and val not in existing_spenders:
-                        existing_spenders.append(val)
+                    if val and val not in existing_spenders: existing_spenders.append(val)
             except: pass
 
     except Exception as ex:
@@ -3492,13 +3503,13 @@ def admin_masrwf():
         WEB_MASRWF_TEMPLATE, 
         rows=rows, 
         total_m=tot, 
+        total_qarz=total_qarz,
         today_date=today_str,
         from_date=from_date,
         to_date=to_date,
         existing_types=existing_types,
         existing_spenders=existing_spenders
     )
-
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
