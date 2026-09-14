@@ -643,21 +643,25 @@ WEB_MASRWF_TEMPLATE = """
                             <th>جۆری مەسرووف</th>
                             <th>کۆمپانیا / خەرجکەر</th>
                             <th>بڕی پارە</th>
+                            <th>شێواز</th>
                             <th>تێبینی</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in rows %}
-                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.notes }}')">
+                        <tr onclick="selectMasrwfRow(this, {{ r.id }}, '{{ r.m_date_raw }}', '{{ r.masrwf_type }}', '{{ r.spent_by }}', {{ r.amount }}, '{{ r.payment_type }}', '{{ r.notes }}')">
                             <td>{{ loop.index }}</td>
                             <td style="color: #38bdf8;">{{ r.m_date }}</td>
                             <td style="font-weight:700; color:#f59e0b;">{{ r.masrwf_type }}</td>
                             <td style="color:#10b981; font-weight:700;">{{ r.spent_by }}</td>
                             <td style="color:#ef4444; font-weight:900; font-size:14.5px;">{{ "{:,.0f}".format(r.amount) }} د.ع</td>
+                            <td>
+                                <span style="background: {{ '#166534' if r.payment_type == 'نەغد' else '#991b1b' }}; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">{{ r.payment_type }}</span>
+                            </td>
                             <td style="color:#94a3b8; text-align:right;">{{ r.notes }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" style="padding:50px; color:#94a3b8; font-size:15px;">هیچ مەسرووفێک لەم ماوەیەدا نەدۆزرایەوە</td></tr>
+                        <tr><td colspan="7" style="padding:50px; color:#94a3b8; font-size:15px;">هیچ مەسرووفێک لەم ماوەیەدا نەدۆزرایەوە</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -685,16 +689,22 @@ WEB_MASRWF_TEMPLATE = """
 
                 <div class="field-group">
                     <label>🏢 کۆمپانیا / شوێنی مەسروف کردن:</label>
-                    <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" autocomplete="off">
+                    <input list="spentOptions" id="txt_spent_by" name="spent_by" class="c-input" autocomplete="off" oninput="filterTableBySpender()">
                     <datalist id="spentOptions">
                         {% for s in existing_spenders %}<option value="{{ s }}">{% endfor %}
                     </datalist>
                 </div>
 
                 <div class="field-group">
-                    <label style="color:#f59e0b;">💵 بڕی پارە (دینار):</label>
-                    <input type="text" id="txt_amount" name="amount_display" class="c-input c-amount" required oninput="formatCurrency(this)">
-                    <input type="hidden" id="real_amount" name="amount" value="0">
+                    <label style="color:#f59e0b;">💵 بڕی پارە (دینار) و شێواز:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="txt_amount" name="amount_display" class="c-input c-amount" required oninput="formatCurrency(this)" style="flex: 2;">
+                        <input type="hidden" id="real_amount" name="amount" value="0">
+                        <select id="txt_payment_type" name="payment_type" class="c-input" style="flex: 1; padding: 0; text-align: center;">
+                            <option value="نەغد">نەغد</option>
+                            <option value="قەرز">قەرز</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="field-group">
@@ -732,7 +742,7 @@ WEB_MASRWF_TEMPLATE = """
             }
         }
 
-        function selectMasrwfRow(row, id, date, type, spentBy, amount, notes) {
+        function selectMasrwfRow(row, id, date, type, spentBy, amount, paymentType, notes) {
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
 
@@ -744,6 +754,7 @@ WEB_MASRWF_TEMPLATE = """
             
             document.getElementById('real_amount').value = amount;
             document.getElementById('txt_amount').value = Number(amount).toLocaleString('en-US');
+            document.getElementById('txt_payment_type').value = paymentType || 'نەغد';
             
             document.getElementById('txt_notes').value = (notes === 'None' || !notes) ? '' : notes;
         }
@@ -755,9 +766,35 @@ WEB_MASRWF_TEMPLATE = """
             document.getElementById('txt_spent_by').value = '';
             document.getElementById('txt_amount').value = '';
             document.getElementById('real_amount').value = '0';
+            document.getElementById('txt_payment_type').value = 'نەغد';
             document.getElementById('txt_notes').value = '';
             document.getElementById('txt_date').value = '{{ today_date }}';
             document.querySelectorAll('#tblMasrwf tbody tr').forEach(r => r.classList.remove('selected-row'));
+        }
+
+        // فلتەرکردنی خشتەکە بەپێی ناوی کۆمپانیا یان خەرجکەر بە شێوەی ڕاستەوخۆ
+        function filterTableBySpender() {
+            let filterValue = document.getElementById('txt_spent_by').value.trim().toLowerCase();
+            let rows = document.querySelectorAll('#tblMasrwf tbody tr');
+            let total = 0;
+            
+            if (rows.length === 1 && rows[0].cells.length === 1) return; // ئەگەر خشتەکە بەتاڵ بوو
+
+            rows.forEach(row => {
+                let cell = row.cells[3]; // ستوونی کۆمپانیا/خەرجکەر
+                if (cell) {
+                    let text = cell.textContent || cell.innerText;
+                    if (text.toLowerCase().indexOf(filterValue) > -1) {
+                        row.style.display = "";
+                        let amountText = row.cells[4].textContent.replace(/,/g, '').replace('د.ع', '').trim();
+                        total += parseFloat(amountText) || 0;
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            });
+            // گۆڕینی کۆی گشتی بەپێی فلتەرەکە
+            document.getElementById('lblTotal').innerText = total.toLocaleString('en-US') + ' دینار';
         }
 
         function submitForm(actionUrl) {
@@ -3378,7 +3415,6 @@ def admin_masrwf():
     try:
         conn = get_db()
         with conn.cursor() as cur:
-            # کێشەکە لێرە چارەسەر کرا: بەکارهێنانی %% لەبری % بۆ ڕێگریکردن لە کێشەی PyMySQL
             query = """
                 SELECT 
                     id, 
@@ -3388,6 +3424,7 @@ def admin_masrwf():
                     masrwf_name, 
                     spent_by, 
                     amount, 
+                    payment_type,
                     notes 
                 FROM masrwf 
             """
@@ -3405,7 +3442,6 @@ def admin_masrwf():
                 m_type = str(r.get('masrwf_type') or '').strip()
                 m_name = str(r.get('masrwf_name') or '').strip()
                 
-                # ئەگەر جۆری مەسرووف بەتاڵ بوو، با ناوی مەسرووف لە ستوونە کۆنەکەوە بخوێنێتەوە
                 final_type = m_type if m_type and m_type != 'None' else m_name
                 
                 rows.append({
@@ -3415,12 +3451,12 @@ def admin_masrwf():
                     'masrwf_type': final_type,
                     'spent_by': r.get('spent_by') or '',
                     'amount': float(r.get('amount') or 0),
+                    'payment_type': r.get('payment_type') or 'نەغد',
                     'notes': r.get('notes') or ''
                 })
 
             tot = sum(r['amount'] for r in rows)
 
-            # هێنانی جۆرەکان بۆ ناو کۆمبۆبۆکسەکان
             try:
                 cur.execute("SELECT DISTINCT masrwf_type FROM masrwf WHERE masrwf_type IS NOT NULL AND masrwf_type != '';")
                 for r in cur.fetchall():
@@ -3462,6 +3498,7 @@ def admin_masrwf():
         existing_types=existing_types,
         existing_spenders=existing_spenders
     )
+
 @app.route('/admin/save_masrwf', methods=['POST'])
 def admin_save_masrwf():
     if not session.get('authenticated') or session.get('role') != 'admin':
@@ -3470,6 +3507,7 @@ def admin_save_masrwf():
     m_type = request.form.get('masrwf_type', '').strip()
     spent_by = request.form.get('spent_by', '').strip()
     amt = float(request.form.get('amount', 0))
+    payment_type = request.form.get('payment_type', 'نەغد').strip()
     notes = request.form.get('notes', '').strip()
     
     if amt > 0:
@@ -3478,12 +3516,43 @@ def admin_save_masrwf():
             conn = get_db()
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, notes) 
-                    VALUES (%s, '', %s, %s, %s, %s)
-                """, (m_date, m_type, spent_by, amt, notes))
+                    INSERT INTO masrwf (masrwf_date, masrwf_name, masrwf_type, spent_by, amount, payment_type, notes) 
+                    VALUES (%s, '', %s, %s, %s, %s, %s)
+                """, (m_date, m_type, spent_by, amt, payment_type, notes))
                 conn.commit()
         except Exception as ex:
             print("Save masrwf error:", ex)
+        finally:
+            if conn:
+                try: conn.close()
+                except: pass
+    return redirect(url_for('admin_masrwf'))
+
+@app.route('/admin/update_masrwf', methods=['POST'])
+def admin_update_masrwf():
+    if not session.get('authenticated') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    m_id = int(request.form.get('id', 0))
+    m_date = request.form.get('masrwf_date')
+    m_type = request.form.get('masrwf_type', '').strip()
+    spent_by = request.form.get('spent_by', '').strip()
+    amt = float(request.form.get('amount', 0))
+    payment_type = request.form.get('payment_type', 'نەغد').strip()
+    notes = request.form.get('notes', '').strip()
+    
+    if m_id > 0 and amt > 0:
+        conn = None
+        try:
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE masrwf 
+                    SET masrwf_date = %s, masrwf_name = '', masrwf_type = %s, spent_by = %s, amount = %s, payment_type = %s, notes = %s 
+                    WHERE id = %s
+                """, (m_date, m_type, spent_by, amt, payment_type, notes, m_id))
+                conn.commit()
+        except Exception as ex:
+            print("Update masrwf error:", ex)
         finally:
             if conn:
                 try: conn.close()
