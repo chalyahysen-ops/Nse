@@ -2554,7 +2554,7 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
 
-                    {% if allow_ordering %}
+                  {% if allow_ordering %}
                     {% set cat_str = item.category or '' %}
                     {% set c_name = cat_str | replace('ي', 'ی') | trim %}
 
