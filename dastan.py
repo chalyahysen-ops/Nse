@@ -2127,36 +2127,35 @@ DESKTOP_TEMPLATE = """
                                 <div class="desktop-food-name">{{ item.food_name }}</div>
                                 <div class="desktop-food-price">{{ "{:,.0f}".format(item.price) }} دینار</div>
                             </div>
+                            
                             {% set cat_str = item.category or '' %}
-                    {% set c_name = cat_str | replace('ي', 'ی') | trim %}
+                            {% set c_name = cat_str | replace('ي', 'ی') | trim %}
 
-                    {% set show_rice = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
-                    {% set show_chicken = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
-                    {% set show_fish = ('ماسی' in c_name or 'ماسی' in item.food_name) %}
+                            {% set show_r = ('کوڵاو' in c_name or 'پەلەوەر' in c_name or 'کورد' in c_name) %}
+                            {% set show_c = ('پەلەوەر' in c_name or 'مریشک' in c_name) %}
 
-                    {% if show_rice or show_chicken or show_fish %}
-                    <div class="options-group">
-                        {% if show_rice %}
-                        <select class="select-sub-opt" id="opt_rice_{{ item.id }}">
-                            <option value="">ج. برنج</option>
-                            <option value="برنجی درێژ">برنجی درێژ</option>
-                            <option value="برنجی خڕ">برنجی خڕ</option>
-                            <option value="برنجی کوردی">برنجی کوردی</option>
-                            <option value="برنج بە سرکە">برنج بە سرکە</option>
-                        </select>
-                        {% endif %}
-                        {% if show_chicken %}
-                        <select class="select-sub-opt" id="opt_chicken_{{ item.id }}">
-                            <option value="">ب. مریشک</option>
-                            <option value="سینگ">سینگ</option>
-                            <option value="ڕان">ڕان</option>
-                        </select>
-                        {% endif %}
-                        {% if show_fish %}
-                        <input type="number" step="0.1" min="0.1" value="1.0" class="select-sub-opt" id="opt_weight_{{ item.id }}" placeholder="کێش" style="text-align:center; color:#059669; font-weight:800; border:1.5px solid #059669;">
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                            {% if show_r or show_c %}
+                            <div style="display:flex; flex-direction:row; gap:4px; width:100%;">
+                                {% if show_r %}
+                                <select class="opt-select" id="d_rice_{{ d_safe }}" style="flex:1; min-width:0;">
+                                    <option value="">ج. برنج</option>
+                                    <option value="برنجی درێژ">برنجی درێژ</option>
+                                    <option value="برنجی خڕ">برنجی خڕ</option>
+                                    <option value="برنجی کوردی">برنجی کوردی</option>
+                                    <option value="برنج بە سرکە">برنج بە سرکە</option>
+                                </select>
+                                {% endif %}
+                                {% if show_c %}
+                                <select class="opt-select" id="d_chick_{{ d_safe }}" style="flex:1; min-width:0;">
+                                    <option value="">ب. مریشک</option>
+                                    <option value="سینگ">سینگ</option>
+                                    <option value="ڕان">ڕان</option>
+                                </select>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
@@ -2226,29 +2225,21 @@ DESKTOP_TEMPLATE = """
             checkHasGrill();
         }
 
-function addFromDesktopCard(baseName, price, cat, safeId) {
+        function addFromDesktopCard(baseName, price, cat, safeId) {
             let rEl = document.getElementById('d_rice_' + safeId);
             let cEl = document.getElementById('d_chick_' + safeId);
-            let wEl = document.getElementById('d_weight_' + safeId);
             
             let fullName = baseName;
             let parts = [];
-            let finalPrice = price;
             
             if (rEl && rEl.value) parts.push(rEl.value.trim());
             if (cEl && cEl.value) parts.push(cEl.value.trim());
-            
-            if (wEl && wEl.value) {
-                let weight = parseFloat(wEl.value) || 1.0;
-                parts.push(weight + " کیلۆ");
-                finalPrice = Math.round(price * weight);
-            }
             
             if (parts.length > 0) {
                 fullName += ` (${parts.join(' - ')})`;
             }
             
-            updateQty(fullName, 1, finalPrice, cat);
+            updateQty(fullName, 1, price, cat);
         }
 
         function updateQty(foodName, change, price, cat) {
@@ -2554,7 +2545,7 @@ CUSTOMER_MENU_TEMPLATE = """
                     <div class="food-title-main">{{ item.food_name }}</div>
                     <div class="food-price-red">{{ "{:,.0f}".format(item.price) }} د.ع</div>
 
-                  {% if allow_ordering %}
+                    {% if allow_ordering %}
                     {% set cat_str = item.category or '' %}
                     {% set c_name = cat_str | replace('ي', 'ی') | trim %}
 
@@ -2695,26 +2686,17 @@ CUSTOMER_MENU_TEMPLATE = """
         }
 
         function changeCustomerQty(baseName, delta, price, cat, foodId) {
-            let riceVal = '', chickenVal = '', weightVal = '';
+            let riceVal = '', chickenVal = '';
             const rEl = document.getElementById('opt_rice_' + foodId);
             const cEl = document.getElementById('opt_chicken_' + foodId);
-            const wEl = document.getElementById('opt_weight_' + foodId);
 
             if (rEl && rEl.value) riceVal = rEl.value.trim();
             if (cEl && cEl.value) chickenVal = cEl.value.trim();
 
             let finalName = baseName;
             let parts = [];
-            let finalPrice = price;
-
             if (riceVal) parts.push(riceVal);
             if (chickenVal) parts.push(chickenVal);
-
-            if (wEl && wEl.value) {
-                let weight = parseFloat(wEl.value) || 1.0;
-                parts.push(weight + " کیلۆ");
-                finalPrice = Math.round(price * weight);
-            }
 
             if (parts.length > 0) {
                 finalName += ` (${parts.join(' - ')})`;
@@ -2724,7 +2706,7 @@ CUSTOMER_MENU_TEMPLATE = """
             let found = false;
             
             for (let i = myCart.length - 1; i >= 0; i--) {
-                if (myCart[i].is_divider) break;
+                if (myCart[i].is_divider) break; // تەنها لە هەمان قاپ دەگەڕێت و تێکەڵی ناکات
                 if (myCart[i].full_name === finalName) {
                     let newQty = myCart[i].qty + delta;
                     if (!isWaiter && newQty < origQty) {
@@ -2744,7 +2726,7 @@ CUSTOMER_MENU_TEMPLATE = """
                     base_name: baseName,
                     full_name: finalName,
                     food_name: finalName,
-                    price: finalPrice,
+                    price: price,
                     qty: 1,
                     cat: cat || '',
                     safe_id: foodId
